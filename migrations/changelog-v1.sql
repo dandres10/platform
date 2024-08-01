@@ -1,0 +1,213 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE
+    language (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        name VARCHAR(100) NOT NULL,
+        code VARCHAR(10) UNIQUE NOT NULL,
+        native_name VARCHAR(100),
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    currency (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        name VARCHAR(255) NOT NULL,
+        code VARCHAR(10) UNIQUE NOT NULL,
+        symbol VARCHAR(10) NOT NULL,
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    country (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        name VARCHAR(255) NOT NULL,
+        code VARCHAR(10) UNIQUE NOT NULL,
+        phone_code VARCHAR(10) NOT NULL,
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    company (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        name VARCHAR(255) NOT NULL,
+        inactivity_time INT NOT NULL DEFAULT 20,
+        nit VARCHAR(255) UNIQUE NOT NULL,
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    location (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        company_id UUID REFERENCES company (id),
+        country_id UUID REFERENCES country (id),
+        name VARCHAR(255) NOT NULL,
+        address text NOT NULL,
+        city VARCHAR(100) NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        main_location BOOLEAN NOT NULL DEFAULT False,
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    currency_location (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        currency_id UUID REFERENCES "currency" (id),
+        location_id UUID REFERENCES location (id),
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        UNIQUE (currency_id, location_id)
+    );
+
+CREATE TABLE
+    platform (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        language_id UUID REFERENCES language (id),
+        location_id UUID REFERENCES location (id),
+        currency_location_id UUID REFERENCES currency_location (id),
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    menu (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        company_id UUID REFERENCES company (id),
+        "name" varchar(100) NOT NULL,
+        description varchar(300) NOT NULL,
+        top_id UUID NOT NULL,
+        route varchar(300) NOT NULL,
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        icon varchar(50) NOT NULL,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    rol (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        company_id UUID REFERENCES company (id),
+        name VARCHAR(255) NOT NULL,
+        code VARCHAR(255) NOT NULL,
+        description TEXT,
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        UNIQUE (company_id, code)
+    );
+
+CREATE TABLE
+    permission (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        company_id UUID REFERENCES company (id),
+        name VARCHAR(255) UNIQUE NOT NULL,
+        description TEXT,
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    rol_permission (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        rol_id UUID REFERENCES "rol" (id),
+        permission_id UUID REFERENCES "permission" (id),
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        UNIQUE (rol_id, permission_id)
+    );
+
+CREATE TABLE
+    menu_permission (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        menu_id UUID REFERENCES "menu" (id),
+        permission_id UUID REFERENCES "permission" (id),
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        UNIQUE (menu_id, permission_id)
+    );
+
+CREATE TABLE
+    "user" (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        rol_id UUID REFERENCES rol (id),
+        platform_id UUID REFERENCES platform (id),
+        password VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        first_name VARCHAR(255),
+        last_name VARCHAR(255),
+        phone VARCHAR(20),
+        refresh_token text,
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
+    );
+
+CREATE TABLE
+    user_location (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        user_id UUID REFERENCES "user" (id),
+        location_id UUID REFERENCES location (id),
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        UNIQUE (user_id, location_id)
+    );
+
+CREATE TABLE
+    translation (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
+        key VARCHAR(255) NOT NULL,
+        language_code VARCHAR(10) NOT NULL REFERENCES language (code),
+        translation TEXT NOT NULL,
+        context VARCHAR(255),
+        state BOOLEAN NOT NULL DEFAULT TRUE,
+        created_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
+        UNIQUE (key, language_code, context)
+    );
+
+--rollback
+DROP TABLE IF EXISTS "translation";
+
+DROP TABLE IF EXISTS user_location;
+
+DROP TABLE IF EXISTS "user";
+
+DROP TABLE IF EXISTS menu_permission;
+
+DROP TABLE IF EXISTS rol_permission;
+
+DROP TABLE IF EXISTS "permission";
+
+DROP TABLE IF EXISTS rol;
+
+DROP TABLE IF EXISTS menu;
+
+DROP TABLE IF EXISTS platform;
+
+DROP TABLE IF EXISTS currency_location;
+
+DROP TABLE IF EXISTS "location";
+
+DROP TABLE IF EXISTS company;
+
+DROP TABLE IF EXISTS country;
+
+DROP TABLE IF EXISTS currency;
+
+DROP TABLE IF EXISTS "language";
