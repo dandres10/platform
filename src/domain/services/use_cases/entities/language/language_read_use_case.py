@@ -3,9 +3,7 @@ from src.core.config import settings
 from src.core.enums.layer import LAYER
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.entities.language.language import Language
-from src.domain.models.entities.language.language_delete import LanguageDelete
-from src.domain.models.entities.language.language_read import LanguageRead
+from src.domain.models.entities.language.index import Language, LanguageRead
 from src.domain.services.repositories.entities.i_language_repository import (
     ILanguageRepository,
 )

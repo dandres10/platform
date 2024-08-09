@@ -4,23 +4,17 @@ from src.core.models.config import Config
 from src.core.models.filter import Pagination
 from src.core.models.response import Response
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.entities.language.language_delete import LanguageDelete
-from src.domain.models.entities.language.language_read import LanguageRead
-from src.domain.models.entities.language.language_save import LanguageSave
-from src.domain.models.entities.language.language_update import LanguageUpdate
-from src.domain.services.use_cases.entities.language.language_delete_use_case import (
+from src.domain.models.entities.language.index import (
+    LanguageDelete,
+    LanguageRead,
+    LanguageSave,
+    LanguageUpdate,
+)
+from src.domain.services.use_cases.entities.language.index import (
     LanguageDeleteUseCase,
-)
-from src.domain.services.use_cases.entities.language.language_list_use_case import (
     LanguageListUseCase,
-)
-from src.domain.services.use_cases.entities.language.language_read_use_case import (
     LanguageReadUseCase,
-)
-from src.domain.services.use_cases.entities.language.language_save_use_case import (
     LanguageSaveUseCase,
-)
-from src.domain.services.use_cases.entities.language.language_update_use_case import (
     LanguageUpdateUseCase,
 )
 from src.infrastructure.database.repositories.language_repository import (

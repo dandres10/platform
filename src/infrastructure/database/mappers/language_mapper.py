@@ -1,7 +1,9 @@
 from typing import List
-from src.domain.models.entities.language.language import Language
-from src.domain.models.entities.language.language_save import LanguageSave
-from src.domain.models.entities.language.language_update import LanguageUpdate
+from src.domain.models.entities.language.index import (
+    Language,
+    LanguageSave,
+    LanguageUpdate,
+)
 from src.infrastructure.database.entities.language_entity import LanguageEntity
 
 
@@ -54,4 +56,3 @@ def map_to_update_language_entity(language: LanguageUpdate) -> LanguageEntity:
         native_name=language.native_name,
         state=language.state,
     )
-

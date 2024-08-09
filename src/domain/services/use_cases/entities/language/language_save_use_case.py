@@ -2,8 +2,7 @@ from typing import Union
 from src.core.enums.layer import LAYER
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.entities.language.language import Language
-from src.domain.models.entities.language.language_save import LanguageSave
+from src.domain.models.entities.language.index import Language, LanguageSave
 from src.domain.services.repositories.entities.i_language_repository import (
     ILanguageRepository,
 )
@@ -22,8 +21,8 @@ class LanguageSaveUseCase:
         config: Config,
         params: LanguageSave,
     ) -> Union[Language, str, None]:
-        language = map_to_save_language_entity(params)
-        result = self.language_repository.save(config=config, params=language)
+        result = map_to_save_language_entity(params)
+        result = self.language_repository.save(config=config, params=result)
         result = result.dict()
         if not result:
             return "Error en el flujo, contactar al administrador"

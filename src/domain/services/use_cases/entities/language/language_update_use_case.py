@@ -2,8 +2,7 @@ from typing import Union
 from src.core.enums.layer import LAYER
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.entities.language.language import Language
-from src.domain.models.entities.language.language_update import LanguageUpdate
+from src.domain.models.entities.language.index import Language, LanguageUpdate
 from src.domain.services.repositories.entities.i_language_repository import (
     ILanguageRepository,
 )
