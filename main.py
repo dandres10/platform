@@ -13,3 +13,4 @@ app = FastAPI(
 app.add_middleware(RedirectToDocsMiddleware)
 CorsAppConfigurator.setup_cors(app)
 Route.set_routes(app)
+
