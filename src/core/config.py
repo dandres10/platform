@@ -10,7 +10,7 @@ elif env == "production":
 
 
 print("*" * 100)
-print(f"ENVIRONMENT: {env}")
+print(f"ENVIRONMENT: {os.getenv('APP_ENVIRONMENT')}")
 print(f"PROJECT_NAME: {os.getenv('PROJECT_NAME')}")
 print(f"PROJECT_VERSION: {os.getenv('PROJECT_VERSION')}")
 print(f"HAS_TRACK: {os.getenv('HAS_TRACK')}")

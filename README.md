@@ -7,3 +7,4 @@ ENV=qa uvicorn main:app --reload
 ENV=production uvicorn main:app --reload
 
 pip install -r pipfiles.txt 
+
