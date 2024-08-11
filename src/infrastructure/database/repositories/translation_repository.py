@@ -1,4 +1,3 @@
-
 from typing import List, Union
 from pydantic import UUID4
 from src.core.config import settings
@@ -25,18 +24,26 @@ from src.infrastructure.database.mappers.translation_mapper import (
 
 class TranslationRepository(ITranslationRepository):
 
-    def save(self, config: Config, params: TranslationEntity) -> Union[Translation, None]:
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    def save(
+        self, config: Config, params: TranslationEntity
+    ) -> Union[Translation, None]:
         db = config.db
         db.add(params)
         db.commit()
         db.refresh(params)
         return map_to_translation(params)
 
-    def update(self, config: Config, params: TranslationUpdate) -> Union[Translation, None]:
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    def update(
+        self, config: Config, params: TranslationUpdate
+    ) -> Union[Translation, None]:
         db = config.db
 
         translation: TranslationEntity = (
-            db.query(TranslationEntity).filter(TranslationEntity.id == params.id).first()
+            db.query(TranslationEntity)
+            .filter(TranslationEntity.id == params.id)
+            .first()
         )
 
         if not translation:
@@ -50,7 +57,10 @@ class TranslationRepository(ITranslationRepository):
         db.refresh(translation)
         return map_to_translation(translation)
 
-    def list(self, config: Config, params: Pagination) -> Union[List[Translation], None]:
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    def list(
+        self, config: Config, params: Pagination
+    ) -> Union[List[Translation], None]:
         db = config.db
         query = db.query(TranslationEntity)
 
@@ -67,6 +77,7 @@ class TranslationRepository(ITranslationRepository):
             return None
         return map_to_list_translation(translations)
 
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     def delete(
         self,
         config: Config,
@@ -74,7 +85,9 @@ class TranslationRepository(ITranslationRepository):
     ) -> Union[Translation, None]:
         db = config.db
         translation: TranslationEntity = (
-            db.query(TranslationEntity).filter(TranslationEntity.id == params.id).first()
+            db.query(TranslationEntity)
+            .filter(TranslationEntity.id == params.id)
+            .first()
         )
 
         if not translation:
@@ -84,6 +97,7 @@ class TranslationRepository(ITranslationRepository):
         db.commit()
         return map_to_translation(translation)
 
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     def read(
         self,
         config: Config,
@@ -91,29 +105,12 @@ class TranslationRepository(ITranslationRepository):
     ) -> Union[Translation, None]:
         db = config.db
         translation: TranslationEntity = (
-            db.query(TranslationEntity).filter(TranslationEntity.id == params.id).first()
+            db.query(TranslationEntity)
+            .filter(TranslationEntity.id == params.id)
+            .first()
         )
 
         if not translation:
             return None
 
         return map_to_translation(translation)
-
-
-if settings.has_track:
-    TranslationRepository.save = execute_transaction(LAYER.I_D_R.value)(
-        TranslationRepository.save
-    )
-    TranslationRepository.update = execute_transaction(LAYER.I_D_R.value)(
-        TranslationRepository.update
-    )
-    TranslationRepository.list = execute_transaction(LAYER.I_D_R.value)(
-        TranslationRepository.list
-    )
-    TranslationRepository.delete = execute_transaction(LAYER.I_D_R.value)(
-        TranslationRepository.delete
-    )
-    TranslationRepository.read = execute_transaction(LAYER.I_D_R.value)(
-        TranslationRepository.read
-    )
-        

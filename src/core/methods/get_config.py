@@ -21,6 +21,7 @@ def get_config(request: Request, language: str = Header(...)) -> Config:
     # config = token
     config.db = session_db()
     config.language = language
+    config.request = request
 
     return config
 

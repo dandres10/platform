@@ -20,6 +20,7 @@ class TranslationSaveUseCase:
         self.translation_repository = translation_repository
         self.message = Message()
 
+    @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     def execute(
         self,
         config: Config,
@@ -38,7 +39,3 @@ class TranslationSaveUseCase:
         return result
 
 
-if settings.has_track:
-    TranslationSaveUseCase.execute = execute_transaction(LAYER.D_S_U_E.value)(
-        TranslationSaveUseCase.execute
-    )

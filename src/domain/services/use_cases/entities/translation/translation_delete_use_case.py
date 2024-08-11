@@ -17,6 +17,7 @@ class TranslationDeleteUseCase:
         self.translation_repository = translation_repository
         self.message = Message()
 
+    @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     def execute(
         self,
         config: Config,
@@ -35,7 +36,3 @@ class TranslationDeleteUseCase:
         return result
 
 
-if settings.has_track:
-    TranslationDeleteUseCase.execute = execute_transaction(LAYER.D_S_U_E.value)(
-        TranslationDeleteUseCase.execute
-    )
