@@ -154,12 +154,19 @@ def execute_transaction_route(enabled=True):
                 if request and hasattr(request.state, "body"):
                     body_content = request.state.body
 
+                    x_forwarded_for = request.headers.get("X-Forwarded-For")
+                    if x_forwarded_for:
+                        client_ip = x_forwarded_for.split(",")[0]
+                    else:
+                        client_ip = request.client.host
+
                     route_info = {
                         "method": request.method,
                         "url": str(request.url),
                         "path": request.url.path,
                         "query_params": dict(request.query_params),
                         "headers": dict(request.headers),
+                        "ip": client_ip,
                     }
 
                     if isinstance(body_content, dict):
