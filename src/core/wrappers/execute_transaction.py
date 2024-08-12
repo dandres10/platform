@@ -113,7 +113,7 @@ def string_to_json(text: str):
 
         return json_object
     except json.JSONDecodeError as e:
-        print(f"Error al convertir la cadena a JSON: {e}")
+        """ print(f"Error al convertir la cadena a JSON: {e}") """
         return None
 
 
