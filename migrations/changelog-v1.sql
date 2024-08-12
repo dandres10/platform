@@ -1,3 +1,6 @@
+--RUN 
+--NAME=Marlon Andres Leon Leon
+--DESCRIPTION=Crea las tablas iniciales
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE
@@ -77,6 +80,8 @@ CREATE TABLE
         language_id UUID REFERENCES language (id),
         location_id UUID REFERENCES location (id),
         currency_location_id UUID REFERENCES currency_location (id),
+        token_expiration_minutes INT NOT NULL DEFAULT 60,
+        refresh_token_expiration_minutes INT NOT NULL DEFAULT 62,
         created_date TIMESTAMP NOT NULL DEFAULT NOW (),
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
@@ -181,7 +186,9 @@ CREATE TABLE
         UNIQUE (key, language_code, context)
     );
 
---rollback
+--FIN RUN
+
+--ROLLBACK
 DROP TABLE IF EXISTS "translation";
 
 DROP TABLE IF EXISTS user_location;
@@ -211,3 +218,4 @@ DROP TABLE IF EXISTS country;
 DROP TABLE IF EXISTS currency;
 
 DROP TABLE IF EXISTS "language";
+--FIN ROLLBACK
