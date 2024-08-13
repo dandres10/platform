@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, UUID4
-from typing import Optional
+from typing import Optional, Text
 from datetime import datetime
 
 class UserSave(BaseModel):
@@ -10,5 +10,5 @@ class UserSave(BaseModel):
     first_name: Optional[str] = Field(default=None, max_length=255)
     last_name: Optional[str] = Field(default=None, max_length=255)
     phone: Optional[str] = Field(default=None, max_length=20)
-    refresh_token: str = Field(default=None)
     state: bool = Field(default=True)
+    dict_number: str = Field(default="dict")

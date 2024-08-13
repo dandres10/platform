@@ -55,7 +55,6 @@ def map_to_save_user_entity(user: UserSave) -> UserEntity:
         first_name=user.first_name,
         last_name=user.last_name,
         phone=user.phone,
-        refresh_token=user.refresh_token,
         state=user.state,
     )
 
