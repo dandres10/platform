@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 # imports
+from src.infrastructure.web.business_routes.auth_router import auth_router
 from src.infrastructure.web.entities_routes.location_router import location_router
 from src.infrastructure.web.entities_routes.platform_router import platform_router
 from src.infrastructure.web.entities_routes.rol_permission_router import rol_permission_router
@@ -37,3 +38,4 @@ class Route:
         app.include_router(currency_router)
         app.include_router(language_router)
         app.include_router(translation_router)
+        app.include_router(auth_router)

@@ -93,6 +93,24 @@ VALUES (
 );
 
 
+INSERT INTO rol_permission (
+    id, 
+    rol_id, 
+    permission_id, 
+    state, 
+    created_date, 
+    updated_date
+)
+VALUES (
+    uuid_generate_v4(),
+    '969961a3-3492-45a5-8f8d-b283e52e99ee',                         -- UUID del rol admin
+    'c9cee9bc-4bea-4431-a77b-70a7538e8409',                   -- UUID del permiso 'HOME'
+    TRUE,
+    NOW(),
+    NOW()
+);
+
+
 
 
 

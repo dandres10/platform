@@ -1,7 +1,7 @@
-
 from typing import List, Union
 from src.core.config import settings
 from src.core.enums.layer import LAYER
+from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
 from src.domain.models.entities.user.index import User
@@ -12,6 +12,7 @@ from src.domain.services.repositories.entities.i_user_repository import (
 from src.core.classes.message import Message
 from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.models.message import MessageCoreEntity
+
 
 class UserListUseCase:
     def __init__(self, user_repository: IUserRepository):
@@ -32,6 +33,10 @@ class UserListUseCase:
                     key=KEYS_MESSAGES.CORE_NO_RESULTS_FOUND.value
                 ),
             )
-        results = [result.dict() for result in results]
+
+        if config.response_type == RESPONSE_TYPE.OBJECT.value:
+            return results
+        elif config.response_type == RESPONSE_TYPE.DICT.value:
+            return [result.dict() for result in results]
+
         return results
-        

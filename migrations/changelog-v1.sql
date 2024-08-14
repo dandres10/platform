@@ -92,7 +92,7 @@ CREATE TABLE
         company_id UUID REFERENCES company (id),
         "name" varchar(100) NOT NULL,
         description varchar(300) NOT NULL,
-        top_id UUID NOT NULL,
+        top_id UUID NULL,
         route varchar(300) NOT NULL,
         state BOOLEAN NOT NULL DEFAULT TRUE,
         icon varchar(50) NOT NULL,
@@ -134,6 +134,8 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
         UNIQUE (rol_id, permission_id)
     );
+
+
 
 CREATE TABLE
     menu_permission (

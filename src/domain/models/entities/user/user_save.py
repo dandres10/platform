@@ -11,4 +11,3 @@ class UserSave(BaseModel):
     last_name: Optional[str] = Field(default=None, max_length=255)
     phone: Optional[str] = Field(default=None, max_length=20)
     state: bool = Field(default=True)
-    dict_number: str = Field(default="dict")

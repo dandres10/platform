@@ -7,8 +7,8 @@ class Platform(BaseModel):
     language_id: Optional[UUID4] = Field(default=None)
     location_id: Optional[UUID4] = Field(default=None)
     currency_location_id: Optional[UUID4] = Field(default=None)
-    token_expiration_minutes: str = Field(default=None)
-    refresh_token_expiration_minutes: str = Field(default=None)
+    token_expiration_minutes: int = Field(default=None)
+    refresh_token_expiration_minutes: int = Field(default=None)
     created_date: Optional[datetime] = Field(default_factory=datetime.now)
     updated_date: Optional[datetime] = Field(default_factory=datetime.now)
 

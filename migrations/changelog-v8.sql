@@ -98,6 +98,26 @@ VALUES (
 );
 
 
+INSERT INTO permission (
+    id, 
+    company_id, 
+    name, 
+    description, 
+    state, 
+    created_date, 
+    updated_date
+)
+VALUES (
+    uuid_generate_v4(),                     -- Genera un UUID automáticamente para la columna id
+    'd5c552fb-9434-4301-83af-03f3ca4195cf', -- UUID de la compañía (debe existir en la tabla company)
+    'HOME',                       -- Nombre del permiso (debe ser único)
+    'Permite al usuario consultar ese item del menu', -- Descripción del permiso
+    TRUE,                                   -- Estado (activo)
+    NOW(),                                  -- Fecha de creación
+    NOW()                                   -- Fecha de actualización
+);
+
+
 
 
 
@@ -109,4 +129,5 @@ DELETE FROM permission WHERE name = 'READ' AND company_id = 'd5c552fb-9434-4301-
 DELETE FROM permission WHERE name = 'SAVE' AND company_id = 'd5c552fb-9434-4301-83af-03f3ca4195cf';
 DELETE FROM permission WHERE name = 'DELETE' AND company_id = 'd5c552fb-9434-4301-83af-03f3ca4195cf';
 DELETE FROM permission WHERE name = 'LIST' AND company_id = 'd5c552fb-9434-4301-83af-03f3ca4195cf';
+DELETE FROM permission WHERE name = 'HOME' AND company_id = 'd5c552fb-9434-4301-83af-03f3ca4195cf';
 --FIN ROLLBACK
