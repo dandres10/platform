@@ -58,7 +58,13 @@ class CurrencyRepository(ICurrencyRepository):
         query = db.query(CurrencyEntity)
 
         if params.all_data:
-            currencys = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=CurrencyEntity
+                )
+                currencys = query.all()
+            else:
+                currencys = query.all()
         else:
             if params.filters:
                 query = get_filter(

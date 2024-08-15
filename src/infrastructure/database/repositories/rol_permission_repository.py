@@ -58,7 +58,13 @@ class RolPermissionRepository(IRolPermissionRepository):
         query = db.query(RolPermissionEntity)
 
         if params.all_data:
-            rol_permissions = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=RolPermissionEntity
+                )
+                rol_permissions = query.all()
+            else:
+                rol_permissions = query.all()
         else:
             if params.filters:
                 query = get_filter(

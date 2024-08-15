@@ -58,7 +58,13 @@ class RolRepository(IRolRepository):
         query = db.query(RolEntity)
 
         if params.all_data:
-            rols = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=RolEntity
+                )
+                rols = query.all()
+            else:
+                rols = query.all()
         else:
             if params.filters:
                 query = get_filter(

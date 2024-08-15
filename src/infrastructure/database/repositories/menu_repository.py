@@ -58,7 +58,13 @@ class MenuRepository(IMenuRepository):
         query = db.query(MenuEntity)
 
         if params.all_data:
-            menus = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=MenuEntity
+                )
+                menus = query.all()
+            else:
+                menus = query.all()
         else:
             if params.filters:
                 query = get_filter(

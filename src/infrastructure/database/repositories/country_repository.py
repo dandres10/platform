@@ -58,7 +58,13 @@ class CountryRepository(ICountryRepository):
         query = db.query(CountryEntity)
 
         if params.all_data:
-            countrys = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=CountryEntity
+                )
+                countrys = query.all()
+            else:
+                countrys = query.all()
         else:
             if params.filters:
                 query = get_filter(

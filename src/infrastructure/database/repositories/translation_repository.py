@@ -58,7 +58,13 @@ class TranslationRepository(ITranslationRepository):
         query = db.query(TranslationEntity)
 
         if params.all_data:
-            translations = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=TranslationEntity
+                )
+                translations = query.all()
+            else:
+                translations = query.all()
         else:
             if params.filters:
                 query = get_filter(

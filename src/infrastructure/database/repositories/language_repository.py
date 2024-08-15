@@ -58,7 +58,13 @@ class LanguageRepository(ILanguageRepository):
         query = db.query(LanguageEntity)
 
         if params.all_data:
-            languages = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=LanguageEntity
+                )
+                languages = query.all()
+            else:
+                languages = query.all()
         else:
             if params.filters:
                 query = get_filter(

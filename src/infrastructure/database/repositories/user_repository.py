@@ -1,4 +1,3 @@
-
 from typing import List, Union
 from pydantic import UUID4
 from src.core.config import settings
@@ -58,7 +57,13 @@ class UserRepository(IUserRepository):
         query = db.query(UserEntity)
 
         if params.all_data:
-            users = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=UserEntity
+                )
+                users = query.all()
+            else:
+                users = query.all()
         else:
             if params.filters:
                 query = get_filter(
@@ -103,4 +108,3 @@ class UserRepository(IUserRepository):
             return None
 
         return map_to_user(user)
-        

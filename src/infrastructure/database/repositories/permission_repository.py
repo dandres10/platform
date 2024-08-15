@@ -58,7 +58,13 @@ class PermissionRepository(IPermissionRepository):
         query = db.query(PermissionEntity)
 
         if params.all_data:
-            permissions = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=PermissionEntity
+                )
+                permissions = query.all()
+            else:
+                permissions = query.all()
         else:
             if params.filters:
                 query = get_filter(

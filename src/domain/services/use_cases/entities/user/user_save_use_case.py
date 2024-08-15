@@ -1,5 +1,5 @@
-
 from typing import Union
+from src.core.classes.password import Password
 from src.core.enums.layer import LAYER
 from src.core.models.config import Config
 from src.core.enums.response_type import RESPONSE_TYPE
@@ -16,10 +16,12 @@ from src.core.classes.message import Message
 from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.models.message import MessageCoreEntity
 
+
 class UserSaveUseCase:
     def __init__(self, user_repository: IUserRepository):
         self.user_repository = user_repository
         self.message = Message()
+        self.password = Password()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     def execute(
@@ -28,6 +30,7 @@ class UserSaveUseCase:
         params: UserSave,
     ) -> Union[User, str, None]:
         result = map_to_save_user_entity(params)
+        result.password = self.password.hash_password(password=result.password)
         result = self.user_repository.save(config=config, params=result)
         if not result:
             return self.message.get_message(
@@ -36,11 +39,10 @@ class UserSaveUseCase:
                     key=KEYS_MESSAGES.CORE_ERROR_SAVING_RECORD.value
                 ),
             )
-            
+
         if config.response_type == RESPONSE_TYPE.OBJECT.value:
             return result
         elif config.response_type == RESPONSE_TYPE.DICT.value:
-            return result.dict() 
+            return result.dict()
 
         return result
-        

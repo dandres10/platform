@@ -58,7 +58,13 @@ class LocationRepository(ILocationRepository):
         query = db.query(LocationEntity)
 
         if params.all_data:
-            locations = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=LocationEntity
+                )
+                locations = query.all()
+            else:
+                locations = query.all()
         else:
             if params.filters:
                 query = get_filter(

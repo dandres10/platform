@@ -1,10 +1,12 @@
 from typing import Any, List, Optional
 from pydantic import BaseModel, Field
 
+from src.core.enums.condition_type import CONDITION_TYPE
+
 
 class FilterManager(BaseModel):
     field: str = Field(...)
-    condition: str = Field(...)
+    condition: CONDITION_TYPE = Field(...)
     value: Any = Field(...)
 
 

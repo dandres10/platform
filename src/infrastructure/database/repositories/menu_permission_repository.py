@@ -58,7 +58,13 @@ class MenuPermissionRepository(IMenuPermissionRepository):
         query = db.query(MenuPermissionEntity)
 
         if params.all_data:
-            menu_permissions = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=MenuPermissionEntity
+                )
+                menu_permissions = query.all()
+            else:
+                menu_permissions = query.all()
         else:
             if params.filters:
                 query = get_filter(

@@ -58,7 +58,13 @@ class CompanyRepository(ICompanyRepository):
         query = db.query(CompanyEntity)
 
         if params.all_data:
-            companys = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=CompanyEntity
+                )
+                companys = query.all()
+            else:
+                companys = query.all()
         else:
             if params.filters:
                 query = get_filter(

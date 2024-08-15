@@ -58,7 +58,13 @@ class UserLocationRepository(IUserLocationRepository):
         query = db.query(UserLocationEntity)
 
         if params.all_data:
-            user_locations = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=UserLocationEntity
+                )
+                user_locations = query.all()
+            else:
+                user_locations = query.all()
         else:
             if params.filters:
                 query = get_filter(

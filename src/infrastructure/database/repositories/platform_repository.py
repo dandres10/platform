@@ -58,7 +58,13 @@ class PlatformRepository(IPlatformRepository):
         query = db.query(PlatformEntity)
 
         if params.all_data:
-            platforms = query.all()
+            if params.filters:
+                query = get_filter(
+                    query=query, filters=params.filters, entity=PlatformEntity
+                )
+                platforms = query.all()
+            else:
+                platforms = query.all()
         else:
             if params.filters:
                 query = get_filter(
