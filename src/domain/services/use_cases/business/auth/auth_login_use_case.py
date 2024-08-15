@@ -10,9 +10,8 @@ from src.core.models.filter import FilterManager, Pagination
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.index import AuthLoginRequest, AuthLoginResponse
-from src.domain.models.entities.user.user import User
 from src.infrastructure.database.repositories.business.auth_repository import AuthRepository
-from src.infrastructure.database.repositories.user_repository import UserRepository
+from src.infrastructure.database.repositories.entities.user_repository import UserRepository
 from src.domain.services.use_cases.entities.user.index import (
     UserListUseCase,
 )
