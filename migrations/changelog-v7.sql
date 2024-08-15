@@ -14,7 +14,7 @@ INSERT INTO rol (
 )
 VALUES (
     uuid_generate_v4(),                     -- Genera un UUID automáticamente para la columna id
-    'd5c552fb-9434-4301-83af-03f3ca4195cf', -- UUID de la compañía (debe existir en la tabla company)
+    '83950f65-ae93-4214-b5b1-8ccd479180b3', -- UUID de la compañía (debe existir en la tabla company)
     'Admin',                                -- Nombre del rol
     'ADMIN',                                -- Código único para el rol
     'core_rol_admin',  -- Descripción del rol
@@ -27,5 +27,5 @@ VALUES (
 --FIN RUN
 
 --ROLLBACK
-DELETE FROM rol WHERE code = 'ADMIN' AND company_id = 'd5c552fb-9434-4301-83af-03f3ca4195cf';
+DELETE FROM rol WHERE code = 'ADMIN' AND company_id = '83950f65-ae93-4214-b5b1-8ccd479180b3';
 --FIN ROLLBACK

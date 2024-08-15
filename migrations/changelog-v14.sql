@@ -5,6 +5,7 @@ INSERT INTO
   menu (
     id,
     company_id,
+    label,
     name,
     description,
     top_id,
@@ -17,7 +18,8 @@ INSERT INTO
 VALUES
   (
     uuid_generate_v4 (),
-    'd5c552fb-9434-4301-83af-03f3ca4195cf', -- company_id
+    '83950f65-ae93-4214-b5b1-8ccd479180b3', -- company_id
+    'Encuentra todo aca',
     'Home', -- name
     'Home for the application', -- description
     NULL, -- top_id
@@ -32,7 +34,7 @@ VALUES
 --ROLLBACK
 DELETE FROM menu
 WHERE
-  company_id = 'd5c552fb-9434-4301-83af-03f3ca4195cf'
+  company_id = '83950f65-ae93-4214-b5b1-8ccd479180b3'
   AND name = 'Home'
   AND route = '/home';
 

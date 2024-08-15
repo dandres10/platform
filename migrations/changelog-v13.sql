@@ -1,10 +1,11 @@
 --RUN 
 --NAME=Marlon Andres Leon Leon
---DESCRIPTION=Crea un permiso para la empresa creada
+--DESCRIPTION= Se de crear el usuario primero
 INSERT INTO
-  user_location (
+  user_location_rol (
     id,
     user_id,
+    rol_id,
     location_id,
     state,
     created_date,
@@ -13,8 +14,9 @@ INSERT INTO
 VALUES
   (
     uuid_generate_v4 (),
-    '7ffc2e72-7923-48cb-8655-0cecdc8bf745', -- user_id
-    'b7d155b4-dc94-4198-908a-c919d9cff336', -- location_id
+    '7979c956-0e2e-4d4a-b6e6-e12d6567eba5', -- user_id
+    '05afee90-958c-41a8-a25d-193aa55dc2a7', -- rol_id
+    'f5ccc80f-aa1e-4775-a610-0d9a3bd44e18', -- location_id
     TRUE,
     NOW (),
     NOW ()
@@ -22,9 +24,10 @@ VALUES
 
 --FIN RUN
 --ROLLBACK
-DELETE FROM user_location
+DELETE FROM user_location_rol
 WHERE
-  user_id = '7ffc2e72-7923-48cb-8655-0cecdc8bf745'
-  AND location_id = 'b7d155b4-dc94-4198-908a-c919d9cff336';
+  user_id = '7979c956-0e2e-4d4a-b6e6-e12d6567eba5'
+  AND location_id = 'f5ccc80f-aa1e-4775-a610-0d9a3bd44e18'
+  AND rol_id = '05afee90-958c-41a8-a25d-193aa55dc2a7';
 
 --FIN ROLLBACK

@@ -11,8 +11,8 @@ INSERT INTO menu_permission (
 )
 VALUES (
     uuid_generate_v4(), 
-    '634eb539-a758-4f21-9d14-eb1f04cdaca1',  -- menu_id
-    'f2b1a5c4-89a1-4b5b-b7f8-6a3b7d4c1e7d',  -- permission_id
+    'a1adc7de-3f83-43f4-863d-a689f5e544f5',  -- menu_id
+    '83358927-d5b7-4e3b-8e69-364d00374af6',  -- permission_id
     TRUE, 
     NOW(), 
     NOW()
@@ -21,7 +21,7 @@ VALUES (
 --FIN RUN
 --ROLLBACK
 DELETE FROM menu_permission
-WHERE menu_id = '634eb539-a758-4f21-9d14-eb1f04cdaca1'
-  AND permission_id = 'f2b1a5c4-89a1-4b5b-b7f8-6a3b7d4c1e7d';
+WHERE menu_id = 'a1adc7de-3f83-43f4-863d-a689f5e544f5'
+  AND permission_id = '83358927-d5b7-4e3b-8e69-364d00374af6';
 
 --FIN ROLLBACK

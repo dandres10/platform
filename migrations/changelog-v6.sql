@@ -18,8 +18,8 @@ INSERT INTO location (
 )
 VALUES (
     uuid_generate_v4(),                  -- Genera un UUID automáticamente para la columna id
-    'd5c552fb-9434-4301-83af-03f3ca4195cf',  -- UUID de la compañía a la que pertenece la ubicación (debe existir en la tabla company)
-    'ba14bca3-1eb2-4cc6-9389-4e9597d0111f',  -- UUID del país (debe existir en la tabla country)
+    '83950f65-ae93-4214-b5b1-8ccd479180b3',  -- UUID de la compañía a la que pertenece la ubicación (debe existir en la tabla company)
+    'e09995a8-4bd7-4bd1-8fbe-4adbd8586cfd',  -- UUID del país (debe existir en la tabla country)
     'Zona G',                        -- Nombre de la ubicación
     '1234 Elm Street',                    -- Dirección
     'Bogota',                         -- Ciudad

@@ -66,8 +66,8 @@ CREATE TABLE
 CREATE TABLE
     currency_location (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        currency_id UUID REFERENCES "currency" (id),
-        location_id UUID REFERENCES location (id),
+        currency_id UUID REFERENCES "currency" (id) NOT NULL,
+        location_id UUID REFERENCES location (id) NOT NULL,
         state BOOLEAN NOT NULL DEFAULT TRUE,
         created_date TIMESTAMP NOT NULL DEFAULT NOW (),
         updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
@@ -89,8 +89,9 @@ CREATE TABLE
 CREATE TABLE
     menu (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        company_id UUID REFERENCES company (id),
+        company_id UUID REFERENCES company (id) NOT NULL,
         "name" varchar(100) NOT NULL,
+        label varchar(300) NOT NULL,
         description varchar(300) NOT NULL,
         top_id UUID NULL,
         route varchar(300) NOT NULL,
@@ -103,7 +104,7 @@ CREATE TABLE
 CREATE TABLE
     rol (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        company_id UUID REFERENCES company (id),
+        company_id UUID REFERENCES company (id) NOT NULL,
         name VARCHAR(255) NOT NULL,
         code VARCHAR(255) NOT NULL,
         description TEXT,
@@ -116,7 +117,7 @@ CREATE TABLE
 CREATE TABLE
     permission (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        company_id UUID REFERENCES company (id),
+        company_id UUID REFERENCES company (id) NOT NULL,
         name VARCHAR(255) UNIQUE NOT NULL,
         description TEXT,
         state BOOLEAN NOT NULL DEFAULT TRUE,
@@ -127,8 +128,8 @@ CREATE TABLE
 CREATE TABLE
     rol_permission (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        rol_id UUID REFERENCES "rol" (id),
-        permission_id UUID REFERENCES "permission" (id),
+        rol_id UUID REFERENCES "rol" (id) NOT NULL,
+        permission_id UUID REFERENCES "permission" (id) NOT NULL,
         state BOOLEAN NOT NULL DEFAULT TRUE,
         created_date TIMESTAMP NOT NULL DEFAULT NOW (),
         updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
@@ -140,8 +141,8 @@ CREATE TABLE
 CREATE TABLE
     menu_permission (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        menu_id UUID REFERENCES "menu" (id),
-        permission_id UUID REFERENCES "permission" (id),
+        menu_id UUID REFERENCES "menu" (id) NOT NULL,
+        permission_id UUID REFERENCES "permission" (id) NOT NULL,
         state BOOLEAN NOT NULL DEFAULT TRUE,
         created_date TIMESTAMP NOT NULL DEFAULT NOW (),
         updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
@@ -151,8 +152,7 @@ CREATE TABLE
 CREATE TABLE
     "user" (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        rol_id UUID REFERENCES rol (id),
-        platform_id UUID REFERENCES platform (id),
+        platform_id UUID REFERENCES platform (id) NOT NULL,
         password VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE NOT NULL,
         first_name VARCHAR(255),
@@ -165,14 +165,15 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    user_location (
+    user_location_rol (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        user_id UUID REFERENCES "user" (id),
-        location_id UUID REFERENCES location (id),
+        user_id UUID REFERENCES "user" (id) NOT NULL,
+        location_id UUID REFERENCES location (id) NOT NULL,
+        rol_id UUID REFERENCES rol (id) NOT NULL,
         state BOOLEAN NOT NULL DEFAULT TRUE,
         created_date TIMESTAMP NOT NULL DEFAULT NOW (),
         updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
-        UNIQUE (user_id, location_id)
+        UNIQUE (user_id, location_id, rol_id)
     );
 
 CREATE TABLE
@@ -193,7 +194,7 @@ CREATE TABLE
 --ROLLBACK
 DROP TABLE IF EXISTS "translation";
 
-DROP TABLE IF EXISTS user_location;
+DROP TABLE IF EXISTS user_location_rol;
 
 DROP TABLE IF EXISTS "user";
 
