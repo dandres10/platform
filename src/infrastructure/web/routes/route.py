@@ -16,7 +16,6 @@ from src.infrastructure.web.entities_routes.currency_router import currency_rout
 from src.infrastructure.web.entities_routes.country_router import country_router
 from src.infrastructure.web.entities_routes.location_router import location_router
 from src.infrastructure.web.entities_routes.company_router import company_router
-from src.infrastructure.web.business_routes.auth_router import auth_router
 
 
 class Route:
@@ -38,4 +37,3 @@ class Route:
         app.include_router(country_router)
         app.include_router(location_router)
         app.include_router(company_router)
-        app.include_router(auth_router)

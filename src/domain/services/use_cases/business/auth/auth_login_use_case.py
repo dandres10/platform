@@ -9,9 +9,30 @@ from src.core.models.config import Config
 from src.core.models.filter import FilterManager, Pagination
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
+from src.domain.models.business.auth.auth_login_response import (
+    BasePlatformConfiguration,
+    PermissionLoginResponse,
+)
 from src.domain.models.business.auth.index import AuthLoginRequest, AuthLoginResponse
-from src.infrastructure.database.repositories.business.auth_repository import AuthRepository
-from src.infrastructure.database.repositories.entities.user_repository import UserRepository
+from src.domain.models.business.auth.security import Security
+from src.infrastructure.database.entities.permission_entity import PermissionEntity
+from src.infrastructure.database.repositories.business.auth_repository import (
+    AuthRepository,
+)
+from src.infrastructure.database.repositories.business.mappers.auth_mapper import (
+    map_to_company_login_response,
+    map_to_country_login_response,
+    map_to_currecy_login_response,
+    map_to_language_login_response,
+    map_to_location_login_response,
+    map_to_permission_response,
+    map_to_platform_login_response,
+    map_to_rol_login_response,
+    map_to_user_login_response,
+)
+from src.infrastructure.database.repositories.entities.user_repository import (
+    UserRepository,
+)
 from src.domain.services.use_cases.entities.user.index import (
     UserListUseCase,
 )
@@ -36,6 +57,7 @@ class AuthLoginUseCase:
         params: AuthLoginRequest,
     ) -> Union[AuthLoginResponse, str, None]:
         config.response_type = RESPONSE_TYPE.OBJECT
+        permissions: List[PermissionLoginResponse] = []
         filters_user: List[FilterManager] = [
             FilterManager(
                 field="email", condition=CONDITION_TYPE.EQUALS.value, value=params.email
@@ -69,34 +91,69 @@ class AuthLoginUseCase:
                 ),
             )
 
-        respueseta = self.auth_Repository.login(config=config, params=params)
+        initial_user_data = self.auth_Repository.initial_user_data(
+            config=config, params=params
+        )
+
+        if not initial_user_data:
+            print("no se encontro informacion relacionada")
+            return self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value
+                ),
+            )
 
         (
-            user_entity,
-            rol_entity,
             platform_entity,
+            user_entity,
             language_entity,
-            currency_location_entity,
+            location_entity,
             currency_entity,
-        ) = respueseta
+            country_entity,
+            company_entity,
+        ) = initial_user_data
 
+        user_role_and_permissions = self.auth_Repository.user_role_and_permissions(
+            config=config,
+            params=Security(email=params.email, location=location_entity.id),
+        )
 
+        if not user_role_and_permissions:
+            print("no se encontro informacion relacionada #2")
+            return self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value
+                ),
+            )
+
+        
+
+        for user_role_and_permission in user_role_and_permissions:
+            user_location_rol_q, user_q, rol_q, rol_permission_q, permission_q = (
+                user_role_and_permission
+            )
+            permissions.append(map_to_permission_response(permission_entity=permission_q))
 
         result = AuthLoginResponse(
-            user_id=user.id,
-            rol_id=user.rol_id,
-            rol_name=rol_entity.name,
-            rol_code=rol_entity.code,
-            platform_id=user.platform_id,
-            language_id=platform_entity.language_id,
-            location_id=platform_entity.location_id,
-            currency_id=currency_entity.id,
-            email=user.email,
-            first_name=user.first_name,
-            last_name=user.last_name,
-            phone=user.phone,
-            state=user.state,
-
+            base_platform_configuration=BasePlatformConfiguration(
+                user=map_to_user_login_response(user_entity=user_entity),
+                currecy=map_to_currecy_login_response(currency_entity=currency_entity),
+                location=map_to_location_login_response(
+                    location_entity=location_entity
+                ),
+                language=map_to_language_login_response(
+                    language_entity=language_entity
+                ),
+                platform=map_to_platform_login_response(
+                    platform_entity=platform_entity
+                ),
+                country=map_to_country_login_response(country_entity=country_entity),
+                company=map_to_company_login_response(company_entity=company_entity),
+                rol=map_to_rol_login_response(rol_entity=rol_q),
+                permissions=permissions
+            )
         )
 
         return result

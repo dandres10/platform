@@ -4,58 +4,105 @@ from src.core.enums.layer import LAYER
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.auth_login_request import AuthLoginRequest
-from src.domain.models.entities.user_location_rol.user_location_rol import UserLocationRol
+from src.domain.models.business.auth.security import Security
 from src.domain.services.repositories.business.i_auth_repository import IAuthRepository
 from src.infrastructure.database.entities.company_entity import CompanyEntity
+from src.infrastructure.database.entities.country_entity import CountryEntity
 from src.infrastructure.database.entities.currency_entity import CurrencyEntity
-from src.infrastructure.database.entities.currency_location_entity import (
-    CurrencyLocationEntity,
-)
 from src.infrastructure.database.entities.language_entity import LanguageEntity
 from src.infrastructure.database.entities.location_entity import LocationEntity
+from src.infrastructure.database.entities.permission_entity import PermissionEntity
 from src.infrastructure.database.entities.platform_entity import PlatformEntity
 from src.infrastructure.database.entities.rol_entity import RolEntity
+from src.infrastructure.database.entities.rol_permission_entity import (
+    RolPermissionEntity,
+)
 from src.infrastructure.database.entities.user_entity import UserEntity
-from src.infrastructure.database.entities.user_location_rol_entity import UserLocationRolEntity
+from src.infrastructure.database.entities.user_location_rol_entity import (
+    UserLocationRolEntity,
+)
 
 
 class AuthRepository(IAuthRepository):
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def login(self, config: Config, params: AuthLoginRequest) -> Union[
+    def initial_user_data(self, config: Config, params: AuthLoginRequest) -> Union[
         Tuple[
-            UserEntity,
-            RolEntity,
             PlatformEntity,
+            UserEntity,
             LanguageEntity,
-            CurrencyLocationEntity,
+            LocationEntity,
             CurrencyEntity,
+            CountryEntity,
+            CompanyEntity,
         ],
         None,
     ]:
         db = config.db
 
-        """ results = (
+        results = (
             db.query(
                 PlatformEntity,
                 UserEntity,
                 LanguageEntity,
                 LocationEntity,
-                CurrencyLocationEntity,
                 CurrencyEntity,
-                UserLocationRolEntity,
-                RolEntity
+                CountryEntity,
+                CompanyEntity,
             )
             .join(PlatformEntity, PlatformEntity.id == UserEntity.platform_id)
             .join(LanguageEntity, LanguageEntity.id == PlatformEntity.language_id)
             .join(LocationEntity, LocationEntity.id == PlatformEntity.location_id)
-            .join(CurrencyLocationEntity, CurrencyLocationEntity.id == PlatformEntity.currency_location_id)
-            .join(CurrencyEntity, CurrencyEntity.id == CurrencyLocationEntity.currency_id)
-            .join(UserLocationRolEntity, UserLocationRolEntity.user_id == UserEntity.id)
-            .join(UserLocationRolEntity, UserLocationRolEntity.rol_id == RolEntity.id)
-            .join(UserLocationRolEntity, UserLocationRolEntity.location_id == LocationEntity.id)
-            .filter(UserEntity, UserEntity.email == params.email)
+            .join(CurrencyEntity, CurrencyEntity.id == PlatformEntity.currency_id)
+            .join(CountryEntity, CountryEntity.id == LocationEntity.country_id)
+            .join(CompanyEntity, CompanyEntity.id == LocationEntity.company_id)
+            .filter(UserEntity.email == params.email)
+            .filter(UserEntity.state == True)
             .first()
-        ) """
+        )
 
-        pass
+        return results
 
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    def user_role_and_permissions(self, config: Config, params: Security) -> Union[
+        List[
+            Tuple[
+                UserLocationRolEntity,
+                UserEntity,
+                RolEntity,
+                RolPermissionEntity,
+                PermissionEntity,
+            ]
+        ],
+        None,
+    ]:
+        db = config.db
+
+        results = (
+            db.query(
+                UserLocationRolEntity,
+                UserEntity,
+                RolEntity,
+                RolPermissionEntity,
+                PermissionEntity,
+            )
+            .join(UserLocationRolEntity, UserLocationRolEntity.user_id == UserEntity.id)
+            .join(
+                LocationEntity,
+                LocationEntity.id == UserLocationRolEntity.location_id,
+            )
+            .join(RolEntity, RolEntity.id == UserLocationRolEntity.rol_id)
+            .join(
+                RolPermissionEntity,
+                RolPermissionEntity.rol_id == UserLocationRolEntity.rol_id,
+            )
+            .join(
+                PermissionEntity,
+                PermissionEntity.id == RolPermissionEntity.permission_id,
+            )
+            .filter(UserEntity.email == params.email)
+            .filter(UserEntity.state == True)
+            .filter(LocationEntity.id == params.location)
+            .all()
+        )
+
+        return results
