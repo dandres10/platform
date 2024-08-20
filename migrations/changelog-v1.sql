@@ -77,9 +77,9 @@ CREATE TABLE
 CREATE TABLE
     platform (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        language_id UUID REFERENCES language (id),
-        location_id UUID REFERENCES location (id),
-        currency_location_id UUID REFERENCES currency_location (id),
+        language_id UUID REFERENCES language (id) NOT NULL,
+        location_id UUID REFERENCES location (id) NOT NULL,
+        currency_id UUID REFERENCES "currency" (id) NOT NULL,
         token_expiration_minutes INT NOT NULL DEFAULT 60,
         refresh_token_expiration_minutes INT NOT NULL DEFAULT 62,
         created_date TIMESTAMP NOT NULL DEFAULT NOW (),

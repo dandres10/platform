@@ -9,7 +9,6 @@ from src.infrastructure.web.entities_routes.rol_permission_router import rol_per
 from src.infrastructure.web.entities_routes.permission_router import permission_router
 from src.infrastructure.web.entities_routes.rol_router import rol_router
 from src.infrastructure.web.entities_routes.menu_router import menu_router
-from src.infrastructure.web.entities_routes.platform_router import platform_router
 from src.infrastructure.web.entities_routes.language_router import language_router
 from src.infrastructure.web.entities_routes.currency_location_router import currency_location_router
 from src.infrastructure.web.entities_routes.currency_router import currency_router
@@ -31,7 +30,6 @@ class Route:
         app.include_router(permission_router)
         app.include_router(rol_router)
         app.include_router(menu_router)
-        app.include_router(platform_router)
         app.include_router(language_router)
         app.include_router(currency_location_router)
         app.include_router(currency_router)
