@@ -93,7 +93,7 @@ CREATE TABLE
         "name" varchar(100) NOT NULL,
         label varchar(300) NOT NULL,
         description varchar(300) NOT NULL,
-        top_id UUID NULL,
+        top_id UUID NOT NULL,
         route varchar(300) NOT NULL,
         state BOOLEAN NOT NULL DEFAULT TRUE,
         icon varchar(50) NOT NULL,

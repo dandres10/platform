@@ -78,6 +78,17 @@ class PermissionLoginResponse(BaseModel):
     state: bool = Field(...)
 
 
+class MenuLoginResponse(BaseModel):
+    id: UUID4 = Field(...)
+    name: str = Field(..., max_length=100)
+    label: str = Field(..., max_length=300)
+    description: str = Field(..., max_length=300)
+    top_id: UUID4 = Field(...)
+    route: str = Field(..., max_length=300)
+    state: bool = Field(default=True)
+    icon: str = Field(..., max_length=50)
+
+
 class BasePlatformConfiguration(BaseModel):
     user: UserLoginResponse = Field(...)
     currecy: CurrecyLoginResponse = Field(...)
@@ -88,6 +99,7 @@ class BasePlatformConfiguration(BaseModel):
     company: CompanyLoginResponse = Field(...)
     rol: RolLoginResponse = Field(...)
     permissions: List[PermissionLoginResponse] = Field(...)
+    menu: List[MenuLoginResponse] = Field(...)
 
 
 class AuthLoginResponse(BaseModel):

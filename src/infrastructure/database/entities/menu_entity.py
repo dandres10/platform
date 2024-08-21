@@ -11,7 +11,7 @@ class MenuEntity(Base):
     name = Column(String(100), nullable=False)
     label = Column(String(300), nullable=False)
     description = Column(String(300), nullable=False)
-    top_id = Column(UUID(as_uuid=True), nullable=True)
+    top_id = Column(UUID(as_uuid=True), nullable=False)
     route = Column(String(300), nullable=False)
     state = Column(Boolean, nullable=False, server_default=text('true'))
     icon = Column(String(50), nullable=False)

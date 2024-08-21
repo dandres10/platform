@@ -5,6 +5,7 @@ from src.domain.models.business.auth.auth_login_response import (
     CurrecyLoginResponse,
     LanguageLoginResponse,
     LocationLoginResponse,
+    MenuLoginResponse,
     PermissionLoginResponse,
     PlatformLoginResponse,
     RolLoginResponse,
@@ -15,6 +16,7 @@ from src.infrastructure.database.entities.country_entity import CountryEntity
 from src.infrastructure.database.entities.currency_entity import CurrencyEntity
 from src.infrastructure.database.entities.language_entity import LanguageEntity
 from src.infrastructure.database.entities.location_entity import LocationEntity
+from src.infrastructure.database.entities.menu_entity import MenuEntity
 from src.infrastructure.database.entities.permission_entity import PermissionEntity
 from src.infrastructure.database.entities.platform_entity import PlatformEntity
 from src.infrastructure.database.entities.rol_entity import RolEntity
@@ -30,12 +32,6 @@ def map_to_user_login_response(user_entity: UserEntity) -> UserLoginResponse:
         phone=user_entity.phone,
         state=user_entity.state,
     )
-
-
-""" def map_to_list_user_login_response(
-    user_entities: List[UserEntity],
-) -> List[UserLoginResponse]:
-    return [map_to_user_login_response(user) for user in user_entities] """
 
 
 def map_to_currecy_login_response(
@@ -133,4 +129,19 @@ def map_to_permission_response(
         name=permission_entity.name,
         description=permission_entity.description,
         state=permission_entity.state,
+    )
+
+
+def map_to_menu_response(
+    menu_entity: MenuEntity,
+) -> MenuLoginResponse:
+    return MenuLoginResponse(
+        id=menu_entity.id,
+        name=menu_entity.name,
+        label=menu_entity.label,
+        description=menu_entity.description,
+        top_id=menu_entity.top_id,
+        route=menu_entity.route,
+        state=menu_entity.state,
+        icon=menu_entity.icon,
     )
