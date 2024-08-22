@@ -89,7 +89,7 @@ class MenuLoginResponse(BaseModel):
     icon: str = Field(..., max_length=50)
 
 
-class BasePlatformConfiguration(BaseModel):
+class PlatformConfiguration(BaseModel):
     user: UserLoginResponse = Field(...)
     currecy: CurrecyLoginResponse = Field(...)
     location: LocationLoginResponse = Field(...)
@@ -102,5 +102,10 @@ class BasePlatformConfiguration(BaseModel):
     menu: List[MenuLoginResponse] = Field(...)
 
 
+class PlatformVariations(BaseModel):
+    currencies: List[CurrecyLoginResponse] = Field(...)
+
+
 class AuthLoginResponse(BaseModel):
-    base_platform_configuration: BasePlatformConfiguration = Field(...)
+    platform_configuration: PlatformConfiguration = Field(...)
+    platform_variations: PlatformVariations = Field(...)

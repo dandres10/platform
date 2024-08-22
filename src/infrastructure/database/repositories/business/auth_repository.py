@@ -3,18 +3,28 @@ from src.core.config import settings
 from src.core.enums.layer import LAYER
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
+from src.domain.models.business.auth.auth_currencies_by_location import (
+    AuthCurremciesByLocation,
+)
 from src.domain.models.business.auth.auth_initial_user_data import AuthInitialUserData
 from src.domain.models.business.auth.auth_login_request import AuthLoginRequest
-from src.domain.models.business.auth.auth_user_role_and_permissions import AuthUserRoleAndPermissions
+from src.domain.models.business.auth.auth_user_role_and_permissions import (
+    AuthUserRoleAndPermissions,
+)
 from src.domain.models.business.auth.menu import Menu
 from src.domain.services.repositories.business.i_auth_repository import IAuthRepository
 from src.infrastructure.database.entities.company_entity import CompanyEntity
 from src.infrastructure.database.entities.country_entity import CountryEntity
 from src.infrastructure.database.entities.currency_entity import CurrencyEntity
+from src.infrastructure.database.entities.currency_location_entity import (
+    CurrencyLocationEntity,
+)
 from src.infrastructure.database.entities.language_entity import LanguageEntity
 from src.infrastructure.database.entities.location_entity import LocationEntity
 from src.infrastructure.database.entities.menu_entity import MenuEntity
-from src.infrastructure.database.entities.menu_permission_entity import MenuPermissionEntity
+from src.infrastructure.database.entities.menu_permission_entity import (
+    MenuPermissionEntity,
+)
 from src.infrastructure.database.entities.permission_entity import PermissionEntity
 from src.infrastructure.database.entities.platform_entity import PlatformEntity
 from src.infrastructure.database.entities.rol_entity import RolEntity
@@ -67,7 +77,9 @@ class AuthRepository(IAuthRepository):
         return results
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def user_role_and_permissions(self, config: Config, params: AuthUserRoleAndPermissions) -> Union[
+    def user_role_and_permissions(
+        self, config: Config, params: AuthUserRoleAndPermissions
+    ) -> Union[
         List[
             Tuple[
                 UserLocationRolEntity,
@@ -113,23 +125,39 @@ class AuthRepository(IAuthRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     def menu(self, config: Config, params: Menu) -> Union[
-        List[
-            Tuple[
-                MenuPermissionEntity,
-                MenuEntity
-            ]
-        ],
+        List[Tuple[MenuPermissionEntity, MenuEntity]],
         None,
     ]:
         db = config.db
 
         results = (
-            db.query(
-                MenuPermissionEntity,
-                MenuEntity
-            )
+            db.query(MenuPermissionEntity, MenuEntity)
             .join(MenuPermissionEntity, MenuPermissionEntity.menu_id == MenuEntity.id)
             .filter(MenuEntity.company_id == params.company)
+            .all()
+        )
+
+        return results
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    def currencies_by_location(
+        self, config: Config, params: AuthCurremciesByLocation
+    ) -> Union[
+        List[Tuple[CurrencyLocationEntity, CurrencyEntity, LocationEntity]],
+        None,
+    ]:
+        db = config.db
+
+        results = (
+            db.query(CurrencyLocationEntity, CurrencyEntity, LocationEntity)
+            .join(
+                CurrencyLocationEntity,
+                CurrencyLocationEntity.currency_id == CurrencyEntity.id,
+            )
+            .join(
+                LocationEntity, LocationEntity.id == CurrencyLocationEntity.location_id
+            )
+            .filter(LocationEntity.id == params.location)
             .all()
         )
 
