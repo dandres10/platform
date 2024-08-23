@@ -10,10 +10,6 @@ from src.domain.models.business.auth.auth_currencies_by_location import (
 )
 from src.domain.models.business.auth.auth_initial_user_data import AuthInitialUserData
 from src.domain.models.business.auth.auth_locations import AuthLocations
-from src.domain.models.business.auth.auth_login_response import (
-    PlatformConfiguration,
-    PlatformVariations,
-)
 from src.domain.models.business.auth.auth_refresh_token_response import (
     AuthRefreshTokenResponse,
 )
@@ -21,8 +17,6 @@ from src.domain.models.business.auth.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
 )
 from src.domain.models.business.auth.index import (
-    AuthLoginRequest,
-    AuthLoginResponse,
     AuthMenu,
 )
 from src.domain.models.entities.user.user_read import UserRead
@@ -53,16 +47,6 @@ from src.domain.services.use_cases.entities.user.user_read_use_case import (
 )
 from src.domain.services.use_cases.entities.user.user_update_use_case import (
     UserUpdateUseCase,
-)
-from src.infrastructure.database.repositories.business.mappers.auth_mapper import (
-    map_to_company_login_response,
-    map_to_country_login_response,
-    map_to_currecy_login_response,
-    map_to_language_login_response,
-    map_to_location_login_response,
-    map_to_platform_login_response,
-    map_to_rol_login_response,
-    map_to_user_login_response,
 )
 from src.core.config import settings
 from src.core.classes.token import Token

@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, status
-from src.core.classes.bearer import Bearer
 from src.core.config import settings
+from src.core.enums.permission_type import PERMISSION_TYPE
 from src.core.models.config import Config
 from src.core.models.response import Response
+from src.core.wrappers.check_permissions import check_permissions
 from src.core.wrappers.execute_transaction import execute_transaction_route
 from src.domain.models.business.auth.auth_login_request import AuthLoginRequest
 from src.infrastructure.web.controller.business.auth_controller import AuthController
@@ -27,6 +28,7 @@ async def login(
 @auth_router.post(
     "/refresh_token", status_code=status.HTTP_200_OK, response_model=Response
 )
+@check_permissions([PERMISSION_TYPE.UPDATE.value])
 @execute_transaction_route(enabled=settings.has_track)
 async def refresh_token(config: Config = Depends(get_config)) -> Response:
     return auth_controller.refresh_token(config=config)

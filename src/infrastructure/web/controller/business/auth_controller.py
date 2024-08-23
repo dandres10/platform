@@ -23,7 +23,6 @@ class AuthController:
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     def login(self, config: Config, params: AuthLoginRequest) -> Response:
-
         result = self.auth_login_use_case.execute(config=config, params=params)
         if isinstance(result, str):
             return Response.error(None, result)
@@ -39,7 +38,6 @@ class AuthController:
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     def refresh_token(self, config: Config) -> Response:
-
         result = self.auth_refresh_token_use_case.execute(config=config)
         if isinstance(result, str):
             return Response.error(None, result)
