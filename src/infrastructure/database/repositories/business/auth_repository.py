@@ -7,6 +7,7 @@ from src.domain.models.business.auth.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
 from src.domain.models.business.auth.auth_initial_user_data import AuthInitialUserData
+from src.domain.models.business.auth.auth_locations import AuthLocations
 from src.domain.models.business.auth.auth_login_request import AuthLoginRequest
 from src.domain.models.business.auth.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
@@ -158,6 +159,28 @@ class AuthRepository(IAuthRepository):
                 LocationEntity, LocationEntity.id == CurrencyLocationEntity.location_id
             )
             .filter(LocationEntity.id == params.location)
+            .all()
+        )
+
+        return results
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    def locations_by_user(self, config: Config, params: AuthLocations) -> Union[
+        List[Tuple[UserLocationRolEntity, LocationEntity, CompanyEntity, UserEntity]],
+        None,
+    ]:
+        db = config.db
+
+        results = (
+            db.query(UserLocationRolEntity, LocationEntity, CompanyEntity, UserEntity)
+            .join(
+                UserLocationRolEntity,
+                UserLocationRolEntity.location_id == LocationEntity.id,
+            )
+            .join(CompanyEntity, CompanyEntity.id == LocationEntity.company_id)
+            .join(UserEntity, UserEntity.id == UserLocationRolEntity.user_id)
+            .filter(UserEntity.id == params.user_id)
+            .filter(CompanyEntity.id == params.company_id)
             .all()
         )
 

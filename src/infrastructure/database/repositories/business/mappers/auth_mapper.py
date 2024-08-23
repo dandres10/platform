@@ -7,10 +7,13 @@ from src.domain.models.business.auth.auth_login_response import (
     LocationLoginResponse,
     MenuLoginResponse,
     PermissionLoginResponse,
+    PermissionToken,
     PlatformLoginResponse,
     RolLoginResponse,
     UserLoginResponse,
 )
+from src.domain.models.entities.currency.currency import Currency
+from src.domain.models.entities.language.language import Language
 from src.infrastructure.database.entities.company_entity import CompanyEntity
 from src.infrastructure.database.entities.country_entity import CountryEntity
 from src.infrastructure.database.entities.currency_entity import CurrencyEntity
@@ -46,6 +49,8 @@ def map_to_currecy_login_response(
     )
 
 
+
+
 def map_to_location_login_response(
     location_entity: LocationEntity,
 ) -> LocationLoginResponse:
@@ -70,6 +75,18 @@ def map_to_language_login_response(
         code=language_entity.code,
         native_name=language_entity.native_name,
         state=language_entity.state,
+    )
+
+
+def map_to_language_base_response(
+    language: Language,
+) -> LanguageLoginResponse:
+    return LanguageLoginResponse(
+        id=language.id,
+        name=language.name,
+        code=language.code,
+        native_name=language.native_name,
+        state=language.state,
     )
 
 
@@ -129,6 +146,14 @@ def map_to_permission_response(
         name=permission_entity.name,
         description=permission_entity.description,
         state=permission_entity.state,
+    )
+
+def map_to_permission_token_response(
+    permission_login_response: PermissionLoginResponse,
+) -> PermissionToken:
+    return PermissionToken(
+        id=str(permission_login_response.id),
+        name=permission_login_response.name,
     )
 
 

@@ -4,6 +4,7 @@ from src.core.models.config import Config
 from src.domain.models.business.auth.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
+from src.domain.models.business.auth.auth_locations import AuthLocations
 from src.domain.models.business.auth.auth_login_request import AuthLoginRequest
 from src.domain.models.business.auth.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
@@ -46,3 +47,16 @@ class IAuthRepository(ABC):
         None,
     ]:
         pass
+
+    @abstractmethod
+    def locations_by_user(
+        self,
+        config: Config,
+        params: AuthLocations,
+    ) -> Union[
+        List[Tuple[Any]],
+        None,
+    ]:
+        pass
+
+

@@ -77,6 +77,10 @@ class PermissionLoginResponse(BaseModel):
     description: str = Field(...)
     state: bool = Field(...)
 
+class PermissionToken(BaseModel):
+    id: str = Field(...)
+    name: str = Field(..., max_length=255)
+
 
 class MenuLoginResponse(BaseModel):
     id: UUID4 = Field(...)
@@ -104,8 +108,11 @@ class PlatformConfiguration(BaseModel):
 
 class PlatformVariations(BaseModel):
     currencies: List[CurrecyLoginResponse] = Field(...)
+    locations: List[LocationLoginResponse] = Field(...)
+    languages: List[LanguageLoginResponse] = Field(...)
 
 
 class AuthLoginResponse(BaseModel):
     platform_configuration: PlatformConfiguration = Field(...)
     platform_variations: PlatformVariations = Field(...)
+    token: str = Field(...)
