@@ -14,6 +14,9 @@ from src.domain.models.business.auth.auth_login_response import (
     PlatformConfiguration,
     PlatformVariations,
 )
+from src.domain.models.business.auth.auth_refresh_token_response import (
+    AuthRefreshTokenResponse,
+)
 from src.domain.models.business.auth.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
 )
@@ -22,6 +25,7 @@ from src.domain.models.business.auth.index import (
     AuthLoginResponse,
     AuthMenu,
 )
+from src.domain.models.entities.user.user_read import UserRead
 from src.domain.models.entities.user.user_update import UserUpdate
 from src.domain.services.use_cases.business.auth.auth_currencies_use_case import (
     AuthCurrenciesUseCase,
@@ -43,6 +47,9 @@ from src.domain.services.use_cases.business.auth.auth_user_role_and_permissions 
 )
 from src.domain.services.use_cases.business.auth.auth_validate_user_use_case import (
     AuthValidateUserUseCase,
+)
+from src.domain.services.use_cases.entities.user.user_read_use_case import (
+    UserReadUseCase,
 )
 from src.domain.services.use_cases.entities.user.user_update_use_case import (
     UserUpdateUseCase,
@@ -67,12 +74,13 @@ from src.infrastructure.database.repositories.entities.user_repository import (
 user_repository = UserRepository()
 
 
-class AuthLoginUseCase:
+class AuthRefreshTokenUseCase:
     def __init__(
         self,
     ):
         self.auth_validate_user_use_case = AuthValidateUserUseCase()
         self.user_update_use_case = UserUpdateUseCase(user_repository=user_repository)
+        self.user_read_use_case = UserReadUseCase(user_repository=user_repository)
         self.auth_languages_use_case = AuthLanguagesUseCase()
         self.auth_locations_use_case = AuthLocationsUseCase()
         self.auth_currencies_use_case = AuthCurrenciesUseCase()
@@ -88,18 +96,18 @@ class AuthLoginUseCase:
     def execute(
         self,
         config: Config,
-        params: AuthLoginRequest,
-    ) -> Union[AuthLoginResponse, str, None]:
+    ) -> Union[AuthRefreshTokenResponse, str, None]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
-        user_validator = self.auth_validate_user_use_case.execute(
-            config=config, params=params
+        user_read = self.user_read_use_case.execute(
+            config=config, params=UserRead(id=config.token.user_id)
         )
-        if isinstance(user_validator, str):
-            return user_validator
+
+        if isinstance(user_read, str):
+            return user_read
 
         initial_user_data = self.auth_initial_user_data_use_case.execute(
-            config=config, params=AuthInitialUserData(email=params.email)
+            config=config, params=AuthInitialUserData(email=user_read.email)
         )
         if isinstance(initial_user_data, str):
             return initial_user_data
@@ -118,7 +126,7 @@ class AuthLoginUseCase:
             self.auth_user_role_and_permissions_use_case.execute(
                 config=config,
                 params=AuthUserRoleAndPermissions(
-                    email=params.email, location=location_entity.id
+                    email=user_read.email, location=location_entity.id
                 ),
             )
         )
@@ -166,7 +174,9 @@ class AuthLoginUseCase:
             permissions=[permission.name for permission in permissions],
         )
 
-        token = self.token.create_access_token(data=access_token)
+        token = self.token.refresh_access_token(
+            refresh_token=user_read.refresh_token, data=access_token
+        )
         refresh_token = self.token.create_refresh_token(data=access_token)
 
         user_update = self.user_update_use_case.execute(
@@ -187,29 +197,6 @@ class AuthLoginUseCase:
         if isinstance(user_update, str):
             return user_update
 
-        result = AuthLoginResponse(
-            platform_configuration=PlatformConfiguration(
-                user=map_to_user_login_response(user_entity=user_entity),
-                currecy=map_to_currecy_login_response(currency_entity=currency_entity),
-                location=map_to_location_login_response(
-                    location_entity=location_entity
-                ),
-                language=map_to_language_login_response(
-                    language_entity=language_entity
-                ),
-                platform=map_to_platform_login_response(
-                    platform_entity=platform_entity
-                ),
-                country=map_to_country_login_response(country_entity=country_entity),
-                company=map_to_company_login_response(company_entity=company_entity),
-                rol=map_to_rol_login_response(rol_entity=rol_q),
-                permissions=permissions,
-                menu=auth_menu,
-            ),
-            platform_variations=PlatformVariations(
-                currencies=currencies, locations=locations, languages=languages
-            ),
-            token=token,
-        )
+        result = AuthRefreshTokenResponse(token=token)
 
         return result

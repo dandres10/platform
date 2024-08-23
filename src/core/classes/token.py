@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 import jwt
 from datetime import datetime, timedelta, timezone
 from src.core.config import settings
@@ -39,11 +40,11 @@ class Token:
             decoded_token = jwt.decode(
                 token, self.secret_key, algorithms=[self.algorithm]
             )
-            return decoded_token
+            return AccessToken(**decoded_token)
         except jwt.ExpiredSignatureError:
-            return None
+            raise HTTPException(status_code=401, detail=f"Token expirado")
         except jwt.InvalidTokenError:
-            return None
+            raise HTTPException(status_code=401, detail=f"Token invalido")
 
     def decode_token(self, token):
         try:
@@ -54,16 +55,19 @@ class Token:
         except:
             return None
 
-    def refresh_access_token(self, refresh_token, body: dict):
+    def refresh_access_token(self, refresh_token, data: AccessToken):
         try:
+            if not refresh_token:
+                raise HTTPException(status_code=401, detail=f"Refresh token no existe")
+
             decoded_token = jwt.decode(
                 refresh_token, self.secret_key, algorithms=[self.algorithm]
             )
 
             if decoded_token:
-                new_access_token = self.create_access_token(body)
+                new_access_token = self.create_access_token(data)
                 return new_access_token
         except jwt.ExpiredSignatureError:
-            return None
+            raise HTTPException(status_code=401, detail=f"Token expirado")
         except jwt.InvalidTokenError:
-            return None
+            raise HTTPException(status_code=401, detail=f"Token invalido")
