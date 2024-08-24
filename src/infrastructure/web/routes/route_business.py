@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from src.infrastructure.web.business_routes.auth_router import auth_router
 
 
+
 class RouteBusiness:
     @staticmethod
     def set_routes(app: FastAPI):

@@ -25,6 +25,7 @@ def get_config(
     config.language = language
     config.request = request
     config.token = token
+    request.state.config = config
 
     return config
 

@@ -32,3 +32,6 @@ async def login(
 @execute_transaction_route(enabled=settings.has_track)
 async def refresh_token(config: Config = Depends(get_config)) -> Response:
     return auth_controller.refresh_token(config=config)
+
+
+

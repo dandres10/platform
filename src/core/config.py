@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     project_description: str = os.getenv("PROJECT_DESCRIPTION")
     jwt_secret_key: str = os.getenv("JWT_SECRET_KEY")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM")
+    app_environment: str = os.getenv("APP_ENVIRONMENT")
 
     class Config:
         env_file = ".env"
