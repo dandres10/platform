@@ -1,204 +1,56 @@
-Aquí está la estructura del proyecto y un resumen de los contenidos:
+# Proyecto FastAPI - Platform
 
+Este proyecto es una aplicación desarrollada en FastAPI que incluye validación de datos con Pydantic.
 
-Directorio: src/core/wrappers
-  Archivo: check_roles.py
-    Contenido: from typing import List
-from fastapi import HTTPException, status
-from functools import wraps
+## Requisitos previos
 
-def check_roles(accepted_roles: List[str]):
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # Obtener `config` desde los kwargs
-            config = kwargs.get("config", None)
+- Python 3.11
+- pip
 
-            # Verificar que `config` y `rol_code` existen
-            if config is None or not hasattr(config, "rol_code"):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Configuration or role code missing"
-                )
+## Configuración del entorno de desarrollo
 
-            user_role = config.rol_code
+Para comenzar, necesitas crear y activar un entorno virtual para gestionar las dependencias del proyecto.
 
-            # Comprobar si el rol del usuario está en la lista de roles aceptados
-            if user_role not in accepted_roles:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"User lacks the required role: {user_role}"
-                )
+### Crear el entorno de desarrollo
 
-            # Ejecutar la función original si pasa la verificación de roles
-            return await func(*args, **kwargs)
+```bash
+python3.11 -m venv env
+```
 
-        return wrapper
+# correr el aplicativo
 
-    return decorator
+## crear el entorno de desarrollo
 
-  Archivo: check_permissions.py
-    Contenido: from functools import wraps
-from typing import List
-from fastapi import HTTPException, status
+```bash
+python3.11 -m venv env
+```
 
-def check_permissions(accepted_permissions: List[str]):
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # Obtener `config` desde los kwargs
-            config = kwargs.get("config", None)
+## activar el entorno de desarrollo
 
-            # Verificar que `config` y `token` existen
-            if config is None or not hasattr(config, "token"):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Configuration or token missing"
-                )
+```bash
+source env/bin/activate
+```
 
-            token = config.token
+## instalar las librerias
 
-            # Verificar si el token tiene permisos
-            if not hasattr(token, "permissions"):
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Token does not contain permissions"
-                )
+```bash
+pip install -r pipfiles.txt
+```
 
-            # Extraer permisos del token
-            user_permissions = [perm for perm in token.permissions]
+## ejecutar el proyecto en modo pruebas
 
-            # Buscar los permisos que faltan
-            missing_permissions = [
-                perm for perm in accepted_permissions if perm not in user_permissions
-            ]
+```bash
+ENV=qa uvicorn main:app --reload
+```
 
-            # Si faltan permisos, generar una excepción con el detalle de qué permisos faltan
-            if missing_permissions:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"User lacks the following required permissions: {', '.join(missing_permissions)}"
-                )
-            
+## ejecutar el proyecto en modo produccion
 
-            # Ejecutar la función original si pasa las verificaciones de permisos
-            return await func(*args, **kwargs)
+```bash
+ENV=production uvicorn main:app --reload
+```
 
-        return wrapper
+## ejecutar el desarrollador ia
 
-    return decorator
-
-  Archivo: execute_transaction.py
-    Contenido: import json
-from functools import wraps
-from fastapi import HTTPException
-from termcolor import colored
-import traceback
-
-
-def execute_transaction(layer, enabled=True):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            if not enabled:
-                # Si el decorador está deshabilitado, simplemente ejecuta la función original
-                return func(*args, **kwargs)
-            try:
-                # Ejecutar la función original
-                return func(*args, **kwargs)
-            except Exception as e:
-                # Obtener la clase y el nombre del método
-                class_name = func.__qualname__.split(".")[0]
-                method_name = func.__name__
-
-                # Extraer los parámetros `params` y `config`
-                params = kwargs.get("params", args[1] if len(args) > 1 else None)
-                config = kwargs.get("config", args[0] if len(args) > 0 else None)
-
-                # Preparar los datos de los parámetros
-                params_data = {}
-                if params:
-                    try:
-                        if hasattr(params, "dict"):
-                            params_data = params.dict()
-                        elif hasattr(params, "__dict__"):
-                            params_data = params.__dict__
-                        else:
-                            params_data = str(params)
-                    except Exception as ex:
-                        params_data = f"Unserializable params: {ex}"
-
-                config_data = {}
-                if config:
-                    try:
-                        if hasattr(config, "dict"):
-                            config_data = config.dict()
-                        elif hasattr(config, "__dict__"):
-                            config_data = {
-                                k: (
-                                    str(v)
-                                    if not isinstance(
-                                        v,
-                                        (dict, list, str, int, float, bool, type(None)),
-                                    )
-                                    else v
-                                )
-                                for k, v in config.__dict__.items()
-                            }
-                        else:
-                            config_data = str(config)
-                    except Exception as ex:
-                        config_data = f"Unserializable config: {ex}"
-
-                # Capturar la traza del error
-                tb = traceback.extract_tb(e.__traceback__)
-                filename = tb[-1].filename
-                line_number = tb[-1].lineno
-
-                # Formatear y retornar los datos de error
-                error_data = {
-                    "layer": layer,
-                    "class_name": class_name,
-                    "method_name": method_name,
-                    "params": params_data,
-                    "config": config_data,
-                    "error": str(e).replace("500:", "").lstrip(),
-                    "file": filename,
-                    "line": line_number,
-                }
-
-                # Serializar el diccionario a JSON
-                error_json = json.dumps(error_data, indent=4, default=str)
-
-                # Imprimir el error formateado
-                print(
-                    colored(
-                        f"ERROR: {error_json}",
-                        "light_red",
-                    )
-                )
-                print(
-                    colored(
-                        "-" * 100,
-                        "light_red",
-                    )
-                )
-
-                # Lanzar una excepción HTTP con el mensaje de error
-                raise HTTPException(
-                    status_code=500, detail=f"{e}".replace("500:", "").lstrip()
-                )
-
-        return wrapper
-
-    return decorator
-
-
-Tú: que te parece el metodo execute_transaction de la carpeta o directorio wrappers
-ChatGPT: El método execute_transaction parece ser un decorador que maneja errores y excepciones en transacciones de alguna aplicación o sistema. El decorador captura excepciones, las formatea en un objeto JSON y las imprime de forma legible. Luego, lanza una excepción HTTP con el mensaje de error.
-
-En general, parece ser una forma organizada y útil de manejar errores y excepciones en transacciones. Sería importante revisar en detalle cómo se utiliza este decorador en el contexto de la aplicación o sistema en el que se encuentra para comprender completamente su funcionalidad y utilidad.
-
-Tú: como estas hoy ?
-ChatGPT: ¡Hola! Estoy aquí para ayudarte. ¿Hay algo más en lo que pueda asistirte hoy?
-
+```bash
+python ia/developer-ia.py
+```
