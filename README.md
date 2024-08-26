@@ -48,3 +48,9 @@ ENV=qa uvicorn main:app --reload
 ```bash
 ENV=production uvicorn main:app --reload
 ```
+
+## ejecutar el desarrollador ia
+
+```bash
+python ia/developer-ia.py
+```

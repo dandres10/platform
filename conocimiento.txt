@@ -1,0 +1,4 @@
+Hola, te voy a enseñar sobre mi proyecto de backend con fastapi 
+
+1. la carpeta migrations, son todos las modificaciones de mi base de datos.
+2. la carpeta src encuentras toda la arquitectura backend del proyecto es una arquitectura hexagonal.
