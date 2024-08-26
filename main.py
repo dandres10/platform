@@ -15,7 +15,7 @@ app = FastAPI(
 
 if settings.app_environment == "production":
     app.add_middleware(
-        UserRateLimitMiddleware, default_limits=["100/hour"], login_limits=["30/hour"]
+        UserRateLimitMiddleware, default_limits=["100/hour"], login_limits=["20/hour"]
     )
     
 app.add_middleware(RedirectToDocsMiddleware)

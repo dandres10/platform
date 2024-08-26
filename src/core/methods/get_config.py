@@ -27,6 +27,8 @@ def get_config(
     config.token = token
     request.state.config = config
 
+    token_cls.validate_has_refresh_token(config=config)
+
     return config
 
 

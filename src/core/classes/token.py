@@ -2,7 +2,18 @@ from fastapi import HTTPException
 import jwt
 from datetime import datetime, timedelta, timezone
 from src.core.config import settings
+from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.access_token import AccessToken
+from src.core.models.config import Config
+from src.domain.models.entities.user.user_read import UserRead
+from src.domain.services.use_cases.entities.user.user_read_use_case import (
+    UserReadUseCase,
+)
+from src.infrastructure.database.repositories.entities.user_repository import (
+    UserRepository,
+)
+
+user_repository = UserRepository()
 
 
 class Token:
@@ -11,6 +22,7 @@ class Token:
     ):
         self.secret_key = settings.jwt_secret_key
         self.algorithm = settings.jwt_algorithm
+        self.user_read_use_case = UserReadUseCase(user_repository=user_repository)
 
     def create_access_token(self, data: AccessToken):
         expiration = datetime.now(timezone.utc) + timedelta(
@@ -40,6 +52,7 @@ class Token:
             decoded_token = jwt.decode(
                 token, self.secret_key, algorithms=[self.algorithm]
             )
+
             return AccessToken(**decoded_token)
         except jwt.ExpiredSignatureError:
             raise HTTPException(status_code=401, detail=f"Token expirado")
@@ -71,3 +84,13 @@ class Token:
             raise HTTPException(status_code=401, detail=f"Token expirado")
         except jwt.InvalidTokenError:
             raise HTTPException(status_code=401, detail=f"Token invalido")
+
+    def validate_has_refresh_token(self, config: Config):
+        ##TODO validar si afecta de forma global
+        config.response_type = RESPONSE_TYPE.OBJECT
+        user_read = self.user_read_use_case.execute(
+            config=config, params=UserRead(id=config.token.user_id)
+        )
+
+        if not user_read.refresh_token:
+            raise HTTPException(status_code=401, detail=f"Token expirado")

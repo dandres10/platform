@@ -14,6 +14,8 @@ from src.domain.models.business.auth.auth_login_response import (
 )
 from src.domain.models.entities.currency.currency import Currency
 from src.domain.models.entities.language.language import Language
+from src.domain.models.entities.user.user_read import UserRead
+from src.domain.models.entities.user.user_update import UserUpdate
 from src.infrastructure.database.entities.company_entity import CompanyEntity
 from src.infrastructure.database.entities.country_entity import CountryEntity
 from src.infrastructure.database.entities.currency_entity import CurrencyEntity
@@ -170,3 +172,19 @@ def map_to_menu_response(
         state=menu_entity.state,
         icon=menu_entity.icon,
     )
+
+
+def map_to_user_read(user_read= UserRead) -> UserUpdate:
+    return UserUpdate(
+        id=user_read.id,
+        platform_id=user_read.platform_id,
+        password=user_read.password,
+        email=user_read.email,
+        first_name=user_read.first_name,
+        last_name=user_read.last_name,
+        phone=user_read.phone,
+        refresh_token=user_read.refresh_token,
+        state=user_read.state,
+    )
+
+
