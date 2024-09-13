@@ -54,3 +54,14 @@ ENV=production uvicorn main:app --reload
 ```bash
 python ia/developer-ia.py
 ```
+
+## Run docker
+
+```bash
+sudo docker build -t goluti-backend .
+```
+
+
+
+
+

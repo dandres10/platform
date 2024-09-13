@@ -11,3 +11,5 @@ termcolor==2.4.0
 pyjwt==2.9.0
 passlib==1.7.4
 bcrypt==3.2.0
+slowapi==0.1.9
+email_validator==2.2.0

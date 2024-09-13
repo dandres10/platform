@@ -5,10 +5,11 @@ WORKDIR /app
 COPY . /app
 
 RUN pip install -r pipfiles.txt --root-user-action=ignore
+RUN pip install --upgrade pip
 
 EXPOSE 8000
 
 ENV ENV=qa
 
 
-CMD ["uvicorn", "src.infrastructure.web.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
