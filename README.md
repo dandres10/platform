@@ -37,10 +37,10 @@ source env/bin/activate
 pip install -r pipfiles.txt
 ```
 
-## ejecutar el proyecto en modo pruebas
+## ejecutar el proyecto en modo local(pc)
 
 ```bash
-ENV=qa uvicorn main:app --reload
+ENV=pc uvicorn main:app --reload
 ```
 
 ## ejecutar el proyecto en modo produccion

@@ -7,6 +7,8 @@ if env == "qa":
     load_dotenv(".env.qa")
 elif env == "production":
     load_dotenv(".env.production")
+elif env == "pc":
+    load_dotenv(".env.pc")
 
 
 print("*" * 100)
