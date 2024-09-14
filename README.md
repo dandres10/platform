@@ -55,11 +55,28 @@ ENV=production uvicorn main:app --reload
 python ia/developer-ia.py
 ```
 
-## Run docker
+## Run docker-compose
+
+## comandos basicos de docker y docker-compose
+
+### elimina todos los contenedores que creaste
 
 ```bash
-sudo docker build -t goluti-backend .
+docker rm $(docker ps -aq)
 ```
+
+### docker-compose ambiente local - crear contenedor
+```bash
+sudo docker-compose -f docker-compose.local.yml up --build
+```
+
+### docker-compose ambiente qa - crear contenedor
+```bash
+sudo docker-compose -f docker-compose.qa.yml up --build
+```
+
+
+
 
 
 

@@ -23,6 +23,7 @@ class AuthController:
         self.auth_refresh_token_use_case = AuthRefreshTokenUseCase()
         self.auth_logout_use_case = AuthLogoutUseCase()
 
+
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     def login(self, config: Config, params: AuthLoginRequest) -> Response:
         result = self.auth_login_use_case.execute(config=config, params=params)

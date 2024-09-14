@@ -9,7 +9,7 @@ from src.core.middleware.redirect_to_docs import RedirectToDocsMiddleware
 
 app = FastAPI(
     title=settings.project_name,
-    description=settings.project_description,
+    description=f"{settings.project_description} [{settings.app_environment}]",
     version=settings.project_version,
 )
 
