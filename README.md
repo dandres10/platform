@@ -4,76 +4,78 @@ Este proyecto es una aplicación desarrollada en FastAPI que incluye validación
 
 ## Requisitos previos
 
-- Python 3.11
-- pip
+- **Python 3.11**
+- **pip**
 
 ## Configuración del entorno de desarrollo
 
-Para comenzar, necesitas crear y activar un entorno virtual para gestionar las dependencias del proyecto.
+Para comenzar, es necesario crear y activar un entorno virtual para gestionar las dependencias del proyecto.
 
-### Crear el entorno de desarrollo
-
-```bash
-python3.11 -m venv env
-```
-
-# correr el aplicativo
-
-## crear el entorno de desarrollo
+### 1. Crear el entorno de desarrollo
 
 ```bash
 python3.11 -m venv env
 ```
 
-## activar el entorno de desarrollo
+### 2. Activar el entorno de desarrollo
 
 ```bash
 source env/bin/activate
 ```
 
-## instalar las librerias
+### 3. Instalar las librerías
 
 ```bash
 pip install -r pipfiles.txt
 ```
 
-## ejecutar el proyecto en modo local(pc)
+## Ejecutar el proyecto
+
+### 1. Ejecutar en modo local (PC)
 
 ```bash
 ENV=pc uvicorn main:app --reload
 ```
 
-## ejecutar el proyecto en modo produccion
+### 2. Ejecutar en modo producción
 
 ```bash
 ENV=production uvicorn main:app --reload
 ```
 
-## ejecutar el desarrollador ia
 
-```bash
-python ia/developer-ia.py
-```
+## Comandos Docker y Docker Compose
 
-## Run docker-compose
-
-## comandos basicos de docker y docker-compose
-
-### elimina todos los contenedores que creaste
+### Eliminar todos los contenedores existentes
 
 ```bash
 docker rm $(docker ps -aq)
 ```
 
-### docker-compose ambiente local - crear contenedor
+### Docker Compose - Ambiente local
+
+- **Crear y construir contenedor**:
+
 ```bash
 sudo docker-compose -f docker-compose.local.yml up --build
 ```
 
-### docker-compose ambiente qa - crear contenedor
+- **Iniciar el contenedor sin construir**:
+
+```bash
+sudo docker-compose -f docker-compose.local.yml up
+```
+
+### Docker Compose - Ambiente QA
+
+- **Crear y construir contenedor en QA**:
+
 ```bash
 sudo docker-compose -f docker-compose.qa.yml up --build
 ```
+
+---
+
 
 
 
