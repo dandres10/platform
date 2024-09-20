@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from src.core.config import settings
 from src.core.enums.permission_type import PERMISSION_TYPE
 from src.core.models.config import Config
@@ -40,6 +40,9 @@ async def refresh_token(config: Config = Depends(get_config)) -> Response:
 @execute_transaction_route(enabled=settings.has_track)
 async def logout(config: Config = Depends(get_config)) -> Response:
     return auth_controller.logout(config=config)
+
+
+
 
 
 

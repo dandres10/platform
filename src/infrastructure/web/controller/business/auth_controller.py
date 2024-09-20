@@ -14,6 +14,8 @@ from src.domain.services.use_cases.business.auth.auth_logout_use_case import Aut
 from src.domain.services.use_cases.business.auth.auth_refresh_token_use_case import (
     AuthRefreshTokenUseCase,
 )
+import os 
+from twilio.rest import Client
 
 
 class AuthController:
@@ -69,3 +71,4 @@ class AuthController:
                 ),
             ),
         )
+    
