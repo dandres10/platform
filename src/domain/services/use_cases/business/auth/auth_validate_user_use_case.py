@@ -1,4 +1,5 @@
 from typing import List, Union
+from src.core.classes.message import Message
 from src.core.classes.password import Password
 from src.core.enums.condition_type import CONDITION_TYPE
 from src.core.enums.keys_message import KEYS_MESSAGES
@@ -22,6 +23,7 @@ class AuthValidateUserUseCase:
     ):
         self.user_list_use_case = UserListUseCase(user_repository)
         self.password = Password()
+        self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     def execute(

@@ -2,8 +2,6 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import UUID4, BaseModel, Field
 
-from src.domain.models.business.auth.auth_login_response import PermissionToken
-
 
 class AccessToken(BaseModel):
     rol_id: str = Field(...)
