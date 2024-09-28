@@ -13,7 +13,6 @@ auth_router = APIRouter(
     prefix="/auth", tags=["Auth"], responses={404: {"description": "Not found"}}
 )
 
-
 auth_controller = AuthController()
 
 
