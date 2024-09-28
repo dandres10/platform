@@ -74,6 +74,17 @@ sudo docker-compose -f docker-compose.local.yml up
 sudo docker-compose -f docker-compose.qa.yml up --build
 ```
 
+
+docker build -f Dockerfile.qa -t nombre_de_tu_imagen .
+
+subir imagen de docker a docker-hub que sea compatible con la arq de linux del servidor
+
+0. docker buildx create --use
+1. docker buildx build --platform linux/amd64 -f Dockerfile.qa -t andresleonleon/backend-platform-qa:v5 --load .
+2. docker inspect andresleonleon/backend-platform-qa:v5 
+3. docker push andresleonleon/backend-platform-qa:v4 
+
+
 ---
 
 
