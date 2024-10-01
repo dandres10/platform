@@ -4,8 +4,7 @@ phases:
   install:
     commands:
       - echo Installing dependencies...
-      - yum update -y                            
-      - yum install -y amazon-linux-extras       
+      - yum update -y                                 
       - amazon-linux-extras enable docker        
       - yum install -y docker                    
       - yum install -y git                       
