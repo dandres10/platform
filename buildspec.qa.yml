@@ -4,16 +4,19 @@ phases:
   install:
     commands:
       - echo Installing dependencies...
-      - apt-get update
-      - apt-get install -y buildx
+      - yum update -y                            
+      - yum install -y amazon-linux-extras       
+      - amazon-linux-extras enable docker        
+      - yum install -y docker                    
+      - yum install -y git                       
       - echo Logging in to Docker Hub...
-      - docker login --username andresleonleon --password '1Docker+0+0'
+      - docker login --username andresleonleon --password '1Docker+0+0'  
   pre_build:
     commands:
       - echo Build started on `date`
       - echo Setting up Docker Buildx...
-      - docker buildx create --use
-      - docker buildx inspect --bootstrap
+      - docker buildx create --use               
+      - docker buildx inspect --bootstrap        
   build:
     commands:
       - echo Building the Docker image for linux/amd64...
@@ -23,4 +26,5 @@ phases:
     commands:
       - echo Pushing the Docker image to Docker Hub...
       - docker push andresleonleon/backend-platform-qa:latest
+      - echo Build completed on `date`d-platform-qa:latest
       - echo Build completed on `date`
