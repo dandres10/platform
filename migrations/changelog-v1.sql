@@ -104,7 +104,7 @@ CREATE TABLE
 CREATE TABLE
     rol (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        company_id UUID REFERENCES company (id) NOT NULL,
+        company_id UUID REFERENCES company (id) NULL,
         name VARCHAR(255) NOT NULL,
         code VARCHAR(255) NOT NULL,
         description TEXT,
@@ -117,7 +117,7 @@ CREATE TABLE
 CREATE TABLE
     permission (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        company_id UUID REFERENCES company (id) NOT NULL,
+        company_id UUID REFERENCES company (id) NULL,
         name VARCHAR(255) NOT NULL,
         description TEXT,
         state BOOLEAN NOT NULL DEFAULT TRUE,

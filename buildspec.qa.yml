@@ -1,0 +1,26 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - echo Installing dependencies...
+      - apt-get update
+      - apt-get install -y buildx
+      - echo Logging in to Docker Hub...
+      - docker login --username andresleonleon --password '1Docker+0+0'
+  pre_build:
+    commands:
+      - echo Build started on `date`
+      - echo Setting up Docker Buildx...
+      - docker buildx create --use
+      - docker buildx inspect --bootstrap
+  build:
+    commands:
+      - echo Building the Docker image for linux/amd64...
+      - docker buildx build --platform linux/amd64 -f Dockerfile.qa -t andresleonleon/backend-platform-qa .
+      - docker tag andresleonleon/backend-platform-qa andresleonleon/backend-platform-qa:latest
+  post_build:
+    commands:
+      - echo Pushing the Docker image to Docker Hub...
+      - docker push andresleonleon/backend-platform-qa:latest
+      - echo Build completed on `date`
