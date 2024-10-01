@@ -7,7 +7,7 @@ INSERT INTO "user" (platform_id, password, email, first_name, last_name, phone, 
     updated_date)
 VALUES (
     (SELECT id FROM "platform" LIMIT 1),         
-    'admin2024',             
+    '$2b$12$.BsJdi.jmp2AivooGAn7FOEazabWXg/mP04ciMEr8MUh3J9f4jKNm',             
     'admin@klym.com',         
     'Marlon',                        
     'Leon',                         

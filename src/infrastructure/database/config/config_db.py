@@ -2,14 +2,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.core.config import settings
 
-
-
-engine = create_engine(settings.database_url, pool_size=20)
+string_db = f"postgresql://{settings.database_user}:{settings.database_password}@{settings.database_host}:5432/{settings.database_name}"
 
 session_db = sessionmaker(
     autocommit=False,
     autoflush=False,
-    bind=engine
+    bind=create_engine(string_db, pool_size=20)
 )
 
 

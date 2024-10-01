@@ -22,6 +22,10 @@ print("*" * 100)
 class Settings(BaseSettings):
     app_name: str = "Platform Management API"
     database_url: str = os.getenv("DATABASE_URL")
+    database_user: str = os.getenv("DATABASE_USER")
+    database_password: str = os.getenv("DATABASE_PASSWORD")
+    database_name: str = os.getenv("DATABASE_NAME")
+    database_host: str = os.getenv("DATABASE_HOST")
     secret_key: str = os.getenv("SECRET_KEY")
     has_debug: bool = os.getenv("HAS_DEBUG")
     has_track: bool = os.getenv("HAS_TRACK")

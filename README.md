@@ -43,6 +43,12 @@ ENV=pc uvicorn main:app --reload
 ENV=production uvicorn main:app --reload
 ```
 
+### 2. Ejecutar en modo qa
+
+```bash
+ENV=qa uvicorn main:app --reload
+```
+
 
 ## Comandos Docker y Docker Compose
 
