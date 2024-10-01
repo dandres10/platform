@@ -13,7 +13,9 @@ phases:
       - echo Build started on `date`
       - echo Setting up Docker Buildx...
       - docker buildx create --use               
-      - docker buildx inspect --bootstrap        
+      - docker buildx inspect --bootstrap
+      - echo "Seleccionando el archivo Dockerrun.aws.json para el entorno: $ENVIRONMENT"
+      - if [ "$ENVIRONMENT" == "qa" ]; then cp Dockerrun.aws.qa.json Dockerrun.aws.json; fi        
   build:
     commands:
       - echo Building the Docker image for linux/amd64...
