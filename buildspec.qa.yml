@@ -4,9 +4,7 @@ phases:
   install:
     commands:
       - echo Installing dependencies...
-      - yum update -y                                 
-      - amazon-linux-extras enable docker        
-      - yum install -y docker                    
+      - yum update -y                                                   
       - yum install -y git                       
       - echo Logging in to Docker Hub...
       - docker login --username andresleonleon --password '1Docker+0+0'  
