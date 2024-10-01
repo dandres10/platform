@@ -17,10 +17,9 @@ phases:
   build:
     commands:
       - echo Building the Docker image for linux/amd64...
-      - docker buildx build --platform linux/amd64 -f Dockerfile.qa -t andresleonleon/backend-platform-qa:latest .
+      - docker buildx build --platform linux/amd64 --load -f Dockerfile.qa -t andresleonleon/backend-platform-qa:latest .
   post_build:
     commands:
       - echo Pushing the Docker image to Docker Hub...
       - docker push andresleonleon/backend-platform-qa:latest
-      - echo Build completed on `date`d-platform-qa:latest
-      - echo Build completed on `date`
+      - echo Build and push completed on `date`
