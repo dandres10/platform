@@ -1,7 +1,7 @@
 -- liquibase formatted sql
 -- changeset Marlon-Leon:1704821121381-1 create_base_tables
 
-
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE
     language (
@@ -14,7 +14,7 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
-alter table language  owner to risk_automation;
+
  
 CREATE TABLE
     currency (
@@ -27,7 +27,7 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
-alter table currency  owner to risk_automation;
+
  
 CREATE TABLE
     country (
@@ -40,7 +40,7 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
-alter table country  owner to risk_automation;
+
  
 CREATE TABLE
     company (
@@ -54,7 +54,7 @@ CREATE TABLE
     );
 
 
-alter table company  owner to risk_automation;
+
  
 CREATE TABLE
     location (
@@ -72,7 +72,7 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
-alter table location  owner to risk_automation;
+
  
 CREATE TABLE
     currency_location (
@@ -85,7 +85,7 @@ CREATE TABLE
         UNIQUE (currency_id, location_id)
     );
 
-alter table currency_location  owner to risk_automation;
+
  
 CREATE TABLE
     platform (
@@ -99,7 +99,7 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
-alter table platform  owner to risk_automation;
+
  
 CREATE TABLE
     menu (
@@ -116,7 +116,7 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
-alter table menu  owner to risk_automation;
+
  
 CREATE TABLE
     rol (
@@ -131,7 +131,7 @@ CREATE TABLE
         UNIQUE (company_id, code)
     );
 
-alter table rol  owner to risk_automation;
+
  
 CREATE TABLE
     permission (
@@ -144,7 +144,7 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
-alter table permission  owner to risk_automation;
+
  
 CREATE TABLE
     rol_permission (
@@ -157,7 +157,7 @@ CREATE TABLE
         UNIQUE (rol_id, permission_id)
     );
  
-alter table rol_permission  owner to risk_automation;
+
  
 CREATE TABLE
     menu_permission (
@@ -170,7 +170,7 @@ CREATE TABLE
         UNIQUE (menu_id, permission_id)
     );
 
-alter table menu_permission  owner to risk_automation;
+
  
 CREATE TABLE
     "user" (
@@ -187,7 +187,7 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
-alter table "user"  owner to risk_automation;
+
  
 CREATE TABLE
     user_location_rol (
@@ -201,7 +201,7 @@ CREATE TABLE
         UNIQUE (user_id, location_id, rol_id)
     );
 
-alter table user_location_rol  owner to risk_automation;
+
  
 CREATE TABLE
     translation (
@@ -216,7 +216,7 @@ CREATE TABLE
         UNIQUE (key, language_code, context)
     );
 
-alter table translation  owner to risk_automation;
+
 
  
 
