@@ -1,27 +1,35 @@
---RUN 
---NAME=Marlon Andres Leon Leon
---DESCRIPTION=Crea un permiso para la empresa creada
-INSERT INTO menu_permission (
-    id, 
-    menu_id, 
-    permission_id, 
-    state, 
-    created_date, 
-    updated_date
+-- liquibase formatted sql
+-- changeset Marlon-Leon:1704821121381-15 insert data menu table
+
+WITH generated_uuid AS (
+  SELECT uuid_generate_v4() AS id
+)
+INSERT INTO menu (
+  id,
+  company_id,
+  label,
+  name,
+  description,
+  top_id,
+  route,
+  state,
+  icon,
+  created_date,
+  updated_date
 )
 VALUES (
-    uuid_generate_v4(), 
-    'a1adc7de-3f83-43f4-863d-a689f5e544f5',  -- menu_id
-    '83358927-d5b7-4e3b-8e69-364d00374af6',  -- permission_id
-    TRUE, 
-    NOW(), 
-    NOW()
+  (SELECT id FROM generated_uuid),    
+  (SELECT id FROM "company" LIMIT 1), 
+  'Encuentra todo acá',               
+  'Home',                             
+  'Home for the application',         
+  (SELECT id FROM generated_uuid),    
+  '/home',                            
+  TRUE,                               
+  'home-icon',                        
+  NOW(),                              
+  NOW()                               
 );
 
---FIN RUN
---ROLLBACK
-DELETE FROM menu_permission
-WHERE menu_id = 'a1adc7de-3f83-43f4-863d-a689f5e544f5'
-  AND permission_id = '83358927-d5b7-4e3b-8e69-364d00374af6';
+--ROLLBACK DELETE FROM menu;
 
---FIN ROLLBACK

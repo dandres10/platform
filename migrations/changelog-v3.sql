@@ -1,4 +1,5 @@
---RUN
+-- liquibase formatted sql
+-- changeset Marlon-Leon:1704821121381-3 insert data translation table
 
 INSERT INTO "translation" (id, "key", language_code, "translation", context, state, created_date, updated_date) values 
 
@@ -28,22 +29,10 @@ INSERT INTO "translation" (id, "key", language_code, "translation", context, sta
 
 (uuid_generate_v4(), 'core_update_failed', 'es', 'no se pudo realizar la actualización', 'backend', true, now(), now()),
 (uuid_generate_v4(), 'core_update_failed', 'en', 'the update could not be completed', 'backend', true, now(), now());
---FIN RUN
-
---ROLLBACK
 
 
-DELETE FROM "translation"
-WHERE "key" IN (
-    'core_query_made',
-    'core_saved_information',
-    'core_updated_information',
-    'core_deletion_performed',
-    'core_record_not_found_to_delete',
-    'core_no_results_found',
-    'core_record_not_found',
-    'core_error_saving_record',
-    'core_update_failed'
-);
 
---FIN ROLLBACK
+
+
+--ROLLBACK DELETE FROM "translation";
+

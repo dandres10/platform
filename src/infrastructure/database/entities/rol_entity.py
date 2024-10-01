@@ -7,7 +7,7 @@ class RolEntity(Base):
     __tablename__ = 'rol'
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, server_default=text('uuid_generate_v4()'))
-    company_id = Column(UUID(as_uuid=True), nullable=False)
+    company_id = Column(UUID(as_uuid=True), nullable=True)
     name = Column(String(255), nullable=False)
     code = Column(String(255), nullable=False, unique=True)
     description = Column(Text, nullable=True)

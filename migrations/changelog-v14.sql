@@ -1,41 +1,26 @@
---RUN 
---NAME=Marlon Andres Leon Leon
---DESCRIPTION=Crea un permiso para la empresa creada
+-- liquibase formatted sql
+-- changeset Marlon-Leon:1704821121381-14 insert data user_location_rol table
+
 INSERT INTO
-  menu (
+  user_location_rol (
     id,
-    company_id,
-    label,
-    name,
-    description,
-    top_id,
-    route,
+    user_id,
+    rol_id,
+    location_id,
     state,
-    icon,
     created_date,
     updated_date
   )
 VALUES
   (
     uuid_generate_v4 (),
-    '83950f65-ae93-4214-b5b1-8ccd479180b3', -- company_id
-    'Encuentra todo aca',
-    'Home', -- name
-    'Home for the application', -- description
-    NULL, -- top_id
-    '/home', -- route
-    TRUE, -- state
-    'home-icon', -- icon
-    NOW (), -- created_date
-    NOW () -- updated_date
+    (SELECT id FROM "user" LIMIT 1), 
+    (SELECT id FROM "rol" LIMIT 1), 
+    (SELECT id FROM "location" LIMIT 1), 
+    TRUE,
+    NOW (),
+    NOW ()
   );
 
---FIN RUN
---ROLLBACK
-DELETE FROM menu
-WHERE
-  company_id = '83950f65-ae93-4214-b5b1-8ccd479180b3'
-  AND name = 'Home'
-  AND route = '/home';
 
---FIN ROLLBACK
+--ROLLBACK DELETE FROM user_location_rol;
