@@ -42,7 +42,7 @@ async def logout(config: Config = Depends(get_config)) -> Response:
     return auth_controller.logout(config=config)
 
 
-@auth_router.get("/obtener_servicios", response_model=List[dict])
+@auth_router.post("/obtener_servicios", response_model=List[dict])
 async def obtener_servicios():
     servicios = [
         {"nombre": "Limpieza Dental", "descripcion": "Limpieza profesional de los dientes", "precio": 150000},
