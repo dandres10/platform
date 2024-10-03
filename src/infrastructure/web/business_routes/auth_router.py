@@ -55,7 +55,7 @@ async def obtener_servicios():
 
 
 
-@auth_router.post("/validar_disponiblidad", response_model=List[dict])
+@auth_router.post("/validar_disponiblidad", response_model=str)
 async def validar_disponiblidad():
     has_space_calendar = False
 
