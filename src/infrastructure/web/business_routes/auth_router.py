@@ -1,4 +1,4 @@
-from typing import List
+
 from fastapi import APIRouter, Depends, Request, status
 from src.core.config import settings
 from src.core.enums.permission_type import PERMISSION_TYPE
@@ -42,16 +42,7 @@ async def logout(config: Config = Depends(get_config)) -> Response:
     return auth_controller.logout(config=config)
 
 
-@auth_router.post("/obtener_servicios", response_model=List[dict])
-async def obtener_servicios():
-    servicios = [
-        {"nombre": "Limpieza Dental", "descripcion": "Limpieza profesional de los dientes", "precio": 150000},
-        {"nombre": "Ortodoncia", "descripcion": "Alineación de los dientes con brackets", "precio": 5000000},
-        {"nombre": "Blanqueamiento Dental", "descripcion": "Blanqueamiento para mejorar la estética", "precio": 300000},
-        {"nombre": "Extracción Dental", "descripcion": "Extracción de muelas o dientes", "precio": 200000},
-        {"nombre": "Implante Dental", "descripcion": "Reemplazo de un diente perdido con un implante", "precio": 4500000},
-    ]
-    return servicios
+
 
 
 
