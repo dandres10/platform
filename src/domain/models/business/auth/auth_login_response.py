@@ -12,7 +12,7 @@ class UserLoginResponse(BaseModel):
     state: bool = Field(...)
 
 
-class CurrecyLoginResponse(BaseModel):
+class CurrencyLoginResponse(BaseModel):
     id: UUID4 = Field(...)
     name: str = Field(..., max_length=255)
     code: str = Field(..., max_length=10)
@@ -95,7 +95,7 @@ class MenuLoginResponse(BaseModel):
 
 class PlatformConfiguration(BaseModel):
     user: UserLoginResponse = Field(...)
-    currecy: CurrecyLoginResponse = Field(...)
+    currency: CurrencyLoginResponse = Field(...)
     location: LocationLoginResponse = Field(...)
     language: LanguageLoginResponse = Field(...)
     platform: PlatformLoginResponse = Field(...)
@@ -107,7 +107,7 @@ class PlatformConfiguration(BaseModel):
 
 
 class PlatformVariations(BaseModel):
-    currencies: List[CurrecyLoginResponse] = Field(...)
+    currencies: List[CurrencyLoginResponse] = Field(...)
     locations: List[LocationLoginResponse] = Field(...)
     languages: List[LanguageLoginResponse] = Field(...)
 

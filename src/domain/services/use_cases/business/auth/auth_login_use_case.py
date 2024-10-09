@@ -190,7 +190,7 @@ class AuthLoginUseCase:
         result = AuthLoginResponse(
             platform_configuration=PlatformConfiguration(
                 user=map_to_user_login_response(user_entity=user_entity),
-                currecy=map_to_currecy_login_response(currency_entity=currency_entity),
+                currency=map_to_currecy_login_response(currency_entity=currency_entity),
                 location=map_to_location_login_response(
                     location_entity=location_entity
                 ),
