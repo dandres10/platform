@@ -2,7 +2,7 @@ from typing import List
 from src.domain.models.business.auth.auth_login_response import (
     CompanyLoginResponse,
     CountryLoginResponse,
-    CurrecyLoginResponse,
+    CurrencyLoginResponse,
     LanguageLoginResponse,
     LocationLoginResponse,
     MenuLoginResponse,
@@ -41,8 +41,8 @@ def map_to_user_login_response(user_entity: UserEntity) -> UserLoginResponse:
 
 def map_to_currecy_login_response(
     currency_entity: CurrencyEntity,
-) -> CurrecyLoginResponse:
-    return CurrecyLoginResponse(
+) -> CurrencyLoginResponse:
+    return CurrencyLoginResponse(
         id=currency_entity.id,
         name=currency_entity.name,
         code=currency_entity.code,
