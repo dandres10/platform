@@ -54,12 +54,12 @@ async def obtener_servicios(token: str = Query(...)):
         {
             "nombre": "Limpieza Dental",
             "descripcion": "Limpieza profesional de los dientes",
-            "precio": 150000,
+            "precio": 15000,
         },
         {
             "nombre": "Ortodoncia",
             "descripcion": "Alineación de los dientes con brackets",
-            "precio": 5000000,
+            "precio": 500000,
         },
         {
             "nombre": "Blanqueamiento Dental",
