@@ -7,10 +7,10 @@ from src.core.models.config import Config
 from src.core.models.filter import Pagination
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.auth_currencies_by_location import (
+from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
-from src.domain.models.business.auth.auth_login_response import CurrencyLoginResponse
+from src.domain.models.business.auth.login.auth_login_response import CurrencyLoginResponse
 from src.domain.services.use_cases.entities.currency.currency_list_use_case import (
     CurrencyListUseCase,
 )
@@ -19,7 +19,7 @@ from src.infrastructure.database.mappers.currency_mapper import map_to_list_curr
 from src.infrastructure.database.repositories.business.auth_repository import (
     AuthRepository,
 )
-from src.infrastructure.database.repositories.business.mappers.auth_mapper import (
+from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_currecy_login_response,
 )
 

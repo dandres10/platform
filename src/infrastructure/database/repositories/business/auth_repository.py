@@ -3,16 +3,16 @@ from src.core.config import settings
 from src.core.enums.layer import LAYER
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.auth_currencies_by_location import (
+from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
-from src.domain.models.business.auth.auth_initial_user_data import AuthInitialUserData
-from src.domain.models.business.auth.auth_locations import AuthLocations
-from src.domain.models.business.auth.auth_login_request import AuthLoginRequest
-from src.domain.models.business.auth.auth_user_role_and_permissions import (
+from src.domain.models.business.auth.login.auth_initial_user_data import AuthInitialUserData
+from src.domain.models.business.auth.login.auth_locations import AuthLocations
+from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
+from src.domain.models.business.auth.login.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
 )
-from src.domain.models.business.auth.menu import Menu
+from src.domain.models.business.auth.login.menu import Menu
 from src.domain.services.repositories.business.i_auth_repository import IAuthRepository
 from src.infrastructure.database.entities.company_entity import CompanyEntity
 from src.infrastructure.database.entities.country_entity import CountryEntity

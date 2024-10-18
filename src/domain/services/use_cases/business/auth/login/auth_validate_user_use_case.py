@@ -9,7 +9,7 @@ from src.core.models.config import Config
 from src.core.models.filter import FilterManager, Pagination
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.auth_login_request import AuthLoginRequest
+from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
 from src.domain.services.use_cases.entities.user.user_list_use_case import UserListUseCase
 from src.core.config import settings
 from src.infrastructure.database.repositories.entities.user_repository import UserRepository

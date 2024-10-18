@@ -5,49 +5,49 @@ from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.access_token import AccessToken
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.auth_currencies_by_location import (
+from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
-from src.domain.models.business.auth.auth_initial_user_data import AuthInitialUserData
-from src.domain.models.business.auth.auth_locations import AuthLocations
-from src.domain.models.business.auth.auth_login_response import (
+from src.domain.models.business.auth.login.auth_initial_user_data import AuthInitialUserData
+from src.domain.models.business.auth.login.auth_locations import AuthLocations
+from src.domain.models.business.auth.login.auth_login_response import (
     PlatformConfiguration,
     PlatformVariations,
 )
-from src.domain.models.business.auth.auth_user_role_and_permissions import (
+from src.domain.models.business.auth.login.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
 )
-from src.domain.models.business.auth.index import (
+from src.domain.models.business.auth.login.index import (
     AuthLoginRequest,
     AuthLoginResponse,
     AuthMenu,
 )
 from src.domain.models.entities.user.user_update import UserUpdate
-from src.domain.services.use_cases.business.auth.auth_currencies_use_case import (
+from src.domain.services.use_cases.business.auth.login.auth_currencies_use_case import (
     AuthCurrenciesUseCase,
 )
-from src.domain.services.use_cases.business.auth.auth_initial_user_data_use_case import (
+from src.domain.services.use_cases.business.auth.login.auth_initial_user_data_use_case import (
     AuthInitialUserDataUseCase,
 )
-from src.domain.services.use_cases.business.auth.auth_languages_use_case import (
+from src.domain.services.use_cases.business.auth.login.auth_languages_use_case import (
     AuthLanguagesUseCase,
 )
-from src.domain.services.use_cases.business.auth.auth_locations_use_case import (
+from src.domain.services.use_cases.business.auth.login.auth_locations_use_case import (
     AuthLocationsUseCase,
 )
-from src.domain.services.use_cases.business.auth.auth_menu_use_case import (
+from src.domain.services.use_cases.business.auth.login.auth_menu_use_case import (
     AuthMenuUseCase,
 )
-from src.domain.services.use_cases.business.auth.auth_user_role_and_permissions import (
+from src.domain.services.use_cases.business.auth.login.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissionsUseCase,
 )
-from src.domain.services.use_cases.business.auth.auth_validate_user_use_case import (
+from src.domain.services.use_cases.business.auth.login.auth_validate_user_use_case import (
     AuthValidateUserUseCase,
 )
 from src.domain.services.use_cases.entities.user.user_update_use_case import (
     UserUpdateUseCase,
 )
-from src.infrastructure.database.repositories.business.mappers.auth_mapper import (
+from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_company_login_response,
     map_to_country_login_response,
     map_to_currecy_login_response,

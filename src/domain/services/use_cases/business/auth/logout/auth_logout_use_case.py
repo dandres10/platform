@@ -5,7 +5,7 @@ from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
 
-from src.domain.models.business.auth.auth_logout_response import AuthLogoutResponse
+from src.domain.models.business.auth.logout.auth_logout_response import AuthLogoutResponse
 from src.domain.models.entities.user.user_read import UserRead
 from src.domain.models.entities.user.user_update import UserUpdate
 
@@ -16,7 +16,7 @@ from src.domain.services.use_cases.entities.user.user_update_use_case import (
     UserUpdateUseCase,
 )
 from src.core.config import settings
-from src.infrastructure.database.repositories.business.mappers.auth_mapper import (
+from src.infrastructure.database.repositories.business.mappers.auth.login import (
     map_to_user_read,
 )
 from src.infrastructure.database.repositories.entities.user_repository import (

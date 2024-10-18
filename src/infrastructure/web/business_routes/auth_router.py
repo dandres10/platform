@@ -6,7 +6,7 @@ from src.core.models.config import Config
 from src.core.models.response import Response
 from src.core.wrappers.check_permissions import check_permissions
 from src.core.wrappers.execute_transaction import execute_transaction_route
-from src.domain.models.business.auth.auth_login_request import AuthLoginRequest
+from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
 from src.infrastructure.web.controller.business.auth_controller import AuthController
 from src.core.methods.get_config import get_config, get_config_login
 

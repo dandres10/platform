@@ -6,12 +6,12 @@ from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.models.message import MessageCoreEntity
 from src.core.models.response import Response
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.index import AuthLoginRequest
-from src.domain.services.use_cases.business.auth.auth_login_use_case import (
+from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
+from src.domain.services.use_cases.business.auth.login.auth_login_use_case import (
     AuthLoginUseCase,
 )
-from src.domain.services.use_cases.business.auth.auth_logout_use_case import AuthLogoutUseCase
-from src.domain.services.use_cases.business.auth.auth_refresh_token_use_case import (
+from src.domain.services.use_cases.business.auth.login.auth_logout_use_case import AuthLogoutUseCase
+from src.domain.services.use_cases.business.auth.login.auth_refresh_token_use_case import (
     AuthRefreshTokenUseCase,
 )
 
