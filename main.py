@@ -20,5 +20,5 @@ if settings.app_environment == "production":
     
 app.add_middleware(RedirectToDocsMiddleware)
 CorsAppConfigurator.setup_cors(app)
-Route.set_routes(app)
 RouteBusiness.set_routes(app)
+Route.set_routes(app)
