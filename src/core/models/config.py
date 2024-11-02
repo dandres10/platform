@@ -7,6 +7,7 @@ from src.core.models.access_token import AccessToken
 
 class Config(BaseModel):
     db: Optional[Any] = None
+    async_db: Optional[Any] = None
     language: Optional[str] = None
     request: Optional[Any] = None
     response_type: RESPONSE_TYPE = Field(default=RESPONSE_TYPE.DICT.value)

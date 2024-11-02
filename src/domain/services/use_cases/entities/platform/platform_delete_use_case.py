@@ -9,7 +9,7 @@ from src.domain.models.entities.platform.index import PlatformDelete, Platform
 from src.domain.services.repositories.entities.i_platform_repository import (
     IPlatformRepository,
 )
-from src.core.classes.message import Message
+from src.core.classes.async_message import Message
 from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.models.message import MessageCoreEntity
 
@@ -19,14 +19,14 @@ class PlatformDeleteUseCase:
         self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)    
-    def execute(
+    async def execute(
         self,
         config: Config,
         params: PlatformDelete,
     ) -> Union[Platform, str, None]:
-        result = self.platform_repository.delete(config=config, params=params)
+        result = await self.platform_repository.delete(config=config, params=params)
         if not result:
-            return self.message.get_message(
+            return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value
