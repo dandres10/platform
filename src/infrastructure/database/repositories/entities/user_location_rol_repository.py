@@ -1,11 +1,13 @@
 
-from typing import List, Union
 from pydantic import UUID4
+from datetime import datetime
+from typing import List, Union
 from src.core.config import settings
+from sqlalchemy.future import select
 from src.core.enums.layer import LAYER
-from src.core.methods.get_filter import get_filter
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
+from src.core.methods.get_filter import get_filter
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.entities.user_location_rol.index import (
     UserLocationRol,
@@ -26,87 +28,83 @@ from src.infrastructure.database.mappers.user_location_rol_mapper import (
 class UserLocationRolRepository(IUserLocationRolRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def save(self, config: Config, params: UserLocationRolEntity) -> Union[UserLocationRol, None]:
-        db = config.db
-        db.add(params)
-        db.commit()
-        db.refresh(params)
-        return map_to_user_location_rol(params)
+    async def save(self, config: Config, params: UserLocationRolEntity) -> Union[UserLocationRol, None]:
+        async with config.async_db as db:
+            db.add(params)
+            await db.commit()
+            await db.refresh(params)
+            return map_to_user_location_rol(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def update(self, config: Config, params: UserLocationRolUpdate) -> Union[UserLocationRol, None]:
-        db = config.db
+    async def update(self, config: Config, params: UserLocationRolUpdate) -> Union[UserLocationRol, None]:
+        async with config.async_db as db:
+            stmt = select(UserLocationRolEntity).filter(UserLocationRolEntity.id == params.id)
+            stmt.updated_date = datetime.now()
+            result = await db.execute(stmt)
+            user_location_rol = result.scalars().first()
 
-        user_location_rol: UserLocationRolEntity = (
-            db.query(UserLocationRolEntity).filter(UserLocationRolEntity.id == params.id).first()
-        )
+            if not user_location_rol:
+                return None
 
-        if not user_location_rol:
-            return None
+            update_data = params.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(user_location_rol, key, value)
 
-        update_data = params.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(user_location_rol, key, value)
-
-        db.commit()
-        db.refresh(user_location_rol)
-        return map_to_user_location_rol(user_location_rol)
+            await db.commit()
+            await db.refresh(user_location_rol)
+            return map_to_user_location_rol(user_location_rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def list(self, config: Config, params: Pagination) -> Union[List[UserLocationRol], None]:
-        db = config.db
-        query = db.query(UserLocationRolEntity)
+    async def list(self, config: Config, params: Pagination) -> Union[List[UserLocationRol], None]:
+        async with config.async_db as db:
+            stmt = select(UserLocationRolEntity)
 
-        if params.all_data:
             if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=UserLocationRolEntity
+                stmt = get_filter(
+                    query=stmt, filters=params.filters, entity=UserLocationRolEntity
                 )
-                user_location_rols = query.all()
-            else:
-                user_location_rols = query.all()
-        else:
-            if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=UserLocationRolEntity
-                )
-                user_location_rols = query.offset(params.skip).limit(params.limit).all()
 
-        if not user_location_rols:
-            return None
-        return map_to_list_user_location_rol(user_location_rols)
+            if not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            user_location_rols = result.scalars().all()
+
+            if not user_location_rols:
+                return None
+            return map_to_list_user_location_rol(user_location_rols)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def delete(
+    async def delete(
         self,
         config: Config,
         params: UserLocationRolDelete,
     ) -> Union[UserLocationRol, None]:
-        db = config.db
-        user_location_rol: UserLocationRolEntity = (
-            db.query(UserLocationRolEntity).filter(UserLocationRolEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(UserLocationRolEntity).filter(UserLocationRolEntity.id == params.id)
+            result = await db.execute(stmt)
+            user_location_rol = result.scalars().first()
 
-        if not user_location_rol:
-            return None
+            if not user_location_rol:
+                return None
 
-        db.delete(user_location_rol)
-        db.commit()
-        return map_to_user_location_rol(user_location_rol)
+            await db.delete(user_location_rol)
+            await db.commit()
+            return map_to_user_location_rol(user_location_rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def read(
+    async def read(
         self,
         config: Config,
         params: UserLocationRolRead,
     ) -> Union[UserLocationRol, None]:
-        db = config.db
-        user_location_rol: UserLocationRolEntity = (
-            db.query(UserLocationRolEntity).filter(UserLocationRolEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(UserLocationRolEntity).filter(UserLocationRolEntity.id == params.id)
+            result = await db.execute(stmt)
+            user_location_rol = result.scalars().first()
 
-        if not user_location_rol:
-            return None
+            if not user_location_rol:
+                return None
 
-        return map_to_user_location_rol(user_location_rol)
+            return map_to_user_location_rol(user_location_rol)
         

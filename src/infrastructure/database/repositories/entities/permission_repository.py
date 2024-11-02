@@ -1,11 +1,13 @@
 
-from typing import List, Union
 from pydantic import UUID4
+from datetime import datetime
+from typing import List, Union
 from src.core.config import settings
+from sqlalchemy.future import select
 from src.core.enums.layer import LAYER
-from src.core.methods.get_filter import get_filter
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
+from src.core.methods.get_filter import get_filter
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.entities.permission.index import (
     Permission,
@@ -26,87 +28,83 @@ from src.infrastructure.database.mappers.permission_mapper import (
 class PermissionRepository(IPermissionRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def save(self, config: Config, params: PermissionEntity) -> Union[Permission, None]:
-        db = config.db
-        db.add(params)
-        db.commit()
-        db.refresh(params)
-        return map_to_permission(params)
+    async def save(self, config: Config, params: PermissionEntity) -> Union[Permission, None]:
+        async with config.async_db as db:
+            db.add(params)
+            await db.commit()
+            await db.refresh(params)
+            return map_to_permission(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def update(self, config: Config, params: PermissionUpdate) -> Union[Permission, None]:
-        db = config.db
+    async def update(self, config: Config, params: PermissionUpdate) -> Union[Permission, None]:
+        async with config.async_db as db:
+            stmt = select(PermissionEntity).filter(PermissionEntity.id == params.id)
+            stmt.updated_date = datetime.now()
+            result = await db.execute(stmt)
+            permission = result.scalars().first()
 
-        permission: PermissionEntity = (
-            db.query(PermissionEntity).filter(PermissionEntity.id == params.id).first()
-        )
+            if not permission:
+                return None
 
-        if not permission:
-            return None
+            update_data = params.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(permission, key, value)
 
-        update_data = params.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(permission, key, value)
-
-        db.commit()
-        db.refresh(permission)
-        return map_to_permission(permission)
+            await db.commit()
+            await db.refresh(permission)
+            return map_to_permission(permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def list(self, config: Config, params: Pagination) -> Union[List[Permission], None]:
-        db = config.db
-        query = db.query(PermissionEntity)
+    async def list(self, config: Config, params: Pagination) -> Union[List[Permission], None]:
+        async with config.async_db as db:
+            stmt = select(PermissionEntity)
 
-        if params.all_data:
             if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=PermissionEntity
+                stmt = get_filter(
+                    query=stmt, filters=params.filters, entity=PermissionEntity
                 )
-                permissions = query.all()
-            else:
-                permissions = query.all()
-        else:
-            if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=PermissionEntity
-                )
-                permissions = query.offset(params.skip).limit(params.limit).all()
 
-        if not permissions:
-            return None
-        return map_to_list_permission(permissions)
+            if not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            permissions = result.scalars().all()
+
+            if not permissions:
+                return None
+            return map_to_list_permission(permissions)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def delete(
+    async def delete(
         self,
         config: Config,
         params: PermissionDelete,
     ) -> Union[Permission, None]:
-        db = config.db
-        permission: PermissionEntity = (
-            db.query(PermissionEntity).filter(PermissionEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(PermissionEntity).filter(PermissionEntity.id == params.id)
+            result = await db.execute(stmt)
+            permission = result.scalars().first()
 
-        if not permission:
-            return None
+            if not permission:
+                return None
 
-        db.delete(permission)
-        db.commit()
-        return map_to_permission(permission)
+            await db.delete(permission)
+            await db.commit()
+            return map_to_permission(permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def read(
+    async def read(
         self,
         config: Config,
         params: PermissionRead,
     ) -> Union[Permission, None]:
-        db = config.db
-        permission: PermissionEntity = (
-            db.query(PermissionEntity).filter(PermissionEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(PermissionEntity).filter(PermissionEntity.id == params.id)
+            result = await db.execute(stmt)
+            permission = result.scalars().first()
 
-        if not permission:
-            return None
+            if not permission:
+                return None
 
-        return map_to_permission(permission)
+            return map_to_permission(permission)
         

@@ -1,6 +1,6 @@
 from sqlalchemy.sql import func
 from src.core.models.base import Base
-from sqlalchemy import Column, String, Boolean, DateTime, text, Text, Integer, Float
+from sqlalchemy import Column, String, Boolean, DateTime, text, Text, Integer, Float, Time
 from sqlalchemy.dialects.postgresql import UUID
 
 class LocationEntity(Base):

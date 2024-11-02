@@ -1,11 +1,13 @@
 
-from typing import List, Union
 from pydantic import UUID4
+from datetime import datetime
+from typing import List, Union
 from src.core.config import settings
+from sqlalchemy.future import select
 from src.core.enums.layer import LAYER
-from src.core.methods.get_filter import get_filter
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
+from src.core.methods.get_filter import get_filter
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.entities.menu_permission.index import (
     MenuPermission,
@@ -26,87 +28,83 @@ from src.infrastructure.database.mappers.menu_permission_mapper import (
 class MenuPermissionRepository(IMenuPermissionRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def save(self, config: Config, params: MenuPermissionEntity) -> Union[MenuPermission, None]:
-        db = config.db
-        db.add(params)
-        db.commit()
-        db.refresh(params)
-        return map_to_menu_permission(params)
+    async def save(self, config: Config, params: MenuPermissionEntity) -> Union[MenuPermission, None]:
+        async with config.async_db as db:
+            db.add(params)
+            await db.commit()
+            await db.refresh(params)
+            return map_to_menu_permission(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def update(self, config: Config, params: MenuPermissionUpdate) -> Union[MenuPermission, None]:
-        db = config.db
+    async def update(self, config: Config, params: MenuPermissionUpdate) -> Union[MenuPermission, None]:
+        async with config.async_db as db:
+            stmt = select(MenuPermissionEntity).filter(MenuPermissionEntity.id == params.id)
+            stmt.updated_date = datetime.now()
+            result = await db.execute(stmt)
+            menu_permission = result.scalars().first()
 
-        menu_permission: MenuPermissionEntity = (
-            db.query(MenuPermissionEntity).filter(MenuPermissionEntity.id == params.id).first()
-        )
+            if not menu_permission:
+                return None
 
-        if not menu_permission:
-            return None
+            update_data = params.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(menu_permission, key, value)
 
-        update_data = params.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(menu_permission, key, value)
-
-        db.commit()
-        db.refresh(menu_permission)
-        return map_to_menu_permission(menu_permission)
+            await db.commit()
+            await db.refresh(menu_permission)
+            return map_to_menu_permission(menu_permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def list(self, config: Config, params: Pagination) -> Union[List[MenuPermission], None]:
-        db = config.db
-        query = db.query(MenuPermissionEntity)
+    async def list(self, config: Config, params: Pagination) -> Union[List[MenuPermission], None]:
+        async with config.async_db as db:
+            stmt = select(MenuPermissionEntity)
 
-        if params.all_data:
             if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=MenuPermissionEntity
+                stmt = get_filter(
+                    query=stmt, filters=params.filters, entity=MenuPermissionEntity
                 )
-                menu_permissions = query.all()
-            else:
-                menu_permissions = query.all()
-        else:
-            if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=MenuPermissionEntity
-                )
-                menu_permissions = query.offset(params.skip).limit(params.limit).all()
 
-        if not menu_permissions:
-            return None
-        return map_to_list_menu_permission(menu_permissions)
+            if not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            menu_permissions = result.scalars().all()
+
+            if not menu_permissions:
+                return None
+            return map_to_list_menu_permission(menu_permissions)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def delete(
+    async def delete(
         self,
         config: Config,
         params: MenuPermissionDelete,
     ) -> Union[MenuPermission, None]:
-        db = config.db
-        menu_permission: MenuPermissionEntity = (
-            db.query(MenuPermissionEntity).filter(MenuPermissionEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(MenuPermissionEntity).filter(MenuPermissionEntity.id == params.id)
+            result = await db.execute(stmt)
+            menu_permission = result.scalars().first()
 
-        if not menu_permission:
-            return None
+            if not menu_permission:
+                return None
 
-        db.delete(menu_permission)
-        db.commit()
-        return map_to_menu_permission(menu_permission)
+            await db.delete(menu_permission)
+            await db.commit()
+            return map_to_menu_permission(menu_permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def read(
+    async def read(
         self,
         config: Config,
         params: MenuPermissionRead,
     ) -> Union[MenuPermission, None]:
-        db = config.db
-        menu_permission: MenuPermissionEntity = (
-            db.query(MenuPermissionEntity).filter(MenuPermissionEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(MenuPermissionEntity).filter(MenuPermissionEntity.id == params.id)
+            result = await db.execute(stmt)
+            menu_permission = result.scalars().first()
 
-        if not menu_permission:
-            return None
+            if not menu_permission:
+                return None
 
-        return map_to_menu_permission(menu_permission)
+            return map_to_menu_permission(menu_permission)
         

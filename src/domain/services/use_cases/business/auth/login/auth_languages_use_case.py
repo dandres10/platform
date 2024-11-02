@@ -7,15 +7,15 @@ from src.core.models.config import Config
 from src.core.models.filter import Pagination
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.auth_locations import AuthLocations
-from src.domain.models.business.auth.auth_login_response import (
+from src.core.classes.async_message import Message
+from src.domain.models.business.auth.login.auth_login_response import (
     LocationLoginResponse,
 )
 from src.core.config import settings
 from src.domain.services.use_cases.entities.language.language_list_use_case import (
     LanguageListUseCase,
 )
-from src.infrastructure.database.repositories.business.mappers.auth_mapper import (
+from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_language_base_response,
 )
 from src.infrastructure.database.repositories.entities.language_repository import (
@@ -32,20 +32,21 @@ class AuthLanguagesUseCase:
         self.language_list_use_case = LanguageListUseCase(
             language_repository=language_repository
         )
+        self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
-    def execute(self, config: Config) -> Union[
+    async def execute(self, config: Config) -> Union[
         List[LocationLoginResponse],
         str,
     ]:
 
-        results = self.language_list_use_case.execute(
+        results = await self.language_list_use_case.execute(
             config=config, params=Pagination(all_data=True)
         )
 
         if not results:
             print("no se encontraron idiomas")
-            return self.message.get_message(
+            return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value

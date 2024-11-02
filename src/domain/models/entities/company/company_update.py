@@ -5,6 +5,6 @@ from datetime import datetime
 class CompanyUpdate(BaseModel):
     id: UUID4 = Field(...)
     name: str = Field(..., max_length=255)
-    inactivity_time: str = Field(default=None)
+    inactivity_time: int = Field(default=20)
     nit: str = Field(..., max_length=255)
     state: bool = Field(default=True)

@@ -6,17 +6,21 @@ from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.config import Config
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.auth_locations import AuthLocations
-from src.domain.models.business.auth.auth_login_response import CurrencyLoginResponse, LocationLoginResponse
+from src.domain.models.business.auth.login.auth_locations import AuthLocations
+from src.domain.models.business.auth.login.auth_login_response import (
+    CurrencyLoginResponse,
+    LocationLoginResponse,
+)
 from src.core.config import settings
 from src.infrastructure.database.mappers.currency_mapper import map_to_list_currency
 from src.infrastructure.database.repositories.business.auth_repository import (
     AuthRepository,
 )
-from src.infrastructure.database.repositories.business.mappers.auth_mapper import (
+from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_currecy_login_response,
     map_to_location_login_response,
 )
+from src.core.classes.async_message import Message
 
 
 class AuthLocationsUseCase:
@@ -24,22 +28,23 @@ class AuthLocationsUseCase:
         self,
     ):
         self.auth_repository = AuthRepository()
+        self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
-    def execute(self, config: Config, params: AuthLocations) -> Union[
+    async def execute(self, config: Config, params: AuthLocations) -> Union[
         List[LocationLoginResponse],
         str,
     ]:
         config.response_type = RESPONSE_TYPE.OBJECT
         locations: List[LocationLoginResponse] = []
 
-        results = self.auth_repository.locations_by_user(
+        results = await self.auth_repository.locations_by_user(
             config=config, params=params
         )
 
         if not results:
             print("no se encontraron locations")
-            return self.message.get_message(
+            return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value
@@ -47,8 +52,11 @@ class AuthLocationsUseCase:
             )
 
         for result in results:
-            user_location_rol_entity, location_entity, company_entity, user_entity = result
-            locations.append(map_to_location_login_response(location_entity=location_entity))
-
+            user_location_rol_entity, location_entity, company_entity, user_entity = (
+                result
+            )
+            locations.append(
+                map_to_location_login_response(location_entity=location_entity)
+            )
 
         return locations

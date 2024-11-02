@@ -1,11 +1,13 @@
 
-from typing import List, Union
 from pydantic import UUID4
+from datetime import datetime
+from typing import List, Union
 from src.core.config import settings
+from sqlalchemy.future import select
 from src.core.enums.layer import LAYER
-from src.core.methods.get_filter import get_filter
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
+from src.core.methods.get_filter import get_filter
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.entities.currency.index import (
     Currency,
@@ -26,87 +28,83 @@ from src.infrastructure.database.mappers.currency_mapper import (
 class CurrencyRepository(ICurrencyRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def save(self, config: Config, params: CurrencyEntity) -> Union[Currency, None]:
-        db = config.db
-        db.add(params)
-        db.commit()
-        db.refresh(params)
-        return map_to_currency(params)
+    async def save(self, config: Config, params: CurrencyEntity) -> Union[Currency, None]:
+        async with config.async_db as db:
+            db.add(params)
+            await db.commit()
+            await db.refresh(params)
+            return map_to_currency(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def update(self, config: Config, params: CurrencyUpdate) -> Union[Currency, None]:
-        db = config.db
+    async def update(self, config: Config, params: CurrencyUpdate) -> Union[Currency, None]:
+        async with config.async_db as db:
+            stmt = select(CurrencyEntity).filter(CurrencyEntity.id == params.id)
+            stmt.updated_date = datetime.now()
+            result = await db.execute(stmt)
+            currency = result.scalars().first()
 
-        currency: CurrencyEntity = (
-            db.query(CurrencyEntity).filter(CurrencyEntity.id == params.id).first()
-        )
+            if not currency:
+                return None
 
-        if not currency:
-            return None
+            update_data = params.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(currency, key, value)
 
-        update_data = params.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(currency, key, value)
-
-        db.commit()
-        db.refresh(currency)
-        return map_to_currency(currency)
+            await db.commit()
+            await db.refresh(currency)
+            return map_to_currency(currency)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def list(self, config: Config, params: Pagination) -> Union[List[Currency], None]:
-        db = config.db
-        query = db.query(CurrencyEntity)
+    async def list(self, config: Config, params: Pagination) -> Union[List[Currency], None]:
+        async with config.async_db as db:
+            stmt = select(CurrencyEntity)
 
-        if params.all_data:
             if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=CurrencyEntity
+                stmt = get_filter(
+                    query=stmt, filters=params.filters, entity=CurrencyEntity
                 )
-                currencys = query.all()
-            else:
-                currencys = query.all()
-        else:
-            if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=CurrencyEntity
-                )
-                currencys = query.offset(params.skip).limit(params.limit).all()
 
-        if not currencys:
-            return None
-        return map_to_list_currency(currencys)
+            if not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            currencys = result.scalars().all()
+
+            if not currencys:
+                return None
+            return map_to_list_currency(currencys)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def delete(
+    async def delete(
         self,
         config: Config,
         params: CurrencyDelete,
     ) -> Union[Currency, None]:
-        db = config.db
-        currency: CurrencyEntity = (
-            db.query(CurrencyEntity).filter(CurrencyEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(CurrencyEntity).filter(CurrencyEntity.id == params.id)
+            result = await db.execute(stmt)
+            currency = result.scalars().first()
 
-        if not currency:
-            return None
+            if not currency:
+                return None
 
-        db.delete(currency)
-        db.commit()
-        return map_to_currency(currency)
+            await db.delete(currency)
+            await db.commit()
+            return map_to_currency(currency)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def read(
+    async def read(
         self,
         config: Config,
         params: CurrencyRead,
     ) -> Union[Currency, None]:
-        db = config.db
-        currency: CurrencyEntity = (
-            db.query(CurrencyEntity).filter(CurrencyEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(CurrencyEntity).filter(CurrencyEntity.id == params.id)
+            result = await db.execute(stmt)
+            currency = result.scalars().first()
 
-        if not currency:
-            return None
+            if not currency:
+                return None
 
-        return map_to_currency(currency)
+            return map_to_currency(currency)
         

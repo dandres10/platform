@@ -1,11 +1,13 @@
 
-from typing import List, Union
 from pydantic import UUID4
+from datetime import datetime
+from typing import List, Union
 from src.core.config import settings
+from sqlalchemy.future import select
 from src.core.enums.layer import LAYER
-from src.core.methods.get_filter import get_filter
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
+from src.core.methods.get_filter import get_filter
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.entities.company.index import (
     Company,
@@ -26,87 +28,83 @@ from src.infrastructure.database.mappers.company_mapper import (
 class CompanyRepository(ICompanyRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def save(self, config: Config, params: CompanyEntity) -> Union[Company, None]:
-        db = config.db
-        db.add(params)
-        db.commit()
-        db.refresh(params)
-        return map_to_company(params)
+    async def save(self, config: Config, params: CompanyEntity) -> Union[Company, None]:
+        async with config.async_db as db:
+            db.add(params)
+            await db.commit()
+            await db.refresh(params)
+            return map_to_company(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def update(self, config: Config, params: CompanyUpdate) -> Union[Company, None]:
-        db = config.db
+    async def update(self, config: Config, params: CompanyUpdate) -> Union[Company, None]:
+        async with config.async_db as db:
+            stmt = select(CompanyEntity).filter(CompanyEntity.id == params.id)
+            stmt.updated_date = datetime.now()
+            result = await db.execute(stmt)
+            company = result.scalars().first()
 
-        company: CompanyEntity = (
-            db.query(CompanyEntity).filter(CompanyEntity.id == params.id).first()
-        )
+            if not company:
+                return None
 
-        if not company:
-            return None
+            update_data = params.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(company, key, value)
 
-        update_data = params.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(company, key, value)
-
-        db.commit()
-        db.refresh(company)
-        return map_to_company(company)
+            await db.commit()
+            await db.refresh(company)
+            return map_to_company(company)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def list(self, config: Config, params: Pagination) -> Union[List[Company], None]:
-        db = config.db
-        query = db.query(CompanyEntity)
+    async def list(self, config: Config, params: Pagination) -> Union[List[Company], None]:
+        async with config.async_db as db:
+            stmt = select(CompanyEntity)
 
-        if params.all_data:
             if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=CompanyEntity
+                stmt = get_filter(
+                    query=stmt, filters=params.filters, entity=CompanyEntity
                 )
-                companys = query.all()
-            else:
-                companys = query.all()
-        else:
-            if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=CompanyEntity
-                )
-                companys = query.offset(params.skip).limit(params.limit).all()
 
-        if not companys:
-            return None
-        return map_to_list_company(companys)
+            if not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            companys = result.scalars().all()
+
+            if not companys:
+                return None
+            return map_to_list_company(companys)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def delete(
+    async def delete(
         self,
         config: Config,
         params: CompanyDelete,
     ) -> Union[Company, None]:
-        db = config.db
-        company: CompanyEntity = (
-            db.query(CompanyEntity).filter(CompanyEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(CompanyEntity).filter(CompanyEntity.id == params.id)
+            result = await db.execute(stmt)
+            company = result.scalars().first()
 
-        if not company:
-            return None
+            if not company:
+                return None
 
-        db.delete(company)
-        db.commit()
-        return map_to_company(company)
+            await db.delete(company)
+            await db.commit()
+            return map_to_company(company)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def read(
+    async def read(
         self,
         config: Config,
         params: CompanyRead,
     ) -> Union[Company, None]:
-        db = config.db
-        company: CompanyEntity = (
-            db.query(CompanyEntity).filter(CompanyEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(CompanyEntity).filter(CompanyEntity.id == params.id)
+            result = await db.execute(stmt)
+            company = result.scalars().first()
 
-        if not company:
-            return None
+            if not company:
+                return None
 
-        return map_to_company(company)
+            return map_to_company(company)
         

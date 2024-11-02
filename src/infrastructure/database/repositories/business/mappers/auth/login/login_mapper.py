@@ -1,5 +1,5 @@
 from typing import List
-from src.domain.models.business.auth.auth_login_response import (
+from src.domain.models.business.auth.login.auth_login_response import (
     CompanyLoginResponse,
     CountryLoginResponse,
     CurrencyLoginResponse,
@@ -12,7 +12,6 @@ from src.domain.models.business.auth.auth_login_response import (
     RolLoginResponse,
     UserLoginResponse,
 )
-from src.domain.models.entities.currency.currency import Currency
 from src.domain.models.entities.language.language import Language
 from src.domain.models.entities.user.user_read import UserRead
 from src.domain.models.entities.user.user_update import UserUpdate

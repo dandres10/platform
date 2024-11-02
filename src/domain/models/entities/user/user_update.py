@@ -10,5 +10,5 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = Field(default=None, max_length=255)
     last_name: Optional[str] = Field(default=None, max_length=255)
     phone: Optional[str] = Field(default=None, max_length=20)
-    refresh_token: str = Field(default=None)
+    refresh_token: Optional[str] = Field(default=None)
     state: bool = Field(default=True)

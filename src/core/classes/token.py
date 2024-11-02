@@ -85,10 +85,10 @@ class Token:
         except jwt.InvalidTokenError:
             raise HTTPException(status_code=401, detail=f"Token invalido")
 
-    def validate_has_refresh_token(self, config: Config):
+    async def validate_has_refresh_token(self, config: Config):
         ##TODO validar si afecta de forma global
         config.response_type = RESPONSE_TYPE.OBJECT
-        user_read = self.user_read_use_case.execute(
+        user_read = await self.user_read_use_case.execute(
             config=config, params=UserRead(id=config.token.user_id)
         )
 
