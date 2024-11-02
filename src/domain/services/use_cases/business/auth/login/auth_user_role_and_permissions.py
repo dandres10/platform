@@ -5,7 +5,9 @@ from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.config import Config
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.login.auth_login_response import PermissionLoginResponse
+from src.domain.models.business.auth.login.auth_login_response import (
+    PermissionLoginResponse,
+)
 from src.domain.models.business.auth.login.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
 )
@@ -17,6 +19,7 @@ from src.core.config import settings
 from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_permission_response,
 )
+from src.core.classes.async_message import Message
 
 
 class AuthUserRoleAndPermissionsUseCase:
@@ -24,9 +27,10 @@ class AuthUserRoleAndPermissionsUseCase:
         self,
     ):
         self.auth_repository = AuthRepository()
+        self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
-    def execute(
+    async def execute(
         self,
         config: Config,
         params: AuthUserRoleAndPermissions,
@@ -39,14 +43,14 @@ class AuthUserRoleAndPermissionsUseCase:
     ]:
         config.response_type = RESPONSE_TYPE.OBJECT
         permissions: List[PermissionLoginResponse] = []
-        results = self.auth_repository.user_role_and_permissions(
+        results = await self.auth_repository.user_role_and_permissions(
             config=config,
             params=params,
         )
 
         if not results:
             print("no se encontro informacion relacionada rol y permisos")
-            return self.message.get_message(
+            return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value

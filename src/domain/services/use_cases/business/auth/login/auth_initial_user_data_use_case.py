@@ -17,6 +17,7 @@ from src.infrastructure.database.repositories.business.auth_repository import (
     AuthRepository,
 )
 from src.core.config import settings
+from src.core.classes.async_message import Message
 
 
 class AuthInitialUserDataUseCase:
@@ -24,9 +25,10 @@ class AuthInitialUserDataUseCase:
         self,
     ):
         self.auth_repository = AuthRepository()
+        self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
-    def execute(
+    async def execute(
         self,
         config: Config,
         params: AuthInitialUserData,
@@ -44,11 +46,11 @@ class AuthInitialUserDataUseCase:
     ]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
-        result = self.auth_repository.initial_user_data(config=config, params=params)
+        result = await self.auth_repository.initial_user_data(config=config, params=params)
 
         if not result:
             print("no se encontro informacion relacionada")
-            return self.message.get_message(
+            return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value

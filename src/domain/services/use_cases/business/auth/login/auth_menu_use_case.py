@@ -13,15 +13,16 @@ from src.infrastructure.database.entities.menu_permission_entity import MenuPerm
 from src.infrastructure.database.repositories.business.auth_repository import AuthRepository
 from src.core.config import settings
 from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import map_to_menu_response
-
+from src.core.classes.async_message import Message
 class AuthMenuUseCase:
     def __init__(
         self,
     ):
         self.auth_repository = AuthRepository()
+        self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
-    def execute(
+    async def execute(
         self,
         config: Config,
         params: AuthMenu,
@@ -31,14 +32,14 @@ class AuthMenuUseCase:
     ]:
         config.response_type = RESPONSE_TYPE.OBJECT
         
-        menus = self.auth_repository.menu(
+        menus = await self.auth_repository.menu(
             config=config,
             params=Menu(company=params.company),
         )
 
         if not menus:
             print("no se encontro el menu de la empresa")
-            return self.message.get_message(
+            return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value

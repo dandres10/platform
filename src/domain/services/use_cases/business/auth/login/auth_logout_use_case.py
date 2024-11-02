@@ -33,10 +33,10 @@ class AuthLogoutUseCase:
         self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
-    def execute(self, config: Config) -> Union[AuthLogoutResponse, str, None]:
+    async def execute(self, config: Config) -> Union[AuthLogoutResponse, str, None]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
-        user_read = self.user_read_use_case.execute(
+        user_read = await self.user_read_use_case.execute(
             config=config, params=UserRead(id=config.token.user_id)
         )
 
@@ -45,7 +45,7 @@ class AuthLogoutUseCase:
 
         user_read.refresh_token = ""
 
-        user_update = self.user_update_use_case.execute(
+        user_update = await self.user_update_use_case.execute(
             config=config, params=map_to_user_read(user_read=user_read)
         )
 

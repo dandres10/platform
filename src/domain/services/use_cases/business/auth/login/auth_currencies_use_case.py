@@ -10,7 +10,9 @@ from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
-from src.domain.models.business.auth.login.auth_login_response import CurrencyLoginResponse
+from src.domain.models.business.auth.login.auth_login_response import (
+    CurrencyLoginResponse,
+)
 from src.domain.services.use_cases.entities.currency.currency_list_use_case import (
     CurrencyListUseCase,
 )
@@ -22,6 +24,7 @@ from src.infrastructure.database.repositories.business.auth_repository import (
 from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_currecy_login_response,
 )
+from src.core.classes.async_message import Message
 
 
 class AuthCurrenciesUseCase:
@@ -29,22 +32,23 @@ class AuthCurrenciesUseCase:
         self,
     ):
         self.auth_repository = AuthRepository()
+        self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
-    def execute(self, config: Config, params: AuthCurremciesByLocation) -> Union[
+    async def execute(self, config: Config, params: AuthCurremciesByLocation) -> Union[
         List[CurrencyLoginResponse],
         str,
     ]:
         config.response_type = RESPONSE_TYPE.OBJECT
         currencies: List[CurrencyLoginResponse] = []
 
-        results = self.auth_repository.currencies_by_location(
+        results = await self.auth_repository.currencies_by_location(
             config=config, params=params
         )
 
         if not results:
             print("no se encontraron idiomas")
-            return self.message.get_message(
+            return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value
@@ -54,6 +58,5 @@ class AuthCurrenciesUseCase:
         for result in results:
             currency_location, currency, location = result
             currencies.append(map_to_currecy_login_response(currency_entity=currency))
-
 
         return currencies

@@ -24,7 +24,7 @@ auth_controller = AuthController()
 async def login(
     params: AuthLoginRequest, config: Config = Depends(get_config_login)
 ) -> Response:
-    return auth_controller.login(config=config, params=params)
+    return await auth_controller.login(config=config, params=params)
 
 
 @auth_router.post(
@@ -33,14 +33,14 @@ async def login(
 @check_permissions([PERMISSION_TYPE.UPDATE.value])
 @execute_transaction_route(enabled=settings.has_track)
 async def refresh_token(config: Config = Depends(get_config)) -> Response:
-    return auth_controller.refresh_token(config=config)
+    return await auth_controller.refresh_token(config=config)
 
 
 @auth_router.post("/logout", status_code=status.HTTP_200_OK, response_model=Response)
 @check_permissions([PERMISSION_TYPE.UPDATE.value])
 @execute_transaction_route(enabled=settings.has_track)
 async def logout(config: Config = Depends(get_config)) -> Response:
-    return auth_controller.logout(config=config)
+    return await auth_controller.logout(config=config)
 
 
 @auth_router.post("/obtener_servicios", response_model=List[dict])

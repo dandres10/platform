@@ -8,9 +8,6 @@ from src.core.middleware.redirect_to_docs import RedirectToDocsMiddleware
 from src.infrastructure.web.routes.route_websockets import RouteWebsockets
 
 
-
-
-
 app = FastAPI(
     title=settings.project_name,
     description=f"{settings.project_description} [{settings.app_environment}]",

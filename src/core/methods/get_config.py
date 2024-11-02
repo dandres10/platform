@@ -25,10 +25,11 @@ async def get_config(
     config.request = request
     config.token = token
     request.state.config = config
-    token_cls.validate_has_refresh_token(config=config)
+    
 
     async with async_session_db() as session:
         config.async_db = session
+        await token_cls.validate_has_refresh_token(config=config)
         yield config 
 
     

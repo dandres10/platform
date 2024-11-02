@@ -1,5 +1,5 @@
 from typing import List, Union
-from src.core.classes.message import Message
+from src.core.classes.async_message import Message
 from src.core.enums.layer import LAYER
 from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.access_token import AccessToken
@@ -77,20 +77,20 @@ class AuthRefreshTokenUseCase:
         self.token = Token()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
-    def execute(
+    async def execute(
         self,
         config: Config,
     ) -> Union[AuthRefreshTokenResponse, str, None]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
-        user_read = self.user_read_use_case.execute(
+        user_read = await self.user_read_use_case.execute(
             config=config, params=UserRead(id=config.token.user_id)
         )
 
         if isinstance(user_read, str):
             return user_read
 
-        initial_user_data = self.auth_initial_user_data_use_case.execute(
+        initial_user_data = await self.auth_initial_user_data_use_case.execute(
             config=config, params=AuthInitialUserData(email=user_read.email)
         )
         if isinstance(initial_user_data, str):
@@ -107,7 +107,7 @@ class AuthRefreshTokenUseCase:
         ) = initial_user_data
 
         user_role_and_permissions = (
-            self.auth_user_role_and_permissions_use_case.execute(
+            await self.auth_user_role_and_permissions_use_case.execute(
                 config=config,
                 params=AuthUserRoleAndPermissions(
                     email=user_read.email, location=location_entity.id
@@ -119,7 +119,7 @@ class AuthRefreshTokenUseCase:
 
         permissions, rol_q = user_role_and_permissions
 
-        auth_menu = self.auth_menu_use_case.execute(
+        auth_menu = await self.auth_menu_use_case.execute(
             config=config,
             params=AuthMenu(company=company_entity.id, permissions=permissions),
         )
@@ -127,14 +127,14 @@ class AuthRefreshTokenUseCase:
         if isinstance(auth_menu, str):
             return auth_menu
 
-        currencies = self.auth_currencies_use_case.execute(
+        currencies = await self.auth_currencies_use_case.execute(
             config=config, params=AuthCurremciesByLocation(location=location_entity.id)
         )
 
         if isinstance(currencies, str):
             return currencies
 
-        locations = self.auth_locations_use_case.execute(
+        locations = await self.auth_locations_use_case.execute(
             config=config,
             params=AuthLocations(user_id=user_entity.id, company_id=company_entity.id),
         )
@@ -142,7 +142,7 @@ class AuthRefreshTokenUseCase:
         if isinstance(locations, str):
             return locations
 
-        languages = self.auth_languages_use_case.execute(config=config)
+        languages = await self.auth_languages_use_case.execute(config=config)
 
         if isinstance(languages, str):
             return languages
@@ -163,7 +163,7 @@ class AuthRefreshTokenUseCase:
         )
         refresh_token = self.token.create_refresh_token(data=access_token)
 
-        user_update = self.user_update_use_case.execute(
+        user_update = await self.user_update_use_case.execute(
             config=config,
             params=UserUpdate(
                 id=user_entity.id,

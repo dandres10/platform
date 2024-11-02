@@ -1,5 +1,5 @@
 from typing import List, Union
-from src.core.classes.message import Message
+from src.core.classes.async_message import Message
 from src.core.classes.password import Password
 from src.core.enums.condition_type import CONDITION_TYPE
 from src.core.enums.keys_message import KEYS_MESSAGES
@@ -10,12 +10,17 @@ from src.core.models.filter import FilterManager, Pagination
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
-from src.domain.services.use_cases.entities.user.user_list_use_case import UserListUseCase
+from src.domain.services.use_cases.entities.user.user_list_use_case import (
+    UserListUseCase,
+)
 from src.core.config import settings
-from src.infrastructure.database.repositories.entities.user_repository import UserRepository
+from src.infrastructure.database.repositories.entities.user_repository import (
+    UserRepository,
+)
 
 
 user_repository = UserRepository()
+
 
 class AuthValidateUserUseCase:
     def __init__(
@@ -26,7 +31,7 @@ class AuthValidateUserUseCase:
         self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
-    def execute(
+    async def execute(
         self,
         config: Config,
         params: AuthLoginRequest,
@@ -36,18 +41,22 @@ class AuthValidateUserUseCase:
     ]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
-        filters_user: List[FilterManager] = [
-            FilterManager(
-                field="email", condition=CONDITION_TYPE.EQUALS.value, value=params.email
-            )
-        ]
-
-        result_users_list = self.user_list_use_case.execute(
-            config=config, params=Pagination(all_data=True, filters=filters_user)
+        result_users_list = await self.user_list_use_case.execute(
+            config=config,
+            params=Pagination(
+                all_data=True,
+                filters=[
+                    FilterManager(
+                        field="email",
+                        condition=CONDITION_TYPE.EQUALS.value,
+                        value=params.email,
+                    )
+                ],
+            ),
         )
 
         if isinstance(result_users_list, str):
-            return self.message.get_message(
+            return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value
@@ -62,13 +71,11 @@ class AuthValidateUserUseCase:
 
         if not check_password:
             print("contraseña es incorrecta")
-            return self.message.get_message(
+            return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value
                 ),
             )
-
-        
 
         return True
