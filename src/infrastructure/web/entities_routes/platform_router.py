@@ -30,7 +30,7 @@ platform_controller = PlatformController()
 @check_permissions([PERMISSION_TYPE.SAVE.value])
 @execute_transaction_route(enabled=settings.has_track)
 async def save(params: PlatformSave, config: Config = Depends(get_config)) -> Response:
-    return platform_controller.save(config=config, params=params)
+    return await platform_controller.save(config=config, params=params)
 
 
 @platform_router.put("", status_code=status.HTTP_200_OK, response_model=Response)

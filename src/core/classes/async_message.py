@@ -1,11 +1,9 @@
+from sqlalchemy.future import select
 from src.core.models.config import Config
 from src.core.models.message import MessageCoreEntity
 from src.infrastructure.database.entities.language_entity import LanguageEntity
 from src.infrastructure.database.entities.translation_entity import TranslationEntity
 from src.infrastructure.database.mappers.translation_mapper import map_to_translation
-from sqlalchemy.future import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 
 class Message:
     async def get_message(cls, config: Config, message: MessageCoreEntity):

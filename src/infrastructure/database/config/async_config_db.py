@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from src.core.config import settings
+from typing import AsyncGenerator
 
 string_db = f"postgresql+asyncpg://{settings.database_user}:{settings.database_password}@{settings.database_host}:5432/{settings.database_name}"
 
@@ -17,7 +18,7 @@ async_db = sessionmaker(
 
 
 @asynccontextmanager
-async def async_session_db():
+async def async_session_db() -> AsyncGenerator[AsyncSession, None] :
     async with async_db() as session:
         yield session
 

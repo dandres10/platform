@@ -34,15 +34,16 @@ async def get_config(
     
 
 
-def get_config_login(request: Request, language: str = Header(...)) -> Config:
+async def get_config_login(request: Request, language: str = Header(...)):
     config = Config()
     valid_language_header(request=request)
     config.db = session_db()
-    config.async_db = async_session_db()
     config.language = language
     config.request = request
 
-    return config
+    async with async_session_db() as session:
+        config.async_db = session
+        yield config 
 
 
 def valid_language_header(request: Request):

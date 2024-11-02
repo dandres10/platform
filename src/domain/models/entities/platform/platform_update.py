@@ -6,6 +6,6 @@ class PlatformUpdate(BaseModel):
     id: UUID4 = Field(...)
     language_id: UUID4 = Field(...)
     location_id: UUID4 = Field(...)
-    token_expiration_minutes: str = Field(default=None)
-    refresh_token_expiration_minutes: str = Field(default=None)
+    token_expiration_minutes: int = Field(default=None)
+    refresh_token_expiration_minutes: int = Field(default=None)
     currency_id: UUID4 = Field(...)
