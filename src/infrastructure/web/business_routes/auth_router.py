@@ -6,6 +6,9 @@ from src.core.models.config import Config
 from src.core.models.response import Response
 from src.core.wrappers.check_permissions import check_permissions
 from src.core.wrappers.execute_transaction import execute_transaction_route
+from src.domain.models.business.auth.create_api_token.create_api_token_request import (
+    CreateApiTokenRequest,
+)
 from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
 from src.infrastructure.database.entities.currency_entity import CurrencyEntity
 from src.infrastructure.web.controller.business.auth_controller import AuthController
@@ -41,6 +44,17 @@ async def refresh_token(config: Config = Depends(get_config)) -> Response:
 @execute_transaction_route(enabled=settings.has_track)
 async def logout(config: Config = Depends(get_config)) -> Response:
     return await auth_controller.logout(config=config)
+
+
+@auth_router.post(
+    "/create-api-token", status_code=status.HTTP_200_OK, response_model=Response
+)
+@check_permissions([PERMISSION_TYPE.SAVE.value])
+@execute_transaction_route(enabled=settings.has_track)
+async def create_api_token(
+    params: CreateApiTokenRequest, config: Config = Depends(get_config)
+) -> Response:
+    return await auth_controller.create_api_token(config=config, params=params)
 
 
 @auth_router.post("/obtener_servicios", response_model=List[dict])
@@ -99,6 +113,3 @@ async def validar_disponibilidad(token: str = Query(...)):
         return "No tenemos disponibilidad."
 
     return "Sí tenemos disponibilidad."
-
-
-

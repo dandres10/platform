@@ -4,6 +4,12 @@ from src.core.enums.layer import LAYER
 from sqlalchemy.future import select
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
+from src.domain.models.business.auth.create_api_token.create_api_token_request import (
+    CreateApiTokenRequest,
+)
+from src.domain.models.business.auth.create_api_token.create_api_token_response import (
+    CreateApiTokenResponse,
+)
 from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
@@ -183,7 +189,7 @@ class AuthRepository(IAuthRepository):
         List[Tuple[UserLocationRolEntity, LocationEntity, CompanyEntity, UserEntity]],
         None,
     ]:
-        async with config.async_db as db:  
+        async with config.async_db as db:
             stmt = (
                 select(UserLocationRolEntity, LocationEntity, CompanyEntity, UserEntity)
                 .join(
@@ -197,6 +203,42 @@ class AuthRepository(IAuthRepository):
             )
 
             result = await db.execute(stmt)
-            results = result.all()  
+            results = result.all()
 
             return results
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def create_api_token(
+        self, config: Config, params: CreateApiTokenRequest
+    ) -> Union[
+        CreateApiTokenResponse,
+        None,
+    ]:
+        async with config.async_db as db:
+            permissions: List[str] = []
+            stmt = (
+                select(RolPermissionEntity, PermissionEntity)
+                .join(
+                    RolPermissionEntity,
+                    RolPermissionEntity.permission_id == PermissionEntity.id,
+                )
+                .where(RolPermissionEntity.rol_id == params.rol_id)
+            )
+
+            result = await db.execute(stmt)
+            results = result.all()
+
+            if not results:
+                return None
+
+            for rol_permission, permission in results:
+                permissions.append(permission.name)
+
+            stmt = select(RolEntity).where(RolEntity.id == params.rol_id).limit(1)
+
+            result = await db.execute(stmt)
+            rol_tuple = result.first()
+            rol, *list = rol_tuple
+            
+
+            return CreateApiTokenResponse(rol_id=params.rol_id, permissions=permissions, rol_code=rol.code)

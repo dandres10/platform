@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 # imports
+from src.infrastructure.web.entities_routes.api_token_router import api_token_router
 from src.infrastructure.web.entities_routes.currency_location_router import currency_location_router
 from src.infrastructure.web.entities_routes.currency_router import currency_router
 from src.infrastructure.web.entities_routes.user_router import user_router
@@ -23,6 +24,7 @@ class Route:
     @staticmethod
     def set_routes(app: FastAPI):
         # include_router
+        app.include_router(api_token_router)
         app.include_router(currency_location_router)
         app.include_router(currency_router)
         app.include_router(user_router)

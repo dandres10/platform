@@ -1,5 +1,4 @@
 fastapi==0.112.0
-uvicorn==0.30.3
 sqlalchemy==2.0.31
 pydantic==2.8.2
 pydantic-settings==2.3.4
@@ -17,3 +16,4 @@ twilio==9.3.1
 openai==1.46.1
 asyncpg==0.30.0
 greenlet==3.1.1
+uvicorn = {extras = ["standard"]}
