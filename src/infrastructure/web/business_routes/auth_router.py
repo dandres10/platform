@@ -47,7 +47,7 @@ async def logout(config: Config = Depends(get_config)) -> Response:
 
 
 @auth_router.post(
-    "/create-api-token", status_code=status.HTTP_200_OK, response_model=Response
+    "/create-api-token", status_code=status.HTTP_200_OK, response_model=Response, include_in_schema=False
 )
 @check_permissions([PERMISSION_TYPE.SAVE.value])
 @execute_transaction_route(enabled=settings.has_track)
@@ -55,61 +55,3 @@ async def create_api_token(
     params: CreateApiTokenRequest, config: Config = Depends(get_config)
 ) -> Response:
     return await auth_controller.create_api_token(config=config, params=params)
-
-
-@auth_router.post("/obtener_servicios", response_model=List[dict])
-async def obtener_servicios(token: str = Query(...)):
-
-    if token != "ead47080-0d60-45da-98b7-57c9a302b662":
-        raise HTTPException(
-            status_code=401,
-            detail={"error": "Unauthorized", "message": "Token is invalid or expired"},
-        )
-
-    servicios = [
-        {
-            "nombre": "Limpieza Dental",
-            "descripcion": "Limpieza profesional de los dientes",
-            "precio": 15000,
-        },
-        {
-            "nombre": "Ortodoncia",
-            "descripcion": "Alineación de los dientes con brackets",
-            "precio": 500000,
-        },
-        {
-            "nombre": "Blanqueamiento Dental",
-            "descripcion": "Blanqueamiento para mejorar la estética",
-            "precio": 300000,
-        },
-        {
-            "nombre": "Extracción Dental",
-            "descripcion": "Extracción de muelas o dientes",
-            "precio": 200000,
-        },
-        {
-            "nombre": "Implante Dental",
-            "descripcion": "Reemplazo de un diente perdido con un implante",
-            "precio": 4500000,
-        },
-    ]
-    return servicios
-
-
-@auth_router.post("/validar_disponibilidad", response_model=str)
-async def validar_disponibilidad(token: str = Query(...)):
-    # Verificar el token (aquí puedes agregar tu lógica para validar el token si es necesario)
-
-    if token != "ead47080-0d60-45da-98b7-57c9a302b662":
-        raise HTTPException(
-            status_code=401,
-            detail={"error": "Unauthorized", "message": "Token is invalid or expired"},
-        )
-
-    # Lógica de disponibilidad del calendario
-    has_space_calendar = False
-
-    if not has_space_calendar:
-        return "No tenemos disponibilidad."
-
-    return "Sí tenemos disponibilidad."
