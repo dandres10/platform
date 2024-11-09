@@ -1,6 +1,12 @@
 from typing import Any, List, Tuple, Union
 from abc import ABC, abstractmethod
 from src.core.models.config import Config
+from src.domain.models.business.auth.create_api_token.create_api_token_request import (
+    CreateApiTokenRequest,
+)
+from src.domain.models.business.auth.create_api_token.create_api_token_response import (
+    CreateApiTokenResponse,
+)
 from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
@@ -59,4 +65,13 @@ class IAuthRepository(ABC):
     ]:
         pass
 
-
+    @abstractmethod
+    def create_api_token(
+        self,
+        config: Config,
+        params: CreateApiTokenRequest,
+    ) -> Union[
+        CreateApiTokenResponse,
+        str,
+    ]:
+        pass

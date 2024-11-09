@@ -24,7 +24,9 @@ async def get_config(
     config.language = language
     config.request = request
     config.token = token
+    config.encoded_token = credentials.credentials
     request.state.config = config
+    
     
 
     async with async_session_db() as session:

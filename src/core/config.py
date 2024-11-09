@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 import os
 from dotenv import load_dotenv
 
-env = os.getenv("ENV", "qa")
+env = os.getenv("ENV", "pc")
 if env == "qa":
     load_dotenv(".env.qa")
 elif env == "production":

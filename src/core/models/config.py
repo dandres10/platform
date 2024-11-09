@@ -13,3 +13,4 @@ class Config(BaseModel):
     request: Optional[Any] = None
     response_type: RESPONSE_TYPE = Field(default=RESPONSE_TYPE.DICT.value)
     token: Optional[AccessToken] = Field(default=None)
+    encoded_token: Optional[str] = None
