@@ -16,4 +16,4 @@ twilio==9.3.1
 openai==1.46.1
 asyncpg==0.30.0
 greenlet==3.1.1
-uvicorn = {extras = ["standard"]}
+uvicorn==0.30.3
