@@ -150,7 +150,7 @@ class Token:
                     FilterManager(
                         field="token",
                         condition=CONDITION_TYPE.EQUALS.value,
-                        value=config.encoded_token,
+                        value=config.token_code,
                     )
                 ],
             ),
