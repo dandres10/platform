@@ -17,5 +17,5 @@ class User(BaseModel):
 
     def dict(self, *args, **kwargs):
         exclude = kwargs.pop("exclude", set())
-        exclude.update({"created_date", "updated_date"})
+        exclude.update({"created_date", "updated_date", "password"})
         return super().model_dump(*args, exclude=exclude, **kwargs)

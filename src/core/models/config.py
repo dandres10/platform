@@ -14,3 +14,4 @@ class Config(BaseModel):
     response_type: RESPONSE_TYPE = Field(default=RESPONSE_TYPE.DICT.value)
     token: Optional[AccessToken] = Field(default=None)
     encoded_token: Optional[str] = None
+    token_code: Optional[str] = None

@@ -21,7 +21,7 @@ from src.infrastructure.web.controller.entities.api_token_controller import (
 
 
 api_token_router = APIRouter(
-    prefix="/api-token", tags=["ApiToken"], responses={404: {"description": "Not found"}}, include_in_schema=False
+    prefix="/api-token", tags=["ApiToken"], responses={404: {"description": "Not found"}}, include_in_schema=True
 )
 
 api_token_controller = ApiTokenController()

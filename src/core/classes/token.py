@@ -8,7 +8,6 @@ from src.core.models.access_token import AccessToken
 from src.core.models.access_token_api import AccessTokenApi
 from src.core.models.config import Config
 from src.core.models.filter import FilterManager, Pagination
-from src.domain.models.entities.api_token.api_token_read import ApiTokenRead
 from src.domain.models.entities.user.user_read import UserRead
 from src.domain.services.use_cases.entities.api_token.api_token_list_use_case import (
     ApiTokenListUseCase,
@@ -151,7 +150,7 @@ class Token:
                     FilterManager(
                         field="token",
                         condition=CONDITION_TYPE.EQUALS.value,
-                        value=config.encoded_token,
+                        value=config.token_code,
                     )
                 ],
             ),
