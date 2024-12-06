@@ -1,14 +1,14 @@
-
-from fastapi import Depends, HTTPException, Header, Request
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from src.core.models.config import Config
 from src.core.classes.token import Token
 from src.core.enums.language import LANGUAGE
-from src.core.models.config import Config
 from src.core.models.ws_request import WSRequest
+from fastapi import Depends, HTTPException, Header, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.infrastructure.database.config.async_config_db import async_session_db
 
 
 bearer_scheme = HTTPBearer()
+
 
 async def get_config(
     request: Request,
@@ -23,18 +23,13 @@ async def get_config(
     config.language = language
     config.request = request
     config.token = token
-    config.encoded_token = credentials.credentials
-    config.token_code = credentials.credentials
     request.state.config = config
-    
-    
+    config.token_code = credentials.credentials
 
     async with async_session_db() as session:
         config.async_db = session
         await token_cls.validate_has_refresh_token(config=config)
-        yield config 
-
-    
+        yield config
 
 
 async def get_config_login(request: Request, language: str = Header(...)):
@@ -45,8 +40,8 @@ async def get_config_login(request: Request, language: str = Header(...)):
 
     async with async_session_db() as session:
         config.async_db = session
-        yield config 
-        
+        yield config
+
 
 async def get_config_ws(ws_resquest: WSRequest):
     config = Config()
@@ -72,7 +67,8 @@ def valid_language_header(request: Request):
 
     if not request.headers["language"] in languages:
         raise HTTPException(status_code=400, detail="Invalid language")
-    
+
+
 def valid_language_header_ws(language: LANGUAGE):
     languages = [LANGUAGE.EN.value, LANGUAGE.ES.value]
     if not language in languages:
