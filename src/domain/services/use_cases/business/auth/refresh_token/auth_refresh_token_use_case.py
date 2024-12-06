@@ -1,5 +1,5 @@
 from typing import List, Union
-from src.core.classes.message import Message
+from src.core.classes.async_message import Message
 from src.core.enums.layer import LAYER
 from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.access_token import AccessToken

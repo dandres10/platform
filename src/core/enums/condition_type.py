@@ -9,3 +9,4 @@ class CONDITION_TYPE(str, Enum):
     LESS_THAN_OR_EQUAL_TO = "<="
     DIFFERENT_THAN = "!="
     LIKE = "like"
+    IN = "in"

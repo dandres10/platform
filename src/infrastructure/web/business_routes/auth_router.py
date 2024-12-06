@@ -1,5 +1,4 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status, WebSocket
+from fastapi import APIRouter, Depends, status
 from src.core.config import settings
 from src.core.enums.permission_type import PERMISSION_TYPE
 from src.core.models.config import Config
@@ -10,7 +9,6 @@ from src.domain.models.business.auth.create_api_token.create_api_token_request i
     CreateApiTokenRequest,
 )
 from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
-from src.infrastructure.database.entities.currency_entity import CurrencyEntity
 from src.infrastructure.web.controller.business.auth_controller import AuthController
 from src.core.methods.get_config import get_config, get_config_login
 
@@ -47,7 +45,7 @@ async def logout(config: Config = Depends(get_config)) -> Response:
 
 
 @auth_router.post(
-    "/create-api-token", status_code=status.HTTP_200_OK, response_model=Response, include_in_schema=False
+    "/create-api-token", status_code=status.HTTP_200_OK, response_model=Response, include_in_schema=True
 )
 @check_permissions([PERMISSION_TYPE.SAVE.value])
 @execute_transaction_route(enabled=settings.has_track)

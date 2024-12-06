@@ -5,7 +5,6 @@ from src.core.classes.token import Token
 from src.core.enums.language import LANGUAGE
 from src.core.models.config import Config
 from src.core.models.ws_request import WSRequest
-from src.infrastructure.database.config.config_db import session_db
 from src.infrastructure.database.config.async_config_db import async_session_db
 
 
@@ -21,7 +20,6 @@ async def get_config(
     valid_language_header(request=request)
     token = credentials.credentials
     token = token_cls.verify_token(token=token)
-    config.db = session_db()
     config.language = language
     config.request = request
     config.token = token
@@ -42,7 +40,6 @@ async def get_config(
 async def get_config_login(request: Request, language: str = Header(...)):
     config = Config()
     valid_language_header(request=request)
-    config.db = session_db()
     config.language = language
     config.request = request
 

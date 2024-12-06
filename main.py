@@ -18,13 +18,10 @@ if settings.app_environment == "production":
     app.add_middleware(
         UserRateLimitMiddleware, default_limits=["100/hour"], login_limits=["20/hour"]
     )
+    
 
 app.add_middleware(RedirectToDocsMiddleware)
 CorsAppConfigurator.setup_cors(app)
 RouteBusiness.set_routes(app)
 Route.set_routes(app)
 RouteWebsockets.set_routes(app)
-
-
-
-    
