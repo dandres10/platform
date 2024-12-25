@@ -7,6 +7,7 @@ class User(BaseModel):
     platform_id: Optional[UUID4] = Field(default=None)
     password: str = Field(..., max_length=255)
     email: str = Field(..., max_length=255)
+    identification: str = Field(..., max_length=30)
     first_name: Optional[str] = Field(default=None, max_length=255)
     last_name: Optional[str] = Field(default=None, max_length=255)
     phone: Optional[str] = Field(default=None, max_length=20)

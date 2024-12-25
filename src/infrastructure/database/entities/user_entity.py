@@ -12,6 +12,7 @@ class UserEntity(Base):
     platform_id = Column(UUID(as_uuid=True), nullable=False)
     password = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
+    identification = Column(String(30), nullable=False)
     first_name = Column(String(255), nullable=True)
     last_name = Column(String(255), nullable=True)
     phone = Column(String(20), nullable=True)

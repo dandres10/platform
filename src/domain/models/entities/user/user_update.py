@@ -7,6 +7,7 @@ class UserUpdate(BaseModel):
     platform_id: UUID4 = Field(...)
     password: str = Field(..., max_length=255)
     email: str = Field(..., max_length=255)
+    identification: str = Field(..., max_length=30)
     first_name: Optional[str] = Field(default=None, max_length=255)
     last_name: Optional[str] = Field(default=None, max_length=255)
     phone: Optional[str] = Field(default=None, max_length=20)
