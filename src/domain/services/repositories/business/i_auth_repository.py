@@ -12,10 +12,13 @@ from src.domain.models.business.auth.login.auth_currencies_by_location import (
 )
 from src.domain.models.business.auth.login.auth_locations import AuthLocations
 from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
+from src.domain.models.business.auth.login.auth_login_response import CompanyLoginResponse
 from src.domain.models.business.auth.login.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
 )
+from src.domain.models.business.auth.login.companies_by_user import CompaniesByUser
 from src.domain.models.business.auth.login.menu import Menu
+from src.domain.models.entities.company.company import Company
 
 
 class IAuthRepository(ABC):
@@ -73,5 +76,12 @@ class IAuthRepository(ABC):
     ) -> Union[
         CreateApiTokenResponse,
         str,
+    ]:
+        pass
+
+    @abstractmethod
+    def companies_by_user(self, config: Config, params: CompaniesByUser) -> Union[
+        List[CompanyLoginResponse],
+        None,
     ]:
         pass

@@ -8,7 +8,9 @@ from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
-from src.domain.models.business.auth.login.auth_initial_user_data import AuthInitialUserData
+from src.domain.models.business.auth.login.auth_initial_user_data import (
+    AuthInitialUserData,
+)
 from src.domain.models.business.auth.login.auth_locations import AuthLocations
 from src.domain.models.business.auth.login.auth_login_response import (
     PlatformConfiguration,
@@ -17,11 +19,13 @@ from src.domain.models.business.auth.login.auth_login_response import (
 from src.domain.models.business.auth.login.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
 )
+from src.domain.models.business.auth.login.companies_by_user import CompaniesByUser
 from src.domain.models.business.auth.login.index import (
     AuthLoginRequest,
     AuthLoginResponse,
     AuthMenu,
 )
+from src.domain.models.entities.company.company import Company
 from src.domain.models.entities.user.user_update import UserUpdate
 from src.domain.services.use_cases.business.auth.login.auth_currencies_use_case import (
     AuthCurrenciesUseCase,
@@ -43,6 +47,9 @@ from src.domain.services.use_cases.business.auth.login.auth_user_role_and_permis
 )
 from src.domain.services.use_cases.business.auth.login.auth_validate_user_use_case import (
     AuthValidateUserUseCase,
+)
+from src.domain.services.use_cases.business.auth.login.companies_by_user_use_case import (
+    CompaniesByUserUseCase,
 )
 from src.domain.services.use_cases.entities.user.user_update_use_case import (
     UserUpdateUseCase,
@@ -81,6 +88,7 @@ class AuthLoginUseCase:
         self.auth_user_role_and_permissions_use_case = (
             AuthUserRoleAndPermissionsUseCase()
         )
+        self.companies_by_user_use_case = CompaniesByUserUseCase()
         self.message = Message()
         self.token = Token()
 
@@ -97,6 +105,15 @@ class AuthLoginUseCase:
         )
         if isinstance(user_validator, str):
             return user_validator
+
+        companies_by_user: List[Company] | str = (
+            await self.companies_by_user_use_case.execute(
+                config=config, params=CompaniesByUser(email=params.email)
+            )
+        )
+
+        if isinstance(companies_by_user, str):
+            return companies_by_user
 
         initial_user_data = await self.auth_initial_user_data_use_case.execute(
             config=config, params=AuthInitialUserData(email=params.email)
@@ -208,7 +225,10 @@ class AuthLoginUseCase:
                 menu=auth_menu,
             ),
             platform_variations=PlatformVariations(
-                currencies=currencies, locations=locations, languages=languages
+                currencies=currencies,
+                locations=locations,
+                languages=languages,
+                companies=companies_by_user,
             ),
             token=token,
         )

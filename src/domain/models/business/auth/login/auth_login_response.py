@@ -2,6 +2,8 @@ from typing import List, Optional
 from pydantic import UUID4, BaseModel
 from pydantic import BaseModel, Field
 
+from src.domain.models.entities.company.company import Company
+
 
 class UserLoginResponse(BaseModel):
     id: UUID4 = Field(...)
@@ -110,6 +112,7 @@ class PlatformVariations(BaseModel):
     currencies: List[CurrencyLoginResponse] = Field(...)
     locations: List[LocationLoginResponse] = Field(...)
     languages: List[LanguageLoginResponse] = Field(...)
+    companies: List[CompanyLoginResponse] = Field(...)
 
 
 class AuthLoginResponse(BaseModel):
