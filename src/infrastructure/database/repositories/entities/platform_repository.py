@@ -1,11 +1,13 @@
 
-from typing import List, Union
 from pydantic import UUID4
+from datetime import datetime
+from typing import List, Union
 from src.core.config import settings
+from sqlalchemy.future import select
 from src.core.enums.layer import LAYER
-from src.core.methods.get_filter import get_filter
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
+from src.core.methods.get_filter import get_filter
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.entities.platform.index import (
     Platform,
@@ -26,87 +28,83 @@ from src.infrastructure.database.mappers.platform_mapper import (
 class PlatformRepository(IPlatformRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def save(self, config: Config, params: PlatformEntity) -> Union[Platform, None]:
-        db = config.db
-        db.add(params)
-        db.commit()
-        db.refresh(params)
-        return map_to_platform(params)
+    async def save(self, config: Config, params: PlatformEntity) -> Union[Platform, None]:
+        async with config.async_db as db:
+            db.add(params)
+            await db.commit()
+            await db.refresh(params)
+            return map_to_platform(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def update(self, config: Config, params: PlatformUpdate) -> Union[Platform, None]:
-        db = config.db
+    async def update(self, config: Config, params: PlatformUpdate) -> Union[Platform, None]:
+        async with config.async_db as db:
+            stmt = select(PlatformEntity).filter(PlatformEntity.id == params.id)
+            stmt.updated_date = datetime.now()
+            result = await db.execute(stmt)
+            platform = result.scalars().first()
 
-        platform: PlatformEntity = (
-            db.query(PlatformEntity).filter(PlatformEntity.id == params.id).first()
-        )
+            if not platform:
+                return None
 
-        if not platform:
-            return None
+            update_data = params.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(platform, key, value)
 
-        update_data = params.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(platform, key, value)
-
-        db.commit()
-        db.refresh(platform)
-        return map_to_platform(platform)
+            await db.commit()
+            await db.refresh(platform)
+            return map_to_platform(platform)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def list(self, config: Config, params: Pagination) -> Union[List[Platform], None]:
-        db = config.db
-        query = db.query(PlatformEntity)
+    async def list(self, config: Config, params: Pagination) -> Union[List[Platform], None]:
+        async with config.async_db as db:
+            stmt = select(PlatformEntity)
 
-        if params.all_data:
             if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=PlatformEntity
+                stmt = get_filter(
+                    query=stmt, filters=params.filters, entity=PlatformEntity
                 )
-                platforms = query.all()
-            else:
-                platforms = query.all()
-        else:
-            if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=PlatformEntity
-                )
-                platforms = query.offset(params.skip).limit(params.limit).all()
 
-        if not platforms:
-            return None
-        return map_to_list_platform(platforms)
+            if not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            platforms = result.scalars().all()
+
+            if not platforms:
+                return None
+            return map_to_list_platform(platforms)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def delete(
+    async def delete(
         self,
         config: Config,
         params: PlatformDelete,
     ) -> Union[Platform, None]:
-        db = config.db
-        platform: PlatformEntity = (
-            db.query(PlatformEntity).filter(PlatformEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(PlatformEntity).filter(PlatformEntity.id == params.id)
+            result = await db.execute(stmt)
+            platform = result.scalars().first()
 
-        if not platform:
-            return None
+            if not platform:
+                return None
 
-        db.delete(platform)
-        db.commit()
-        return map_to_platform(platform)
+            await db.delete(platform)
+            await db.commit()
+            return map_to_platform(platform)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def read(
+    async def read(
         self,
         config: Config,
         params: PlatformRead,
     ) -> Union[Platform, None]:
-        db = config.db
-        platform: PlatformEntity = (
-            db.query(PlatformEntity).filter(PlatformEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(PlatformEntity).filter(PlatformEntity.id == params.id)
+            result = await db.execute(stmt)
+            platform = result.scalars().first()
 
-        if not platform:
-            return None
+            if not platform:
+                return None
 
-        return map_to_platform(platform)
+            return map_to_platform(platform)
         

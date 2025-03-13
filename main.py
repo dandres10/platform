@@ -5,6 +5,7 @@ from src.infrastructure.web.routes.route import Route
 from src.infrastructure.web.routes.route_business import RouteBusiness
 from src.core.middleware.cors_app import CorsAppConfigurator
 from src.core.middleware.redirect_to_docs import RedirectToDocsMiddleware
+from src.infrastructure.web.routes.route_websockets import RouteWebsockets
 
 
 app = FastAPI(
@@ -13,12 +14,14 @@ app = FastAPI(
     version=settings.project_version,
 )
 
-if settings.app_environment == "production":
+""" if settings.app_environment == "prod":
     app.add_middleware(
         UserRateLimitMiddleware, default_limits=["100/hour"], login_limits=["20/hour"]
-    )
+    ) """
     
+
 app.add_middleware(RedirectToDocsMiddleware)
 CorsAppConfigurator.setup_cors(app)
-Route.set_routes(app)
 RouteBusiness.set_routes(app)
+Route.set_routes(app)
+RouteWebsockets.set_routes(app)

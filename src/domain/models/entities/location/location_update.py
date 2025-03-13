@@ -7,7 +7,7 @@ class LocationUpdate(BaseModel):
     company_id: UUID4 = Field(...)
     country_id: UUID4 = Field(...)
     name: str = Field(..., max_length=255)
-    address: str = Field(default=None)
+    address: str = Field(...)
     city: str = Field(..., max_length=100)
     phone: str = Field(..., max_length=20)
     email: str = Field(..., max_length=100)

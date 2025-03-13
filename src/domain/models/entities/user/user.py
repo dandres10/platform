@@ -7,6 +7,7 @@ class User(BaseModel):
     platform_id: Optional[UUID4] = Field(default=None)
     password: str = Field(..., max_length=255)
     email: str = Field(..., max_length=255)
+    identification: str = Field(..., max_length=30)
     first_name: Optional[str] = Field(default=None, max_length=255)
     last_name: Optional[str] = Field(default=None, max_length=255)
     phone: Optional[str] = Field(default=None, max_length=20)
@@ -17,5 +18,5 @@ class User(BaseModel):
 
     def dict(self, *args, **kwargs):
         exclude = kwargs.pop("exclude", set())
-        exclude.update({"created_date", "updated_date"})
+        exclude.update({"created_date", "updated_date", "password"})
         return super().model_dump(*args, exclude=exclude, **kwargs)

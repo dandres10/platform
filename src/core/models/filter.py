@@ -8,6 +8,7 @@ class FilterManager(BaseModel):
     field: str = Field(...)
     condition: CONDITION_TYPE = Field(...)
     value: Any = Field(...)
+    group: Optional[int] = Field(None)
 
 
 class Pagination(BaseModel):

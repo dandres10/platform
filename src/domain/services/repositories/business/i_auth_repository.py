@@ -1,15 +1,24 @@
 from typing import Any, List, Tuple, Union
 from abc import ABC, abstractmethod
 from src.core.models.config import Config
-from src.domain.models.business.auth.auth_currencies_by_location import (
+from src.domain.models.business.auth.create_api_token.create_api_token_request import (
+    CreateApiTokenRequest,
+)
+from src.domain.models.business.auth.create_api_token.create_api_token_response import (
+    CreateApiTokenResponse,
+)
+from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
-from src.domain.models.business.auth.auth_locations import AuthLocations
-from src.domain.models.business.auth.auth_login_request import AuthLoginRequest
-from src.domain.models.business.auth.auth_user_role_and_permissions import (
+from src.domain.models.business.auth.login.auth_locations import AuthLocations
+from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
+from src.domain.models.business.auth.login.auth_login_response import CompanyLoginResponse
+from src.domain.models.business.auth.login.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
 )
-from src.domain.models.business.auth.menu import Menu
+from src.domain.models.business.auth.login.companies_by_user import CompaniesByUser
+from src.domain.models.business.auth.login.menu import Menu
+from src.domain.models.entities.company.company import Company
 
 
 class IAuthRepository(ABC):
@@ -59,4 +68,20 @@ class IAuthRepository(ABC):
     ]:
         pass
 
+    @abstractmethod
+    def create_api_token(
+        self,
+        config: Config,
+        params: CreateApiTokenRequest,
+    ) -> Union[
+        CreateApiTokenResponse,
+        str,
+    ]:
+        pass
 
+    @abstractmethod
+    def companies_by_user(self, config: Config, params: CompaniesByUser) -> Union[
+        List[CompanyLoginResponse],
+        None,
+    ]:
+        pass

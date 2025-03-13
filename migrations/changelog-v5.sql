@@ -1,6 +1,5 @@
---RUN 
---NAME=Marlon Andres Leon Leon
---DESCRIPTION=Crea un pais
+-- liquibase formatted sql
+-- changeset Marlon-Leon:1704821121381-5 insert data country table
 
 INSERT INTO country (
     id, 
@@ -12,19 +11,16 @@ INSERT INTO country (
     updated_date
 )
 VALUES (
-    uuid_generate_v4(),   -- Genera un UUID automáticamente para la columna id
-    'Colombia',           -- Nombre del país
-    'CO',                 -- Código ISO del país
-    '+57',                -- Código telefónico del país
-    TRUE,                 -- Estado (activo)
-    NOW(),                -- Fecha de creación
-    NOW()                 -- Fecha de actualización
+    uuid_generate_v4(),   
+    'Colombia',           
+    'CO',                 
+    '+57',                
+    TRUE,                 
+    NOW(),                
+    NOW()                 
 );
 
 
 
---FIN RUN
+--ROLLBACK DELETE FROM country WHERE code = 'CO';
 
---ROLLBACK
-DELETE FROM country WHERE code = 'CO';
---FIN ROLLBACK

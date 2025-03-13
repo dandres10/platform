@@ -1,11 +1,13 @@
 
-from typing import List, Union
 from pydantic import UUID4
+from datetime import datetime
+from typing import List, Union
 from src.core.config import settings
+from sqlalchemy.future import select
 from src.core.enums.layer import LAYER
-from src.core.methods.get_filter import get_filter
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
+from src.core.methods.get_filter import get_filter
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.entities.translation.index import (
     Translation,
@@ -26,87 +28,83 @@ from src.infrastructure.database.mappers.translation_mapper import (
 class TranslationRepository(ITranslationRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def save(self, config: Config, params: TranslationEntity) -> Union[Translation, None]:
-        db = config.db
-        db.add(params)
-        db.commit()
-        db.refresh(params)
-        return map_to_translation(params)
+    async def save(self, config: Config, params: TranslationEntity) -> Union[Translation, None]:
+        async with config.async_db as db:
+            db.add(params)
+            await db.commit()
+            await db.refresh(params)
+            return map_to_translation(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def update(self, config: Config, params: TranslationUpdate) -> Union[Translation, None]:
-        db = config.db
+    async def update(self, config: Config, params: TranslationUpdate) -> Union[Translation, None]:
+        async with config.async_db as db:
+            stmt = select(TranslationEntity).filter(TranslationEntity.id == params.id)
+            stmt.updated_date = datetime.now()
+            result = await db.execute(stmt)
+            translation = result.scalars().first()
 
-        translation: TranslationEntity = (
-            db.query(TranslationEntity).filter(TranslationEntity.id == params.id).first()
-        )
+            if not translation:
+                return None
 
-        if not translation:
-            return None
+            update_data = params.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(translation, key, value)
 
-        update_data = params.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(translation, key, value)
-
-        db.commit()
-        db.refresh(translation)
-        return map_to_translation(translation)
+            await db.commit()
+            await db.refresh(translation)
+            return map_to_translation(translation)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def list(self, config: Config, params: Pagination) -> Union[List[Translation], None]:
-        db = config.db
-        query = db.query(TranslationEntity)
+    async def list(self, config: Config, params: Pagination) -> Union[List[Translation], None]:
+        async with config.async_db as db:
+            stmt = select(TranslationEntity)
 
-        if params.all_data:
             if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=TranslationEntity
+                stmt = get_filter(
+                    query=stmt, filters=params.filters, entity=TranslationEntity
                 )
-                translations = query.all()
-            else:
-                translations = query.all()
-        else:
-            if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=TranslationEntity
-                )
-                translations = query.offset(params.skip).limit(params.limit).all()
 
-        if not translations:
-            return None
-        return map_to_list_translation(translations)
+            if not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            translations = result.scalars().all()
+
+            if not translations:
+                return None
+            return map_to_list_translation(translations)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def delete(
+    async def delete(
         self,
         config: Config,
         params: TranslationDelete,
     ) -> Union[Translation, None]:
-        db = config.db
-        translation: TranslationEntity = (
-            db.query(TranslationEntity).filter(TranslationEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(TranslationEntity).filter(TranslationEntity.id == params.id)
+            result = await db.execute(stmt)
+            translation = result.scalars().first()
 
-        if not translation:
-            return None
+            if not translation:
+                return None
 
-        db.delete(translation)
-        db.commit()
-        return map_to_translation(translation)
+            await db.delete(translation)
+            await db.commit()
+            return map_to_translation(translation)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def read(
+    async def read(
         self,
         config: Config,
         params: TranslationRead,
     ) -> Union[Translation, None]:
-        db = config.db
-        translation: TranslationEntity = (
-            db.query(TranslationEntity).filter(TranslationEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(TranslationEntity).filter(TranslationEntity.id == params.id)
+            result = await db.execute(stmt)
+            translation = result.scalars().first()
 
-        if not translation:
-            return None
+            if not translation:
+                return None
 
-        return map_to_translation(translation)
+            return map_to_translation(translation)
         

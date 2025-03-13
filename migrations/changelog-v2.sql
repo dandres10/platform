@@ -1,4 +1,6 @@
---RUN
+-- liquibase formatted sql
+-- changeset Marlon-Leon:1704821121381-2 insert data language table
+
 INSERT INTO
     language (
         id,
@@ -19,7 +21,7 @@ VALUES
         NOW (),
         NOW ()
     );
-
+ 
 INSERT INTO
     language (
         id,
@@ -35,21 +37,14 @@ VALUES
         uuid_generate_v4 (),
         'English',
         'en',
-        'English',
+        'Ingles',
         TRUE,
         NOW (),
         NOW ()
     );
 
---FIN RUN
 
---ROLLBACK
-DELETE FROM language
-WHERE
-    code = 'es';
+--ROLLBACK DELETE FROM language WHERE code = 'es'; 
+--ROLLBACK DELETE FROM language WHERE code = 'en';
 
-DELETE FROM language
-WHERE
-    code = 'en';
 
---FIN ROLLBACK

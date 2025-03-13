@@ -5,16 +5,24 @@ from termcolor import colored
 import traceback
 
 
+import asyncio
+import traceback
+import json
+from functools import wraps
+from fastapi import HTTPException
+from termcolor import colored
+
+
 def execute_transaction(layer, enabled=True):
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        async def async_wrapper(*args, **kwargs):
             if not enabled:
                 # Si el decorador está deshabilitado, simplemente ejecuta la función original
-                return func(*args, **kwargs)
+                return await func(*args, **kwargs)
             try:
                 # Ejecutar la función original
-                return func(*args, **kwargs)
+                return await func(*args, **kwargs)
             except Exception as e:
                 # Obtener la clase y el nombre del método
                 class_name = func.__qualname__.split(".")[0]
@@ -98,7 +106,23 @@ def execute_transaction(layer, enabled=True):
                     status_code=500, detail=f"{e}".replace("500:", "").lstrip()
                 )
 
-        return wrapper
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            if not enabled:
+                # Si el decorador está deshabilitado, simplemente ejecuta la función original
+                return func(*args, **kwargs)
+            try:
+                # Ejecutar la función original
+                return func(*args, **kwargs)
+            except Exception as e:
+                # Misma lógica de manejo de errores que async_wrapper
+                ...
+
+        # Detectar si la función es asíncrona
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
 
     return decorator
 
@@ -113,14 +137,14 @@ def string_to_json(text: str):
 
         return json_object
     except json.JSONDecodeError as e:
-        """ print(f"Error al convertir la cadena a JSON: {e}") """
+        """print(f"Error al convertir la cadena a JSON: {e}")"""
         return None
 
 
 def execute_transaction_route(enabled=True):
     def decorator(func):
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def async_wrapper(*args, **kwargs):
             if not enabled:
                 # Si el decorador está deshabilitado, simplemente ejecuta la función original
                 return await func(*args, **kwargs)
@@ -205,6 +229,43 @@ def execute_transaction_route(enabled=True):
                     status_code=500, detail=f"{e}".replace("500:", "").lstrip()
                 )
 
-        return wrapper
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            if not enabled:
+                # Si el decorador está deshabilitado, simplemente ejecuta la función original
+                return func(*args, **kwargs)
+
+            try:
+                # Lógica para funciones síncronas similar a la asíncrona
+                config = kwargs.get("config", None)
+
+                if config is not None and hasattr(config, "request"):
+                    request = config.request
+                else:
+                    request = None
+
+                if request:
+                    body = request.body()  # Síncrono, sin await
+                    formatted_body = (
+                        body.decode("utf-8") if isinstance(body, bytes) else str(body)
+                    )
+
+                    json_body = string_to_json(formatted_body)
+
+                    # Almacenar directamente el objeto JSON si es válido
+                    request.state.body = (
+                        json_body if json_body is not None else formatted_body
+                    )
+
+                return func(*args, **kwargs)
+            except Exception as e:
+                # Manejo de errores similar a async_wrapper
+                ...
+
+        # Detectar si la función es asíncrona
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
 
     return decorator

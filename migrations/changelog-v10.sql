@@ -1,6 +1,6 @@
---RUN 
---NAME=Marlon Andres Leon Leon
---DESCRIPTION=Crea un permiso para la empresa creada
+-- liquibase formatted sql
+-- changeset Marlon-Leon:1704821121381-10 insert data currency table
+
 INSERT INTO
     currency (
         id,
@@ -22,10 +22,6 @@ VALUES
         NOW ()
     );
 
---FIN RUN
---ROLLBACK
-DELETE FROM currency
-WHERE
-    code = 'COP';
 
---FIN ROLLBACK
+--ROLLBACK DELETE FROM currency WHERE code = 'COP';
+

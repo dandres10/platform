@@ -1,11 +1,13 @@
 
-from typing import List, Union
 from pydantic import UUID4
+from datetime import datetime
+from typing import List, Union
 from src.core.config import settings
+from sqlalchemy.future import select
 from src.core.enums.layer import LAYER
-from src.core.methods.get_filter import get_filter
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
+from src.core.methods.get_filter import get_filter
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.entities.country.index import (
     Country,
@@ -26,87 +28,83 @@ from src.infrastructure.database.mappers.country_mapper import (
 class CountryRepository(ICountryRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def save(self, config: Config, params: CountryEntity) -> Union[Country, None]:
-        db = config.db
-        db.add(params)
-        db.commit()
-        db.refresh(params)
-        return map_to_country(params)
+    async def save(self, config: Config, params: CountryEntity) -> Union[Country, None]:
+        async with config.async_db as db:
+            db.add(params)
+            await db.commit()
+            await db.refresh(params)
+            return map_to_country(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def update(self, config: Config, params: CountryUpdate) -> Union[Country, None]:
-        db = config.db
+    async def update(self, config: Config, params: CountryUpdate) -> Union[Country, None]:
+        async with config.async_db as db:
+            stmt = select(CountryEntity).filter(CountryEntity.id == params.id)
+            stmt.updated_date = datetime.now()
+            result = await db.execute(stmt)
+            country = result.scalars().first()
 
-        country: CountryEntity = (
-            db.query(CountryEntity).filter(CountryEntity.id == params.id).first()
-        )
+            if not country:
+                return None
 
-        if not country:
-            return None
+            update_data = params.model_dump(exclude_unset=True)
+            for key, value in update_data.items():
+                setattr(country, key, value)
 
-        update_data = params.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(country, key, value)
-
-        db.commit()
-        db.refresh(country)
-        return map_to_country(country)
+            await db.commit()
+            await db.refresh(country)
+            return map_to_country(country)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def list(self, config: Config, params: Pagination) -> Union[List[Country], None]:
-        db = config.db
-        query = db.query(CountryEntity)
+    async def list(self, config: Config, params: Pagination) -> Union[List[Country], None]:
+        async with config.async_db as db:
+            stmt = select(CountryEntity)
 
-        if params.all_data:
             if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=CountryEntity
+                stmt = get_filter(
+                    query=stmt, filters=params.filters, entity=CountryEntity
                 )
-                countrys = query.all()
-            else:
-                countrys = query.all()
-        else:
-            if params.filters:
-                query = get_filter(
-                    query=query, filters=params.filters, entity=CountryEntity
-                )
-                countrys = query.offset(params.skip).limit(params.limit).all()
 
-        if not countrys:
-            return None
-        return map_to_list_country(countrys)
+            if not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            countrys = result.scalars().all()
+
+            if not countrys:
+                return None
+            return map_to_list_country(countrys)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def delete(
+    async def delete(
         self,
         config: Config,
         params: CountryDelete,
     ) -> Union[Country, None]:
-        db = config.db
-        country: CountryEntity = (
-            db.query(CountryEntity).filter(CountryEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(CountryEntity).filter(CountryEntity.id == params.id)
+            result = await db.execute(stmt)
+            country = result.scalars().first()
 
-        if not country:
-            return None
+            if not country:
+                return None
 
-        db.delete(country)
-        db.commit()
-        return map_to_country(country)
+            await db.delete(country)
+            await db.commit()
+            return map_to_country(country)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    def read(
+    async def read(
         self,
         config: Config,
         params: CountryRead,
     ) -> Union[Country, None]:
-        db = config.db
-        country: CountryEntity = (
-            db.query(CountryEntity).filter(CountryEntity.id == params.id).first()
-        )
+        async with config.async_db as db:
+            stmt = select(CountryEntity).filter(CountryEntity.id == params.id)
+            result = await db.execute(stmt)
+            country = result.scalars().first()
 
-        if not country:
-            return None
+            if not country:
+                return None
 
-        return map_to_country(country)
+            return map_to_country(country)
         

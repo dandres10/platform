@@ -1,6 +1,6 @@
---RUN 
---NAME=Marlon Andres Leon Leon
---DESCRIPTION=Crea las tablas iniciales
+-- liquibase formatted sql
+-- changeset Marlon-Leon:1704821121381-1 create_base_tables
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE
@@ -14,6 +14,8 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
+
+ 
 CREATE TABLE
     currency (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -25,6 +27,8 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
+
+ 
 CREATE TABLE
     country (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -36,6 +40,8 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
+
+ 
 CREATE TABLE
     company (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -47,6 +53,9 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
+
+
+ 
 CREATE TABLE
     location (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -63,6 +72,8 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
+
+ 
 CREATE TABLE
     currency_location (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -74,6 +85,8 @@ CREATE TABLE
         UNIQUE (currency_id, location_id)
     );
 
+
+ 
 CREATE TABLE
     platform (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -86,6 +99,8 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
+
+ 
 CREATE TABLE
     menu (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -101,10 +116,12 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
+
+ 
 CREATE TABLE
     rol (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        company_id UUID REFERENCES company (id) NOT NULL,
+        company_id UUID REFERENCES company (id) NULL,
         name VARCHAR(255) NOT NULL,
         code VARCHAR(255) NOT NULL,
         description TEXT,
@@ -114,10 +131,12 @@ CREATE TABLE
         UNIQUE (company_id, code)
     );
 
+
+ 
 CREATE TABLE
     permission (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
-        company_id UUID REFERENCES company (id) NOT NULL,
+        company_id UUID REFERENCES company (id) NULL,
         name VARCHAR(255) NOT NULL,
         description TEXT,
         state BOOLEAN NOT NULL DEFAULT TRUE,
@@ -125,6 +144,8 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
+
+ 
 CREATE TABLE
     rol_permission (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -135,9 +156,9 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW (),
         UNIQUE (rol_id, permission_id)
     );
+ 
 
-
-
+ 
 CREATE TABLE
     menu_permission (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -149,6 +170,8 @@ CREATE TABLE
         UNIQUE (menu_id, permission_id)
     );
 
+
+ 
 CREATE TABLE
     "user" (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -164,6 +187,8 @@ CREATE TABLE
         updated_date TIMESTAMP NOT NULL DEFAULT NOW ()
     );
 
+
+ 
 CREATE TABLE
     user_location_rol (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -176,6 +201,8 @@ CREATE TABLE
         UNIQUE (user_id, location_id, rol_id)
     );
 
+
+ 
 CREATE TABLE
     translation (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -189,36 +216,22 @@ CREATE TABLE
         UNIQUE (key, language_code, context)
     );
 
---FIN RUN
 
---ROLLBACK
-DROP TABLE IF EXISTS "translation";
 
-DROP TABLE IF EXISTS user_location_rol;
+ 
 
-DROP TABLE IF EXISTS "user";
-
-DROP TABLE IF EXISTS menu_permission;
-
-DROP TABLE IF EXISTS rol_permission;
-
-DROP TABLE IF EXISTS "permission";
-
-DROP TABLE IF EXISTS rol;
-
-DROP TABLE IF EXISTS menu;
-
-DROP TABLE IF EXISTS platform;
-
-DROP TABLE IF EXISTS currency_location;
-
-DROP TABLE IF EXISTS "location";
-
-DROP TABLE IF EXISTS company;
-
-DROP TABLE IF EXISTS country;
-
-DROP TABLE IF EXISTS currency;
-
-DROP TABLE IF EXISTS "language";
---FIN ROLLBACK
+--ROLLBACK DROP TABLE IF EXISTS "translation";
+--ROLLBACK DROP TABLE IF EXISTS user_location_rol; 
+--ROLLBACK DROP TABLE IF EXISTS "user";
+--ROLLBACK DROP TABLE IF EXISTS menu_permission; 
+--ROLLBACK DROP TABLE IF EXISTS rol_permission;
+--ROLLBACK DROP TABLE IF EXISTS "permission";
+--ROLLBACK DROP TABLE IF EXISTS rol;
+--ROLLBACK DROP TABLE IF EXISTS menu;
+--ROLLBACK DROP TABLE IF EXISTS platform;
+--ROLLBACK DROP TABLE IF EXISTS currency_location;
+--ROLLBACK DROP TABLE IF EXISTS "location";
+--ROLLBACK DROP TABLE IF EXISTS company;
+--ROLLBACK DROP TABLE IF EXISTS country;
+--ROLLBACK DROP TABLE IF EXISTS currency;
+--ROLLBACK DROP TABLE IF EXISTS "language";
