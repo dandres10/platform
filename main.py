@@ -14,10 +14,10 @@ app = FastAPI(
     version=settings.project_version,
 )
 
-if settings.app_environment == "production":
+""" if settings.app_environment == "prod":
     app.add_middleware(
         UserRateLimitMiddleware, default_limits=["100/hour"], login_limits=["20/hour"]
-    )
+    ) """
     
 
 app.add_middleware(RedirectToDocsMiddleware)

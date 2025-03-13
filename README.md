@@ -40,7 +40,7 @@ ENV=pc uvicorn main:app --reload
 ### 2. Ejecutar en modo producción
 
 ```bash
-ENV=production uvicorn main:app --reload
+ENV=prod uvicorn main:app --reload
 ```
 
 ### 2. Ejecutar en modo qa
@@ -78,6 +78,15 @@ sudo docker-compose -f docker-compose.local.yml up
 
 ```bash
 sudo docker-compose -f docker-compose.qa.yml up --build
+```
+
+
+### Docker Compose - Ambiente PROD
+
+- **Crear y construir contenedor en QA**:
+
+```bash
+sudo docker-compose -f docker-compose.prod.yml up --build
 ```
 
 

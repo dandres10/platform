@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 env = os.getenv("ENV", "pc")
 if env == "qa":
     load_dotenv(".env.qa")
-elif env == "production":
-    load_dotenv(".env.production")
+elif env == "prod":
+    load_dotenv(".env.prod")
 elif env == "pc":
     load_dotenv(".env.pc")
 
@@ -21,7 +21,6 @@ print("*" * 100)
 
 class Settings(BaseSettings):
     app_name: str = "Platform Management API"
-    database_url: str = os.getenv("DATABASE_URL")
     database_user: str = os.getenv("DATABASE_USER")
     database_password: str = os.getenv("DATABASE_PASSWORD")
     database_name: str = os.getenv("DATABASE_NAME")
