@@ -35,6 +35,7 @@ pip install -r pipfiles.txt
 
 ```bash
 ENV=pc uvicorn main:app --reload
+ENV=pc uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### 2. Ejecutar en modo producción
