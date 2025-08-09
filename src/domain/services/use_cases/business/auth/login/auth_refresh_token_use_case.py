@@ -8,7 +8,9 @@ from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
-from src.domain.models.business.auth.login.auth_initial_user_data import AuthInitialUserData
+from src.domain.models.business.auth.login.auth_initial_user_data import (
+    AuthInitialUserData,
+)
 from src.domain.models.business.auth.login.auth_locations import AuthLocations
 from src.domain.models.business.auth.refresh_token.auth_refresh_token_response import (
     AuthRefreshTokenResponse,
