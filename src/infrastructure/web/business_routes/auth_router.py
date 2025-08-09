@@ -45,7 +45,10 @@ async def logout(config: Config = Depends(get_config)) -> Response:
 
 
 @auth_router.post(
-    "/create-api-token", status_code=status.HTTP_200_OK, response_model=Response, include_in_schema=True
+    "/create-api-token",
+    status_code=status.HTTP_200_OK,
+    response_model=Response,
+    include_in_schema=True,
 )
 @check_permissions([PERMISSION_TYPE.SAVE.value])
 @execute_transaction_route(enabled=settings.has_track)

@@ -170,6 +170,7 @@ class AuthRefreshTokenUseCase:
                 platform_id=user_entity.platform_id,
                 password=user_entity.password,
                 email=user_entity.email,
+                identification=user_entity.identification,
                 first_name=user_entity.first_name,
                 last_name=user_entity.last_name,
                 phone=user_entity.phone,
