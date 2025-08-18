@@ -12,17 +12,20 @@ from src.domain.models.business.auth.login.auth_initial_user_data import (
     AuthInitialUserData,
 )
 from src.domain.models.business.auth.login.auth_locations import AuthLocations
-from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
-from src.domain.models.business.auth.refresh_token.auth_refresh_token_response import (
-    AuthRefreshTokenResponse,
+from src.domain.models.business.auth.login.auth_login_response import (
+    PlatformConfiguration,
+    PlatformVariations,
 )
 from src.domain.models.business.auth.login.auth_user_role_and_permissions import (
     AuthUserRoleAndPermissions,
 )
+from src.domain.models.business.auth.login.companies_by_user import CompaniesByUser
 from src.domain.models.business.auth.login.index import (
+    AuthLoginRequest,
+    AuthLoginResponse,
     AuthMenu,
 )
-from src.domain.models.entities.user.user_read import UserRead
+from src.domain.models.entities.company.company import Company
 from src.domain.models.entities.user.user_update import UserUpdate
 from src.domain.services.use_cases.business.auth.login.auth_currencies_use_case import (
     AuthCurrenciesUseCase,
@@ -36,9 +39,6 @@ from src.domain.services.use_cases.business.auth.login.auth_languages_use_case i
 from src.domain.services.use_cases.business.auth.login.auth_locations_use_case import (
     AuthLocationsUseCase,
 )
-from src.domain.services.use_cases.business.auth.login.auth_login_refresh_token_use_case import (
-    AuthLoginRefreshTokenUseCase,
-)
 from src.domain.services.use_cases.business.auth.login.auth_menu_use_case import (
     AuthMenuUseCase,
 )
@@ -48,11 +48,21 @@ from src.domain.services.use_cases.business.auth.login.auth_user_role_and_permis
 from src.domain.services.use_cases.business.auth.login.auth_validate_user_use_case import (
     AuthValidateUserUseCase,
 )
-from src.domain.services.use_cases.entities.user.user_read_use_case import (
-    UserReadUseCase,
+from src.domain.services.use_cases.business.auth.login.companies_by_user_use_case import (
+    CompaniesByUserUseCase,
 )
 from src.domain.services.use_cases.entities.user.user_update_use_case import (
     UserUpdateUseCase,
+)
+from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
+    map_to_company_login_response,
+    map_to_country_login_response,
+    map_to_currecy_login_response,
+    map_to_language_login_response,
+    map_to_location_login_response,
+    map_to_platform_login_response,
+    map_to_rol_login_response,
+    map_to_user_login_response,
 )
 from src.core.config import settings
 from src.core.classes.token import Token
@@ -64,13 +74,12 @@ from src.infrastructure.database.repositories.entities.user_repository import (
 user_repository = UserRepository()
 
 
-class AuthRefreshTokenUseCase:
+class AuthLoginRefreshTokenUseCase:
     def __init__(
         self,
     ):
         self.auth_validate_user_use_case = AuthValidateUserUseCase()
         self.user_update_use_case = UserUpdateUseCase(user_repository=user_repository)
-        self.user_read_use_case = UserReadUseCase(user_repository=user_repository)
         self.auth_languages_use_case = AuthLanguagesUseCase()
         self.auth_locations_use_case = AuthLocationsUseCase()
         self.auth_currencies_use_case = AuthCurrenciesUseCase()
@@ -79,38 +88,29 @@ class AuthRefreshTokenUseCase:
         self.auth_user_role_and_permissions_use_case = (
             AuthUserRoleAndPermissionsUseCase()
         )
+        self.companies_by_user_use_case = CompaniesByUserUseCase()
         self.message = Message()
         self.token = Token()
-        self.auth_login_refresh_token_use_case = AuthLoginRefreshTokenUseCase()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
         self,
         config: Config,
-    ) -> Union[AuthRefreshTokenResponse, str, None]:
+        params: AuthLoginRequest,
+    ) -> Union[AuthLoginResponse, str, None]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
-        user_read = await self.user_read_use_case.execute(
-            config=config, params=UserRead(id=config.token.user_id)
-        )
-
-        if isinstance(user_read, str):
-            return user_read
-
-        result_login_refresh_token = (
-            await self.auth_login_refresh_token_use_case.execute(
-                config=config,
-                params=AuthLoginRequest(
-                    email=user_read.email, password=user_read.password
-                ),
+        companies_by_user: List[Company] | str = (
+            await self.companies_by_user_use_case.execute(
+                config=config, params=CompaniesByUser(email=params.email)
             )
         )
 
-        if isinstance(result_login_refresh_token, str):
-            return result_login_refresh_token
+        if isinstance(companies_by_user, str):
+            return companies_by_user
 
         initial_user_data = await self.auth_initial_user_data_use_case.execute(
-            config=config, params=AuthInitialUserData(email=user_read.email)
+            config=config, params=AuthInitialUserData(email=params.email)
         )
         if isinstance(initial_user_data, str):
             return initial_user_data
@@ -129,7 +129,7 @@ class AuthRefreshTokenUseCase:
             await self.auth_user_role_and_permissions_use_case.execute(
                 config=config,
                 params=AuthUserRoleAndPermissions(
-                    email=user_read.email, location=location_entity.id
+                    email=params.email, location=location_entity.id
                 ),
             )
         )
@@ -177,10 +177,7 @@ class AuthRefreshTokenUseCase:
             permissions=[permission.name for permission in permissions],
         )
 
-        self.token.refresh_access_token(
-            refresh_token=user_read.refresh_token, data=access_token
-        )
-
+        token = self.token.create_access_token(data=access_token)
         refresh_token = self.token.create_refresh_token(data=access_token)
 
         user_update = await self.user_update_use_case.execute(
@@ -202,10 +199,32 @@ class AuthRefreshTokenUseCase:
         if isinstance(user_update, str):
             return user_update
 
-        result_login_refresh_token.token = refresh_token
-
-        return AuthRefreshTokenResponse(
-            platform_configuration=result_login_refresh_token.platform_configuration,
-            platform_variations=result_login_refresh_token.platform_variations,
-            token=refresh_token,
+        result = AuthLoginResponse(
+            platform_configuration=PlatformConfiguration(
+                user=map_to_user_login_response(user_entity=user_entity),
+                currency=map_to_currecy_login_response(currency_entity=currency_entity),
+                location=map_to_location_login_response(
+                    location_entity=location_entity
+                ),
+                language=map_to_language_login_response(
+                    language_entity=language_entity
+                ),
+                platform=map_to_platform_login_response(
+                    platform_entity=platform_entity
+                ),
+                country=map_to_country_login_response(country_entity=country_entity),
+                company=map_to_company_login_response(company_entity=company_entity),
+                rol=map_to_rol_login_response(rol_entity=rol_q),
+                permissions=permissions,
+                menu=auth_menu,
+            ),
+            platform_variations=PlatformVariations(
+                currencies=currencies,
+                locations=locations,
+                languages=languages,
+                companies=companies_by_user,
+            ),
+            token=token,
         )
+
+        return result
