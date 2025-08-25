@@ -36,17 +36,6 @@ class Settings(BaseSettings):
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "")
     app_environment: str = os.getenv("APP_ENVIRONMENT", "")
 
-    # MCP Service Configuration
-    mcp_base_url: str = os.getenv(
-        "MCP_BASE_URL",
-        "http://backend-platform-prod-env.eba-dddmvypu.us-east-1.elasticbeanstalk.com",
-    )
-    mcp_timeout: float = float(os.getenv("MCP_TIMEOUT", "30.0"))
-    mcp_verify_ssl: bool = os.getenv("MCP_VERIFY_SSL", "true").lower() == "true"
-    mcp_api_key: str = os.getenv("MCP_API_KEY", "")
-    mcp_max_retries: int = int(os.getenv("MCP_MAX_RETRIES", "3"))
-    mcp_retry_delay: float = float(os.getenv("MCP_RETRY_DELAY", "1.0"))
-
     class Config:
         env_file = ".env"
 
