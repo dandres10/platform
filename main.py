@@ -6,6 +6,7 @@ from src.infrastructure.web.routes.route_business import RouteBusiness
 from src.core.middleware.cors_app import CorsAppConfigurator
 from src.core.middleware.redirect_to_docs import RedirectToDocsMiddleware
 from src.infrastructure.web.routes.route_websockets import RouteWebsockets
+from src.infrastructure.web.routes.route_mcps import RouteMCPs
 
 
 app = FastAPI(
@@ -25,3 +26,4 @@ CorsAppConfigurator.setup_cors(app)
 RouteBusiness.set_routes(app)
 Route.set_routes(app)
 RouteWebsockets.set_routes(app)
+RouteMCPs.set_routes(app)
