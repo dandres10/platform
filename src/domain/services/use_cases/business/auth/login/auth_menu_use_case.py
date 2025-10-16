@@ -9,11 +9,19 @@ from src.domain.models.business.auth.login.auth_login_response import MenuLoginR
 from src.domain.models.business.auth.login.auth_menu import AuthMenu
 from src.domain.models.business.auth.login.menu import Menu
 from src.infrastructure.database.entities.menu_entity import MenuEntity
-from src.infrastructure.database.entities.menu_permission_entity import MenuPermissionEntity
-from src.infrastructure.database.repositories.business.auth_repository import AuthRepository
+from src.infrastructure.database.entities.menu_permission_entity import (
+    MenuPermissionEntity,
+)
+from src.infrastructure.database.repositories.business.auth_repository import (
+    AuthRepository,
+)
 from src.core.config import settings
-from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import map_to_menu_response
+from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
+    map_to_menu_response,
+)
 from src.core.classes.async_message import Message
+
+
 class AuthMenuUseCase:
     def __init__(
         self,
@@ -31,7 +39,7 @@ class AuthMenuUseCase:
         str,
     ]:
         config.response_type = RESPONSE_TYPE.OBJECT
-        
+
         menus = await self.auth_repository.menu(
             config=config,
             params=Menu(company=params.company),
@@ -68,7 +76,5 @@ class AuthMenuUseCase:
             for menuu in list_menu_entity
             if menuu.id in menu_ids
         ]
-        
-
 
         return result
