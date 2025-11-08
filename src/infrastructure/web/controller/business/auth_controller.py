@@ -6,9 +6,16 @@ from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.models.message import MessageCoreEntity
 from src.core.models.response import Response
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.create_api_token.create_api_token_request import CreateApiTokenRequest
+from src.domain.models.business.auth.create_api_token.create_api_token_request import (
+    CreateApiTokenRequest,
+)
 from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
-from src.domain.services.use_cases.business.auth.create_api_token.create_api_token_use_case import CreateApiTokenUseCase
+from src.domain.models.business.auth.create_user_internal import (
+    CreateUserInternalRequest,
+)
+from src.domain.services.use_cases.business.auth.create_api_token.create_api_token_use_case import (
+    CreateApiTokenUseCase,
+)
 from src.domain.services.use_cases.business.auth.login.auth_login_use_case import (
     AuthLoginUseCase,
 )
@@ -17,6 +24,9 @@ from src.domain.services.use_cases.business.auth.login.auth_logout_use_case impo
 )
 from src.domain.services.use_cases.business.auth.login.auth_refresh_token_use_case import (
     AuthRefreshTokenUseCase,
+)
+from src.domain.services.use_cases.business.auth.create_user_internal import (
+    CreateUserInternalUseCase,
 )
 
 
@@ -27,6 +37,7 @@ class AuthController:
         self.auth_refresh_token_use_case = AuthRefreshTokenUseCase()
         self.auth_logout_use_case = AuthLogoutUseCase()
         self.create_api_token_use_case = CreateApiTokenUseCase()
+        self.create_user_internal_use_case = CreateUserInternalUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -72,11 +83,14 @@ class AuthController:
                 ),
             ),
         )
-        
-        
+
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
-    async def create_api_token(self, params: CreateApiTokenRequest, config: Config) -> Response:
-        result = await self.create_api_token_use_case.execute(config=config, params=params)
+    async def create_api_token(
+        self, params: CreateApiTokenRequest, config: Config
+    ) -> Response:
+        result = await self.create_api_token_use_case.execute(
+            config=config, params=params
+        )
         if isinstance(result, str):
             return Response.error(None, result)
         return Response.success_temporary_message(
@@ -85,6 +99,27 @@ class AuthController:
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_SAVED_INFORMATION.value
+                ),
+            ),
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def create_user_internal(
+        self, config: Config, params: CreateUserInternalRequest
+    ) -> Response:
+        result = await self.create_user_internal_use_case.execute(
+            config=config, params=params
+        )
+
+        if isinstance(result, str):
+            return Response.error(message=result)
+
+        return Response.success_temporary_message(
+            response=None,
+            message=await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.AUTH_CREATE_USER_SUCCESS.value
                 ),
             ),
         )

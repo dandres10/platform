@@ -10,7 +10,7 @@ class PlatformEntity(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, server_default=text('uuid_generate_v4()'))
     language_id = Column(UUID(as_uuid=True), nullable=False)
-    location_id = Column(UUID(as_uuid=True), nullable=False)
+    location_id = Column(UUID(as_uuid=True), nullable=True)
     currency_id = Column(UUID(as_uuid=True), nullable=False)
     token_expiration_minutes = Column(Integer, nullable=False, server_default=text('60'))
     refresh_token_expiration_minutes = Column(Integer, nullable=False, server_default=text('62'))

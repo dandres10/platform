@@ -1,5 +1,12 @@
 # Especificación de Servicios List y Sistema de Filtros
 
+**Versión**: 1.1  
+**Fecha**: Noviembre 2024  
+**Estado**: Vigente  
+**Autor(es)**: Equipo de Desarrollo Goluti
+
+---
+
 ## Tabla de Contenidos
 1. [Introducción](#introducción)
 2. [Arquitectura de Servicios List](#arquitectura-de-servicios-list)
@@ -9,9 +16,13 @@
 6. [Referencia de API](#referencia-de-api)
 7. [Casos de Uso Comunes](#casos-de-uso-comunes)
 
+---
+
 ## Introducción
 
 Los servicios de tipo `list` en la plataforma Goluti proporcionan funcionalidad de consulta y listado de entidades con capacidades avanzadas de filtrado, paginación y ordenamiento. Estos servicios siguen una arquitectura consistente basada en Clean Architecture y Domain-Driven Design.
+
+---
 
 ## Arquitectura de Servicios List
 
@@ -44,6 +55,8 @@ HTTP Response ← Response Wrapper ← Domain Entity ← Database Result
 - **Responsabilidad**: Acceso a datos y aplicación de filtros
 - **Método**: `list(config: Config, params: Pagination)`
 
+---
+
 ## Estructura de Respuesta
 
 ### Tipo de Retorno de Use Cases
@@ -72,6 +85,8 @@ Dependiendo de `config.response_type`:
 
 - **`RESPONSE_TYPE.OBJECT`** (por defecto): Objetos Pydantic
 - **`RESPONSE_TYPE.DICT`**: Diccionarios Python
+
+---
 
 ## Sistema de Filtros
 
@@ -139,6 +154,8 @@ filters = [
 - Solo se aplican filtros a **campos válidos** de la entidad
 - Los campos se validan usando SQLAlchemy introspection
 - Filtros con campos inválidos se ignoran silenciosamente
+
+---
 
 ## Ejemplos Prácticos
 
@@ -291,6 +308,8 @@ POST /language/list
 }
 ```
 
+---
+
 ## Referencia de API
 
 ### Entidades Disponibles
@@ -336,6 +355,8 @@ Todos los endpoints de list requieren el permiso:
 ```
 PERMISSION_TYPE.LIST.value
 ```
+
+---
 
 ## Casos de Uso Comunes
 
@@ -437,6 +458,8 @@ POST /translation/list
 }
 ```
 
+---
+
 ## Consideraciones de Rendimiento
 
 ### Mejores Prácticas
@@ -451,6 +474,8 @@ POST /translation/list
 - **Límite por defecto**: 100 registros si no se especifica `limit`
 - **Límite máximo**: 1000 registros por petición
 - **Timeout**: 30 segundos para consultas complejas
+
+---
 
 ## Manejo de Errores
 
@@ -471,6 +496,8 @@ POST /translation/list
   "response": null
 }
 ```
+
+---
 
 ## Extensibilidad
 
@@ -495,6 +522,22 @@ Para agregar un nuevo tipo de condición:
 
 ---
 
-**Versión**: 1.0  
-**Fecha**: Octubre 2024  
-**Autor**: Equipo de Desarrollo Goluti
+## Referencias
+
+- **[02-00] Entity Flow Overview**: Documentación completa del flujo de entidades
+- **[04-05] Core Models**: Modelos Filter y Pagination
+- **[04-06] Core Utilities**: Método get_filter()
+
+---
+
+## Historial de Cambios
+
+| Versión | Fecha | Cambios | Autor |
+|---------|-------|---------|-------|
+| 1.0 | Oct 2024 | Versión inicial | Equipo Dev |
+| 1.1 | Nov 2024 | Reorganización en nueva estructura de docs | Equipo Dev |
+
+---
+
+**Fin del Documento**
+
