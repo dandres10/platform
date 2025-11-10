@@ -34,6 +34,14 @@ from src.domain.services.use_cases.business.auth.create_user_internal import (
 from src.domain.services.use_cases.business.auth.create_user_external import (
     CreateUserExternalUseCase,
 )
+from src.core.models.filter import Pagination
+from typing import List
+from src.domain.models.business.auth.list_users_by_location import (
+    UserByLocationItem
+)
+from src.domain.services.use_cases.business.auth.users_internal import (
+    UsersInternalUseCase,
+)
 
 
 class AuthController:
@@ -45,6 +53,7 @@ class AuthController:
         self.create_api_token_use_case = CreateApiTokenUseCase()
         self.create_user_internal_use_case = CreateUserInternalUseCase()
         self.create_user_external_use_case = CreateUserExternalUseCase()
+        self.users_internal_use_case = UsersInternalUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -148,6 +157,38 @@ class AuthController:
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.AUTH_CREATE_USER_EXTERNAL_SUCCESS.value
+                ),
+            ),
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def users_internal(
+        self, 
+        config: Config, 
+        params: Pagination
+    ) -> Response[List[UserByLocationItem]]:
+        result = await self.users_internal_use_case.execute(
+            config=config, 
+            params=params
+        )
+        
+        if not result:
+            return Response.success_temporary_message(
+                response=[],
+                message=await self.message.get_message(
+                    config=config,
+                    message=MessageCoreEntity(
+                        key=KEYS_MESSAGES.CORE_NO_RESULTS_FOUND.value
+                    ),
+                ),
+            )
+        
+        return Response.success_temporary_message(
+            response=result,
+            message=await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.CORE_QUERY_MADE.value
                 ),
             ),
         )

@@ -1,8 +1,8 @@
 # Flujo de Creación de Usuario Interno (Create User Internal)
 
-**Versión**: 1.0  
+**Versión**: 1.7  
 **Fecha**: Noviembre 2024  
-**Estado**: En Desarrollo  
+**Estado**: Especificado  
 **Autor(es)**: Equipo de Desarrollo Goluti  
 **Responsable**: [Nombre del líder técnico]
 
@@ -69,7 +69,9 @@ Actualmente, crear un usuario interno requiere múltiples llamadas a diferentes 
 2. `POST /user` - Crear usuario
 3. `POST /user_location_rol` - Asignar rol (una vez por cada ubicación)
 
-Este flujo unifica todo en una sola operación atómica, garantizando consistencia y simplificando el proceso. Además, permite asignar el usuario a múltiples ubicaciones con roles específicos para cada una.
+Este flujo unifica todo en una sola operación atómica, garantizando consistencia y simplificando el proceso. Además, permite asignar el usuario a múltiples ubicaciones, con un rol específico para cada ubicación.
+
+**Regla de Negocio Importante**: Un usuario interno puede tener **UN SOLO rol por ubicación**. La combinación `(user_id, location_id)` debe ser única en la tabla `user_location_rol`.
 
 ### Beneficios Esperados
 
@@ -77,8 +79,8 @@ Este flujo unifica todo en una sola operación atómica, garantizando consistenc
 - ✅ Garantía de atomicidad (todo o nada)
 - ✅ Reducción de errores por proceso manual
 - ✅ Validaciones centralizadas
-- ✅ Soporte para múltiples ubicaciones con roles diferentes
-- ✅ Flexibilidad: un usuario puede ser admin en una ubicación y operador en otra
+- ✅ Soporte para múltiples ubicaciones (una ubicación = un rol)
+- ✅ Flexibilidad: un usuario puede ser admin en una ubicación y operador en OTRA ubicación diferente
 - ✅ Mejor experiencia para administradores
 
 ---
@@ -332,7 +334,7 @@ Content-Type: application/json
 **Nota importante sobre `location_rol`:**
 - Es una lista que puede contener múltiples combinaciones de location_id y rol_id
 - Permite asignar al usuario a varias ubicaciones con roles específicos
-- **Puede repetirse el mismo location_id** pero con **rol_id diferente** (ej: un usuario puede ser ADMIN y AUDITOR en la misma ubicación)
+- **NO puede repetirse el mismo location_id** en la lista - cada combinación `(location_id, rol_id)` debe ser única, y un usuario solo puede tener UN rol por ubicación
 - **No se permiten duplicados exactos** de la combinación (location_id, rol_id)
 - La lista **no puede estar vacía** (mínimo 1 asignación)
 
@@ -1239,9 +1241,9 @@ curl -X POST https://api.goluti.com/auth/create-user-internal \
 }
 ```
 
-### Caso de Uso 2: Usuario con Misma Ubicación pero Diferentes Roles
+### Caso de Uso 2: Usuario en Múltiples Ubicaciones (Diferentes)
 
-**Escenario**: Juan será administrador Y auditor en la misma Sede Principal.
+**Escenario**: María será administradora en la Sede Principal Y operadora en la Sucursal Norte.
 
 **Request:**
 ```bash
@@ -1258,16 +1260,16 @@ curl -X POST https://api.goluti.com/auth/create-user-internal \
         "rol_id": "880e8400-e29b-41d4-a716-446655440000"
       },
       {
-        "location_id": "660e8400-e29b-41d4-a716-446655440000",
+        "location_id": "770e8400-e29b-41d4-a716-446655440099",
         "rol_id": "990e8400-e29b-41d4-a716-446655440000"
       }
     ],
-    "email": "juan.perez@goluti.com",
+    "email": "maria.lopez@goluti.com",
     "password": "SecurePass123!",
-    "identification": "12345678",
-    "first_name": "Juan",
-    "last_name": "Pérez",
-    "phone": "+573001234567"
+    "identification": "87654321",
+    "first_name": "María",
+    "last_name": "López",
+    "phone": "+573007654321"
   }'
 ```
 
@@ -1281,9 +1283,9 @@ curl -X POST https://api.goluti.com/auth/create-user-internal \
 }
 ```
 
-**Nota**: Juan puede tener ambos roles en la misma ubicación.
+**Nota**: María tiene roles en DIFERENTES ubicaciones (Sede Principal y Sucursal Norte). Un usuario solo puede tener UN rol por ubicación.
 
-### Caso de Uso 3: Error - Combinación Duplicada
+### Caso de Uso 3: Error - Misma Ubicación (NO Permitido)
 
 **Request:**
 ```bash
@@ -1405,8 +1407,8 @@ async def test_create_user_internal_success_multiple_locations(mock_config):
     assert len(result.assigned_roles) == 2
 
 @pytest.mark.asyncio
-async def test_create_user_internal_same_location_different_roles(mock_config):
-    """Test usuario con múltiples roles en la misma ubicación"""
+async def test_create_user_internal_same_location_different_roles_should_fail(mock_config):
+    """Test error: NO se permite múltiples roles en la misma ubicación"""
     request = CreateUserInternalRequest(
         language_id="lang-uuid",
         currency_id="curr-uuid",
@@ -1424,10 +1426,8 @@ async def test_create_user_internal_same_location_different_roles(mock_config):
     use_case = CreateUserInternalUseCase()
     result = await use_case.execute(config=mock_config, params=request)
     
-    assert result is not None
-    assert not isinstance(result, str)
-    assert len(result.assigned_roles) == 2
-    assert result.assigned_roles[0].location.id == result.assigned_roles[1].location.id
+    assert isinstance(result, str)
+    assert "duplicada" in result.lower() or "misma ubicación" in result.lower()
 
 @pytest.mark.asyncio
 async def test_create_user_internal_duplicate_combination(mock_config):
@@ -1555,8 +1555,8 @@ async def test_create_user_internal_forbidden_non_admin(client: TestClient, user
   - 1 registro en `platform`
   - 1 registro en `user`
   - N registros en `user_location_rol` (según la cantidad en `location_rol`)
-- ✅ Probar escenario de múltiples ubicaciones con diferentes roles
-- ✅ Probar escenario de misma ubicación con diferentes roles
+- ✅ Probar escenario de múltiples ubicaciones (DIFERENTES ubicaciones con roles específicos)
+- ✅ Probar validación que impide asignar múltiples roles en la MISMA ubicación (debe fallar)
 - ✅ Validar que el rollback funciona si falla cualquier asignación
 - ✅ Validar restricción de rol ADMIN
 - ✅ Validar permisos SAVE
@@ -1578,12 +1578,13 @@ async def test_create_user_internal_forbidden_non_admin(client: TestClient, user
 | Versión | Fecha | Cambios | Autor |
 |---------|-------|---------|-------|
 | 1.0 | Nov 2024 | Creación inicial de especificación | Equipo de Desarrollo Goluti |
-| 1.1 | Nov 2024 | Actualización para soportar múltiples asignaciones de ubicación-rol mediante lista `location_rol`. Permite asignar usuario a múltiples ubicaciones con roles diferentes, o misma ubicación con múltiples roles. | Equipo de Desarrollo Goluti |
+| 1.1 | Nov 2024 | Actualización para soportar múltiples asignaciones de ubicación-rol mediante lista `location_rol`. Permite asignar usuario a múltiples ubicaciones diferentes, con un rol específico por ubicación. **Regla de negocio**: Un usuario solo puede tener UN rol por ubicación. | Equipo de Desarrollo Goluti |
 | 1.2 | Nov 2024 | Especificación de restricción de acceso: solo usuarios con rol ADMIN pueden consumir este endpoint. Actualización de validaciones de seguridad y manejo de errores 403. | Equipo de Desarrollo Goluti |
 | 1.3 | Nov 2024 | Integración del sistema de traducciones del proyecto. Todos los mensajes de error ahora usan `KEYS_MESSAGES` y `Message().get_message()`. Definición de 8 nuevas claves de traducción con soporte para ES/EN. | Equipo de Desarrollo Goluti |
 | 1.4 | Nov 2024 | Simplificación de respuesta: el endpoint retorna solo mensaje de éxito con `response: null`. Eliminación del modelo `CreateUserInternalResponse` y clases auxiliares. El use case retorna directamente el mensaje traducido. | Equipo de Desarrollo Goluti |
 | 1.5 | Nov 2024 | Eliminación de todos los comentarios del código. Código limpio sin comentarios para producción. Corrección de mensajes hardcodeados para usar sistema de traducciones consistentemente. Response tipado como `Response[None]`. Documentación de estructura espejo de tests. | Equipo de Desarrollo Goluti |
 | 1.6 | Nov 2024 | Actualización del patrón Controller/Use Case: el use case ahora retorna `Union[str, None]` (None en éxito, str en error). El Controller maneja el mensaje de éxito usando `KEYS_MESSAGES.AUTH_CREATE_USER_SUCCESS`. Eliminación del parámetro `{count}` del mensaje de éxito. Documentación completa del Controller. | Equipo de Desarrollo Goluti |
+| 1.7 | Nov 2024 | **Aclaración crítica de regla de negocio**: Un usuario interno puede tener UN SOLO rol por ubicación. La combinación `(user_id, location_id)` debe ser única en `user_location_rol`. Actualización de ejemplos, tests y validaciones para reflejar esta restricción. Eliminación de ejemplos que mostraban múltiples roles en la misma ubicación. | Equipo de Desarrollo Goluti |
 
 ---
 

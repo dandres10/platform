@@ -112,6 +112,7 @@ Documentación de desarrollos nuevos, flujos específicos e integraciones.
 **Flujos Implementados:**
 - **[Create User Internal](./07-flows/07-01-create-user-internal-flow.md)**: Creación de usuarios internos con múltiples roles por ubicación (requiere rol ADMIN)
 - **[Create User External](./07-flows/07-02-create-user-external-flow.md)**: Registro público de usuarios externos sin roles corporativos (endpoint público)
+- **[List Users by Location](./07-flows/07-03-list-users-by-location-flow.md)**: Consulta paginada de usuarios internos por ubicación (`/auth/users-internal`) con JOINs y filtros avanzados
 
 **Ejemplos Sugeridos:**
 - Onboarding de clientes

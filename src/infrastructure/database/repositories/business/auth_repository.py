@@ -3,13 +3,18 @@ from src.core.config import settings
 from src.core.enums.layer import LAYER
 from sqlalchemy.future import select
 from src.core.models.config import Config
+from src.core.models.filter import Pagination
 from src.core.wrappers.execute_transaction import execute_transaction
+from src.core.methods.apply_memory_filters import apply_memory_filters
+from src.core.methods.build_alias_map import build_alias_map
+
 from src.domain.models.business.auth.create_api_token.create_api_token_request import (
     CreateApiTokenRequest,
 )
 from src.domain.models.business.auth.create_api_token.create_api_token_response import (
     CreateApiTokenResponse,
 )
+from src.domain.models.business.auth.list_users_by_location import UserByLocationItem
 from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
@@ -51,6 +56,9 @@ from src.infrastructure.database.mappers.company_mapper import map_to_list_compa
 from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_company_login_response,
 )
+from src.infrastructure.database.repositories.business.mappers.auth.users_internal import (
+    map_to_user_by_location_item,
+)
 
 
 class AuthRepository(IAuthRepository):
@@ -68,7 +76,7 @@ class AuthRepository(IAuthRepository):
         ],
         None,
     ]:
-        async with config.async_db as db:  # Usar AsyncSession de config
+        async with config.async_db as db:
             stmt = (
                 select(
                     PlatformEntity,
@@ -260,7 +268,7 @@ class AuthRepository(IAuthRepository):
             stmt = (
                 select(CompanyEntity)
                 .join(
-                    LocationEntity,  # Agregar LocationEntity a los JOIN
+                    LocationEntity,
                     CompanyEntity.id == LocationEntity.company_id,
                 )
                 .join(
@@ -287,3 +295,61 @@ class AuthRepository(IAuthRepository):
             ]
 
             return companies
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def users_internal(
+        self, config: Config, params: Pagination
+    ) -> Union[List[UserByLocationItem], None]:
+        async with config.async_db as db:
+            stmt = (
+                select(
+                    UserLocationRolEntity.id.label("user_location_rol_id"),
+                    UserLocationRolEntity.location_id.label("location_id"),
+                    UserEntity.id.label("user_id"),
+                    UserEntity.email,
+                    UserEntity.identification,
+                    UserEntity.first_name,
+                    UserEntity.last_name,
+                    UserEntity.phone,
+                    UserEntity.state.label("user_state"),
+                    UserEntity.created_date.label("user_created_date"),
+                    UserEntity.updated_date.label("user_updated_date"),
+                    RolEntity.id.label("rol_id"),
+                    RolEntity.name.label("rol_name"),
+                    RolEntity.code.label("rol_code"),
+                    RolEntity.description.label("rol_description"),
+                )
+                .join(UserEntity, UserLocationRolEntity.user_id == UserEntity.id)
+                .join(RolEntity, UserLocationRolEntity.rol_id == RolEntity.id)
+                .filter(UserLocationRolEntity.state == True)
+                .order_by(UserEntity.first_name, UserEntity.last_name)
+            )
+
+            if not params.filters and not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            results = result.all()
+
+            if not results:
+                return None
+
+            users_internal: List[UserByLocationItem] = [
+                map_to_user_by_location_item(row) for row in results
+            ]
+
+            if params.filters:
+                alias_map = build_alias_map(response_class=UserByLocationItem)
+
+                users_internal = [
+                    user
+                    for user in users_internal
+                    if apply_memory_filters(user, params.filters, alias_map)
+                ]
+
+                if not params.all_data:
+                    skip = params.skip if params.skip is not None else 0
+                    limit = params.limit if params.limit is not None else 10
+                    users_internal = users_internal[skip : skip + limit]
+
+            return users_internal
