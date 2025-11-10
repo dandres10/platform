@@ -1,6 +1,6 @@
 # Flujos de Desarrollo - Overview
 
-**Versión**: 1.1  
+**Versión**: 1.2  
 **Fecha**: Noviembre 2024  
 **Estado**: Vigente  
 **Autor(es)**: Equipo de Desarrollo Goluti
@@ -561,9 +561,108 @@ async def test_flow_validation_error():
 
 ---
 
-### Ejemplo Sugerido 3: Onboarding de Clientes
+### Flujo Implementado 3: List Users by Location ✅
 
-**Archivo**: `07-03-onboarding-flow.md`
+**Archivo**: `07-03-list-users-by-location-flow.md`
+
+**Estado**: Especificado (Versión 1.0)
+
+**Contenido**:
+- **Usa directamente clase `Pagination` del core** (no crea request personalizado - reutilización)
+- Query con JOINs entre `user_location_rol`, `user` y `rol`
+- **⚡ Optimización de paginación dual**:
+  - Sin filtros → Paginación en SQL (`offset/limit`) - más eficiente
+  - Con filtros → Paginación en memoria (después de filtrar)
+- Sistema de filtros **flexible y genérico** usando `filters` de `Pagination`
+- **El desarrollador puede filtrar por CUALQUIER campo del response** (`UserByLocationItem`)
+- `location_id` es **opcional**, se filtra mediante `filters` si se necesita
+- Todos los 15 campos retornados son filtrables: UUIDs, strings, boolean, fechas
+- Retorna información completa del usuario (sin password) + rol
+- **Un usuario tiene UN SOLO rol por ubicación** (constraint único)
+- Requiere autenticación y permiso READ
+
+**Características Destacadas**:
+- **Reutilización de Código**: Usa directamente `Pagination` del core sin crear modelo personalizado
+- **⚡ Optimización Dual**: Paginación en SQL (sin filtros) o en memoria (con filtros) según el caso
+- **Flexibilidad Total**: El desarrollador puede filtrar por cualquier campo sin restricciones
+- **Performance**: Query optimizado con JOINs directos + paginación inteligente
+- **Seguridad**: Password nunca se expone
+- **Patrón Consistente**: Usa `apply_memory_filters` y `build_alias_map` (patrón del proyecto)
+- **Escalabilidad**: Paginación adaptativa para grandes volúmenes
+
+**Tecnología**:
+- SQLAlchemy con JOINs directos (sin N+1 queries)
+- **Paginación dual adaptativa**:
+  - Sin filtros → `stmt.offset().limit()` en SQL (óptimo)
+  - Con filtros → Paginación en memoria después de filtrar
+- Filtros usando `apply_memory_filters` y `build_alias_map`
+
+**Endpoint**: `POST /auth/users-internal`
+
+**Ejemplo de Request 1 - Por ubicación (paginado)**:
+```json
+{
+  "skip": 0,
+  "limit": 10,
+  "filters": [
+    {
+      "field": "location_id",
+      "condition": "equals",
+      "value": "660e8400-e29b-41d4-a716-446655440000"
+    }
+  ]
+}
+```
+
+**Ejemplo de Request 2 - Todos los ADMIN del sistema**:
+```json
+{
+  "all_data": true,
+  "filters": [
+    {
+      "field": "rol_code",
+      "condition": "equals",
+      "value": "ADMIN"
+    }
+  ]
+}
+```
+
+**Ejemplo de Response**:
+```json
+{
+  "response": [
+    {
+      "user_location_rol_id": "uuid-1",
+      "location_id": "location-uuid",
+      "user_id": "user-uuid-1",
+      "email": "juan@goluti.com",
+      "first_name": "Juan",
+      "last_name": "Pérez",
+      "rol_id": "rol-uuid-1",
+      "rol_name": "Administrador",
+      "rol_code": "ADMIN"
+    },
+    {
+      "user_location_rol_id": "uuid-2",
+      "location_id": "location-uuid",
+      "user_id": "user-uuid-2",
+      "email": "maria@goluti.com",
+      "first_name": "María",
+      "last_name": "López",
+      "rol_id": "rol-uuid-2",
+      "rol_name": "Operador",
+      "rol_code": "OPERATOR"
+    }
+  ]
+}
+```
+
+---
+
+### Ejemplo Sugerido 4: Onboarding de Clientes
+
+**Archivo**: `07-04-onboarding-flow.md`
 
 **Contenido**:
 - Registro inicial del cliente
@@ -573,9 +672,9 @@ async def test_flow_validation_error():
 - Activación de cuenta
 - Notificaciones
 
-### Ejemplo Sugerido 4: Flujo de Pagos
+### Ejemplo Sugerido 5: Flujo de Pagos
 
-**Archivo**: `07-04-payment-flow.md`
+**Archivo**: `07-05-payment-flow.md`
 
 **Contenido**:
 - Integración con pasarela de pagos
@@ -585,9 +684,9 @@ async def test_flow_validation_error():
 - Conciliación bancaria
 - Generación de comprobantes
 
-### Ejemplo Sugerido 5: Sistema de Notificaciones
+### Ejemplo Sugerido 6: Sistema de Notificaciones
 
-**Archivo**: `07-05-notification-system-flow.md`
+**Archivo**: `07-06-notification-system-flow.md`
 
 **Contenido**:
 - Tipos de notificaciones (email, SMS, push)
@@ -705,6 +804,7 @@ Al cambiar el estado de un flujo:
 |---------|-------|---------|-------|
 | 1.0 | Nov 2024 | Creación inicial de carpeta Flows. Documentación de Flujo 1: Create User Internal | Equipo de Desarrollo Goluti |
 | 1.1 | Nov 2024 | Agregado Flujo 2: Create User External. Endpoint público para crear usuarios externos sin roles corporativos. Platform sin ubicación (location_id = null) | Equipo de Desarrollo Goluti |
+| 1.2 | Nov 2024 | Agregado Flujo 3: List Users by Location. Endpoint: `/auth/users-internal`. **Usa directamente clase `Pagination` del core** sin crear request personalizado (reutilización de código). **⚡ Optimización de paginación dual**: Sin filtros → Paginación en SQL (`offset/limit`); Con filtros → Paginación en memoria (después de filtrar). Sistema de filtros flexible y genérico - **el desarrollador puede filtrar por CUALQUIER campo del response** (15 campos filtrables). `location_id` es opcional, se filtra mediante `filters`. Query con JOINs. Filtros aplicados en memoria usando `apply_memory_filters` y `build_alias_map`. Password excluido. Regla de negocio: Un usuario tiene UN SOLO rol por ubicación. | Equipo de Desarrollo Goluti |
 
 ---
 
