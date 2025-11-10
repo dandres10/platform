@@ -23,6 +23,9 @@ from src.domain.models.business.auth.refresh_token.auth_refresh_token_response i
 from src.domain.models.business.auth.create_user_internal import (
     CreateUserInternalRequest,
 )
+from src.domain.models.business.auth.create_user_external import (
+    CreateUserExternalRequest,
+)
 from src.infrastructure.web.controller.business.auth_controller import AuthController
 from src.core.methods.get_config import get_config, get_config_login
 
@@ -92,3 +95,16 @@ async def create_user_internal(
     params: CreateUserInternalRequest, config: Config = Depends(get_config)
 ) -> Response:
     return await auth_controller.create_user_internal(config=config, params=params)
+
+
+@auth_router.post(
+    "/create-user-external",
+    status_code=status.HTTP_200_OK,
+    response_model=Response
+)
+@execute_transaction_route(enabled=settings.has_track)
+async def create_user_external(
+    params: CreateUserExternalRequest,
+    config: Config = Depends(get_config_login)
+) -> Response:
+    return await auth_controller.create_user_external(config=config, params=params)

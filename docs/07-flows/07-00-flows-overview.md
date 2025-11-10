@@ -1,6 +1,6 @@
 # Flujos de Desarrollo - Overview
 
-**Versión**: 1.0  
+**Versión**: 1.1  
 **Fecha**: Noviembre 2024  
 **Estado**: Vigente  
 **Autor(es)**: Equipo de Desarrollo Goluti
@@ -517,9 +517,53 @@ async def test_flow_validation_error():
 
 ---
 
-### Ejemplo Sugerido 2: Onboarding de Clientes
+### Flujo Implementado 2: Create User External ✅
 
-**Archivo**: `07-02-onboarding-flow.md`
+**Archivo**: `07-02-create-user-external-flow.md`
+
+**Estado**: Especificado (Versión 1.0)
+
+**Contenido**:
+- Creación de usuario externo (público) sin roles corporativos
+- Validaciones de referencias (language, currency)
+- Validación de unicidad de email
+- Validación de unicidad de identification
+- Creación de Platform **sin ubicación** (`location_id = null`)
+- Creación de User con hash de password
+- **Sin asignación de roles** (usuarios públicos)
+- Endpoint público (sin autenticación requerida)
+
+**Características Destacadas**:
+- **Simplicidad**: No requiere información corporativa
+- **Público**: Endpoint sin autenticación para registro abierto
+- **Flexible**: Platform sin ubicación permite uso global
+- **Seguro**: Validaciones estrictas de unicidad (email + identification)
+
+**Use Cases Involucrados**:
+- Validación: LanguageReadUseCase, CurrencyReadUseCase, UserListUseCase (email), UserListUseCase (identification)
+- Creación: PlatformSaveUseCase, UserSaveUseCase
+
+**Endpoint**: `POST /auth/create-user-external`
+
+**Ejemplo de Request**:
+```json
+{
+  "language_id": "550e8400-e29b-41d4-a716-446655440000",
+  "currency_id": "770e8400-e29b-41d4-a716-446655440000",
+  "email": "usuario@example.com",
+  "password": "SecurePassword123!",
+  "identification": "12345678",
+  "first_name": "Juan",
+  "last_name": "Pérez",
+  "phone": "+573001234567"
+}
+```
+
+---
+
+### Ejemplo Sugerido 3: Onboarding de Clientes
+
+**Archivo**: `07-03-onboarding-flow.md`
 
 **Contenido**:
 - Registro inicial del cliente
@@ -529,9 +573,9 @@ async def test_flow_validation_error():
 - Activación de cuenta
 - Notificaciones
 
-### Ejemplo Sugerido 3: Flujo de Pagos
+### Ejemplo Sugerido 4: Flujo de Pagos
 
-**Archivo**: `07-03-payment-flow.md`
+**Archivo**: `07-04-payment-flow.md`
 
 **Contenido**:
 - Integración con pasarela de pagos
@@ -541,9 +585,9 @@ async def test_flow_validation_error():
 - Conciliación bancaria
 - Generación de comprobantes
 
-### Ejemplo Sugerido 4: Sistema de Notificaciones
+### Ejemplo Sugerido 5: Sistema de Notificaciones
 
-**Archivo**: `07-04-notification-system-flow.md`
+**Archivo**: `07-05-notification-system-flow.md`
 
 **Contenido**:
 - Tipos de notificaciones (email, SMS, push)
@@ -659,7 +703,8 @@ Al cambiar el estado de un flujo:
 
 | Versión | Fecha | Cambios | Autor |
 |---------|-------|---------|-------|
-| 1.0 | Nov 2024 | Creación inicial de carpeta Flows | Equipo de Desarrollo Goluti |
+| 1.0 | Nov 2024 | Creación inicial de carpeta Flows. Documentación de Flujo 1: Create User Internal | Equipo de Desarrollo Goluti |
+| 1.1 | Nov 2024 | Agregado Flujo 2: Create User External. Endpoint público para crear usuarios externos sin roles corporativos. Platform sin ubicación (location_id = null) | Equipo de Desarrollo Goluti |
 
 ---
 

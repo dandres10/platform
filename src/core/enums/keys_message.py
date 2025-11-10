@@ -20,3 +20,9 @@ class KEYS_MESSAGES(str, Enum):
     AUTH_CREATE_USER_DUPLICATE_COMBINATION = "auth_create_user_duplicate_combination"
     AUTH_CREATE_USER_EMAIL_ALREADY_EXISTS = "auth_create_user_email_already_exists"
     AUTH_CREATE_USER_SUCCESS = "auth_create_user_success"
+    
+    AUTH_CREATE_USER_EXTERNAL_LANGUAGE_NOT_FOUND = "auth_create_user_external_language_not_found"
+    AUTH_CREATE_USER_EXTERNAL_CURRENCY_NOT_FOUND = "auth_create_user_external_currency_not_found"
+    AUTH_CREATE_USER_EXTERNAL_EMAIL_ALREADY_EXISTS = "auth_create_user_external_email_already_exists"
+    AUTH_CREATE_USER_EXTERNAL_IDENTIFICATION_ALREADY_EXISTS = "auth_create_user_external_identification_already_exists"
+    AUTH_CREATE_USER_EXTERNAL_SUCCESS = "auth_create_user_external_success"

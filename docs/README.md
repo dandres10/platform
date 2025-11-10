@@ -109,7 +109,11 @@ Documentación de desarrollos nuevos, flujos específicos e integraciones.
 - **Features Complejas**: Notificaciones, reportes, auditoría
 - **Flujos de Migración**: Migración de datos, transformaciones
 
-**Ejemplos:**
+**Flujos Implementados:**
+- **[Create User Internal](./07-flows/07-01-create-user-internal-flow.md)**: Creación de usuarios internos con múltiples roles por ubicación (requiere rol ADMIN)
+- **[Create User External](./07-flows/07-02-create-user-external-flow.md)**: Registro público de usuarios externos sin roles corporativos (endpoint público)
+
+**Ejemplos Sugeridos:**
 - Onboarding de clientes
 - Integración con pasarela de pagos
 - Sistema de notificaciones multi-canal
@@ -349,8 +353,8 @@ Este proyecto y su documentación son propiedad de **Goluti**.
 
 ## 📅 Última Actualización
 
-**Fecha**: Noviembre 8, 2024  
-**Versión de Documentación**: 1.0  
+**Fecha**: Noviembre 10, 2024  
+**Versión de Documentación**: 1.1  
 **Versión del Proyecto**: 1.0.0
 
 ---

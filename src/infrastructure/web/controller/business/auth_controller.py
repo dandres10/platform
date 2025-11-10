@@ -13,6 +13,9 @@ from src.domain.models.business.auth.login.auth_login_request import AuthLoginRe
 from src.domain.models.business.auth.create_user_internal import (
     CreateUserInternalRequest,
 )
+from src.domain.models.business.auth.create_user_external import (
+    CreateUserExternalRequest,
+)
 from src.domain.services.use_cases.business.auth.create_api_token.create_api_token_use_case import (
     CreateApiTokenUseCase,
 )
@@ -28,6 +31,9 @@ from src.domain.services.use_cases.business.auth.login.auth_refresh_token_use_ca
 from src.domain.services.use_cases.business.auth.create_user_internal import (
     CreateUserInternalUseCase,
 )
+from src.domain.services.use_cases.business.auth.create_user_external import (
+    CreateUserExternalUseCase,
+)
 
 
 class AuthController:
@@ -38,6 +44,7 @@ class AuthController:
         self.auth_logout_use_case = AuthLogoutUseCase()
         self.create_api_token_use_case = CreateApiTokenUseCase()
         self.create_user_internal_use_case = CreateUserInternalUseCase()
+        self.create_user_external_use_case = CreateUserExternalUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -120,6 +127,27 @@ class AuthController:
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.AUTH_CREATE_USER_SUCCESS.value
+                ),
+            ),
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def create_user_external(
+        self, config: Config, params: CreateUserExternalRequest
+    ) -> Response:
+        result = await self.create_user_external_use_case.execute(
+            config=config, params=params
+        )
+
+        if isinstance(result, str):
+            return Response.error(None, result)
+
+        return Response.success_temporary_message(
+            response=None,
+            message=await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.AUTH_CREATE_USER_EXTERNAL_SUCCESS.value
                 ),
             ),
         )
