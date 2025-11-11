@@ -15,6 +15,7 @@ from src.domain.models.business.auth.create_api_token.create_api_token_response 
     CreateApiTokenResponse,
 )
 from src.domain.models.business.auth.list_users_by_location import UserByLocationItem
+from src.domain.models.business.auth.list_users_external import UserExternalItem
 from src.domain.models.business.auth.login.auth_currencies_by_location import (
     AuthCurremciesByLocation,
 )
@@ -58,6 +59,9 @@ from src.infrastructure.database.repositories.business.mappers.auth.login.login_
 )
 from src.infrastructure.database.repositories.business.mappers.auth.users_internal import (
     map_to_user_by_location_item,
+)
+from src.infrastructure.database.repositories.business.mappers.auth.users_external import (
+    map_to_user_external_item,
 )
 
 
@@ -353,3 +357,64 @@ class AuthRepository(IAuthRepository):
                     users_internal = users_internal[skip : skip + limit]
 
             return users_internal
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def users_external(
+        self, config: Config, params: Pagination
+    ) -> Union[List[UserExternalItem], None]:
+        async with config.async_db as db:
+            stmt = (
+                select(
+                    PlatformEntity.id.label("platform_id"),
+                    UserEntity.id.label("user_id"),
+                    UserEntity.email,
+                    UserEntity.identification,
+                    UserEntity.first_name,
+                    UserEntity.last_name,
+                    UserEntity.phone,
+                    UserEntity.state.label("user_state"),
+                    UserEntity.created_date.label("user_created_date"),
+                    UserEntity.updated_date.label("user_updated_date"),
+                    PlatformEntity.language_id,
+                    PlatformEntity.currency_id,
+                    PlatformEntity.token_expiration_minutes,
+                    PlatformEntity.refresh_token_expiration_minutes,
+                    PlatformEntity.created_date.label("platform_created_date"),
+                    PlatformEntity.updated_date.label("platform_updated_date"),
+                )
+                .join(PlatformEntity, UserEntity.platform_id == PlatformEntity.id)
+                .outerjoin(UserLocationRolEntity, UserEntity.id == UserLocationRolEntity.user_id)
+                .filter(UserEntity.state == True)
+                .filter(PlatformEntity.location_id.is_(None))
+                .filter(UserLocationRolEntity.id.is_(None))
+                .order_by(UserEntity.first_name, UserEntity.last_name)
+            )
+
+            if not params.filters and not params.all_data:
+                stmt = stmt.offset(params.skip).limit(params.limit)
+
+            result = await db.execute(stmt)
+            results = result.all()
+
+            if not results:
+                return None
+
+            users_external: List[UserExternalItem] = [
+                map_to_user_external_item(row) for row in results
+            ]
+
+            if params.filters:
+                alias_map = build_alias_map(response_class=UserExternalItem)
+
+                users_external = [
+                    user
+                    for user in users_external
+                    if apply_memory_filters(user, params.filters, alias_map)
+                ]
+
+                if not params.all_data:
+                    skip = params.skip if params.skip is not None else 0
+                    limit = params.limit if params.limit is not None else 10
+                    users_external = users_external[skip : skip + limit]
+
+            return users_external

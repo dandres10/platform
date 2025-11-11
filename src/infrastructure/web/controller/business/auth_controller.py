@@ -39,8 +39,14 @@ from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
     UserByLocationItem
 )
+from src.domain.models.business.auth.list_users_external import (
+    UserExternalItem
+)
 from src.domain.services.use_cases.business.auth.users_internal import (
     UsersInternalUseCase,
+)
+from src.domain.services.use_cases.business.auth.users_external import (
+    UsersExternalUseCase,
 )
 
 
@@ -54,6 +60,7 @@ class AuthController:
         self.create_user_internal_use_case = CreateUserInternalUseCase()
         self.create_user_external_use_case = CreateUserExternalUseCase()
         self.users_internal_use_case = UsersInternalUseCase()
+        self.users_external_use_case = UsersExternalUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -168,6 +175,38 @@ class AuthController:
         params: Pagination
     ) -> Response[List[UserByLocationItem]]:
         result = await self.users_internal_use_case.execute(
+            config=config, 
+            params=params
+        )
+        
+        if not result:
+            return Response.success_temporary_message(
+                response=[],
+                message=await self.message.get_message(
+                    config=config,
+                    message=MessageCoreEntity(
+                        key=KEYS_MESSAGES.CORE_NO_RESULTS_FOUND.value
+                    ),
+                ),
+            )
+        
+        return Response.success_temporary_message(
+            response=result,
+            message=await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.CORE_QUERY_MADE.value
+                ),
+            ),
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def users_external(
+        self, 
+        config: Config, 
+        params: Pagination
+    ) -> Response[List[UserExternalItem]]:
+        result = await self.users_external_use_case.execute(
             config=config, 
             params=params
         )
