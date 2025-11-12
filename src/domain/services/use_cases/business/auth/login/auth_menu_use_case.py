@@ -40,6 +40,15 @@ class AuthMenuUseCase:
     ]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
+        # Validar que company sea proporcionado
+        if not params.company:
+            return await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.CORE_REQUIRED_FIELD.value
+                ),
+            )
+
         menus = await self.auth_repository.menu(
             config=config,
             params=Menu(company=params.company),

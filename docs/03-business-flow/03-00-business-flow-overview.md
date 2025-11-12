@@ -16,6 +16,12 @@
 5. [Componentes del Flujo](#componentes-del-flujo)
 6. [Casos de Uso Disponibles](#casos-de-uso-disponibles)
 7. [Patrones y Convenciones](#patrones-y-convenciones)
+   - 7.1. [Composición de Use Cases](#1-composición-de-use-cases)
+   - 7.2. [Manejo de Errores en Cadena](#2-manejo-de-errores-en-cadena)
+   - 7.3. [Modelos Request/Response Específicos](#3-modelos-requestresponse-específicos)
+   - 7.4. [Mappers Especializados](#4-mappers-especializados)
+   - 7.5. [Decoradores](#5-decoradores)
+   - 7.6. [Organización de Use Cases en Business](#6-organización-de-use-cases-en-business)
 8. [Ejemplo: Auth Login](#ejemplo-auth-login)
 9. [Referencias](#referencias)
 
@@ -532,6 +538,83 @@ def map_to_user_login_response(user_entity: User) -> UserLoginResponse:
 
 Nota: Login no requiere `@check_permissions` porque es el punto de entrada.
 
+### 6. Organización de Use Cases en Business
+
+**Regla**: Cada flujo de negocio debe tener **su propia carpeta** dentro de `auth/` (o el contexto correspondiente). Dentro de esa carpeta van **todos** los casos de uso relacionados con ese flujo.
+
+#### Estructura Correcta ✅
+
+```
+src/domain/services/use_cases/business/auth/
+├── create_company/
+│   ├── create_company_use_case.py (principal)
+│   ├── clone_menus_for_company_use_case.py (auxiliar)
+│   ├── clone_menu_permissions_for_company_use_case.py (auxiliar)
+│   └── __init__.py
+├── create_user_internal/
+│   ├── create_user_internal_use_case.py (principal)
+│   ├── validate_user_internal_use_case.py (auxiliar)
+│   └── __init__.py
+├── create_user_external/
+│   ├── create_user_external_use_case.py (principal)
+│   └── __init__.py
+├── login/
+│   ├── auth_login_use_case.py (principal)
+│   ├── auth_validate_user_use_case.py (auxiliar)
+│   ├── auth_menu_use_case.py (auxiliar)
+│   └── __init__.py
+├── logout/
+│   ├── auth_logout_use_case.py
+│   └── __init__.py
+└── __init__.py
+```
+
+#### Beneficios de Esta Organización
+
+1. ✅ **Agrupación lógica**: Todos los casos de uso de un flujo están juntos
+2. ✅ **Facilita navegación**: Es fácil encontrar todo lo relacionado con un flujo
+3. ✅ **Escalabilidad**: Cada flujo puede crecer independientemente
+4. ✅ **Claridad**: Se ve inmediatamente qué casos de uso son auxiliares de cuál principal
+5. ✅ **Modularidad**: Cada carpeta es una unidad funcional completa
+
+#### Nomenclatura
+
+- **Carpeta**: Nombre del flujo en snake_case
+  - Ejemplo: `create_company/`, `login/`, `refresh_token/`
+- **Archivo principal**: `{nombre_flujo}_use_case.py`
+  - Ejemplo: `create_company_use_case.py`, `auth_login_use_case.py`
+- **Archivos auxiliares**: `{operacion}_use_case.py` o `{operacion}_for_{contexto}_use_case.py`
+  - Ejemplo: `clone_menus_for_company_use_case.py`
+  - Ejemplo: `validate_user_internal_use_case.py`
+
+#### Imports
+
+```python
+# ✅ Correcto
+from src.domain.services.use_cases.business.auth.create_company.create_company_use_case import CreateCompanyUseCase
+from src.domain.services.use_cases.business.auth.create_company.clone_menus_for_company_use_case import CloneMenusForCompanyUseCase
+
+# Los casos de uso auxiliares se importan desde la misma carpeta del flujo
+# create_company_use_case.py
+from .clone_menus_for_company_use_case import CloneMenusForCompanyUseCase
+from .clone_menu_permissions_for_company_use_case import CloneMenuPermissionsForCompanyUseCase
+```
+
+#### Casos de Uso Auxiliares
+
+Los casos de uso auxiliares van en la **misma carpeta** que el caso de uso principal que los utiliza:
+
+```python
+# src/domain/services/use_cases/business/auth/create_company/create_company_use_case.py
+from .clone_menus_for_company_use_case import CloneMenusForCompanyUseCase
+from .clone_menu_permissions_for_company_use_case import CloneMenuPermissionsForCompanyUseCase
+
+class CreateCompanyUseCase:
+    def __init__(self):
+        self.clone_menus_uc = CloneMenusForCompanyUseCase()
+        self.clone_permissions_uc = CloneMenuPermissionsForCompanyUseCase()
+```
+
 ---
 
 ## Ejemplo: Auth Login
@@ -561,6 +644,7 @@ Ver documento **[03-05-auth-flow-specification.md]** para la especificación com
 | Versión | Fecha | Cambios | Autor |
 |---------|-------|---------|-------|
 | 1.0 | Nov 2024 | Creación inicial del documento de Business Flow | Equipo de Desarrollo Goluti |
+| 1.1 | Nov 12, 2024 | Agregada sección 7.6 "Organización de Use Cases en Business": Cada flujo de negocio tiene su propia carpeta dentro de auth/ con todos sus casos de uso (principal + auxiliares). Incluye ejemplos de estructura, nomenclatura e imports. | Equipo de Desarrollo Goluti |
 
 ---
 
