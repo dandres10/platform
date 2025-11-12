@@ -912,12 +912,103 @@ Al cambiar el estado de un flujo:
 
 ---
 
+### Flujo Implementado 5: Create Company ✅
+
+**Archivo**: `07-05-create-company-flow.md`
+
+**Estado**: Especificado (Versión 1.0)
+
+**Contenido**:
+- **Endpoint PÚBLICO** (sin autenticación) para auto-registro de compañías
+- Creación completa de compañía en una sola operación atómica
+- Creación de registro de compañía
+- **Clonación inteligente de menús** desde plantilla global (menús con `company_id = NULL`)
+- **Preservación de jerarquías padre-hijo** en menús clonados:
+  - Menús cabeza: `id == top_id` (mantienen esta característica)
+  - Menús hijo: `top_id` apunta al padre correcto mapeado
+  - Genera nuevos UUIDs usando `uuid.uuid4()` con mapeo bidireccional
+- Clonación de permisos de menú desde plantilla
+- Creación de ubicación principal (`main_location = true`)
+- Creación de usuario administrador inicial usando `CreateUserInternalUseCase`
+- Validaciones exhaustivas (NIT único, email único, referencias existen)
+- **Transaccionalidad completa**: todo o nada (rollback automático si falla cualquier paso)
+- **Medidas de seguridad**: Rate limiting (3/hora), reCAPTCHA, auditoría de intentos
+
+**Características Destacadas**:
+- **Público y Accesible**: No requiere autenticación, ideal para onboarding self-service
+- **Onboarding Rápido**: Una compañía completa en segundos vs horas manuales
+- **Estructura Estándar**: Todas las compañías inician con la misma plantilla de menús
+- **Preservación de Relaciones**: Algoritmo de mapeo mantiene jerarquías complejas
+- **Atomicidad**: Garantiza consistencia total usando transacciones
+- **Reutilización**: Usa `CreateUserInternalUseCase` existente para crear admin
+- **Escalabilidad**: Plantilla centralizada fácil de mantener
+- **Seguro**: Rate limiting, validaciones estrictas, auditoría de intentos, opcional reCAPTCHA
+
+**Algoritmo de Clonación de Menús**:
+1. Consultar menús template (`company_id = NULL`)
+2. Primera pasada: generar mapeo `old_id → new_id` para todos los menús
+3. Segunda pasada: crear menús preservando relaciones:
+   - Si es cabeza (`id == top_id`): `new_top_id = new_id`
+   - Si es hijo (`id != top_id`): `new_top_id = mapping[old_top_id]`
+4. Asociar todos los menús al nuevo `company_id`
+
+**Use Cases Involucrados**:
+- Validación: CompanyListUseCase (NIT), UserListUseCase (email), CountryReadUseCase, LanguageReadUseCase, CurrencyReadUseCase, RolReadUseCase, MenuListUseCase, MenuPermissionListUseCase (N veces)
+- Creación: CompanySaveUseCase, MenuSaveUseCase (N veces), MenuPermissionSaveUseCase (M veces), LocationSaveUseCase, CreateUserInternalUseCase
+
+**Endpoint**: `POST /auth/create-company`
+
+**Ejemplo de Request**:
+```json
+{
+  "company": {
+    "name": "TechStart S.A.S.",
+    "nit": "900555666-1",
+    "inactivity_time": 30
+  },
+  "location": {
+    "country_id": "uuid",
+    "name": "Sede Principal",
+    "address": "Calle 123 #45-67",
+    "city": "Bogotá",
+    "phone": "+57 300 1234567",
+    "email": "info@techstart.com"
+  },
+  "admin_user": {
+    "email": "admin@techstart.com",
+    "password": "SecurePassword123!",
+    "first_name": "María",
+    "last_name": "González",
+    "identification_type": "CC",
+    "identification_number": "1234567890",
+    "phone": "+57 300 1234567",
+    "language_id": "uuid",
+    "currency_id": "uuid",
+    "rol_id": "uuid"
+  }
+}
+```
+
+**Ejemplo de Response**:
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "Compañía creada exitosamente"
+}
+```
+
+---
+
 ## Referencias
 
 - **[00-00] Documentation Methodology**: Metodología de documentación
 - **[02-00] Entity Flow Overview**: Patrón CRUD estándar
 - **[03-00] Business Flow Overview**: Lógica de negocio compleja
 - **[01-00] Architecture Overview**: Arquitectura general del sistema
+- **[07-01] Create User Internal Flow**: Flujo reutilizado para crear usuario admin
+- **Changelog v28**: Script para hacer `company_id` opcional en tabla `menu`
+- **Changelog v29**: Script para insertar menús globales (plantilla)
 
 ---
 
@@ -928,6 +1019,8 @@ Al cambiar el estado de un flujo:
 | 1.0 | Nov 2024 | Creación inicial de carpeta Flows. Documentación de Flujo 1: Create User Internal | Equipo de Desarrollo Goluti |
 | 1.1 | Nov 2024 | Agregado Flujo 2: Create User External. Endpoint público para crear usuarios externos sin roles corporativos. Platform sin ubicación (location_id = null) | Equipo de Desarrollo Goluti |
 | 1.2 | Nov 2024 | Agregado Flujo 3: List Users by Location. Endpoint: `/auth/users-internal`. **Usa directamente clase `Pagination` del core** sin crear request personalizado (reutilización de código). **⚡ Optimización de paginación dual**: Sin filtros → Paginación en SQL (`offset/limit`); Con filtros → Paginación en memoria (después de filtrar). Sistema de filtros flexible y genérico - **el desarrollador puede filtrar por CUALQUIER campo del response** (15 campos filtrables). `location_id` es opcional, se filtra mediante `filters`. Query con JOINs. Filtros aplicados en memoria usando `apply_memory_filters` y `build_alias_map`. Password excluido. Regla de negocio: Un usuario tiene UN SOLO rol por ubicación. | Equipo de Desarrollo Goluti |
+| 1.3 | Nov 12, 2024 | Agregado Flujo 4: List Users External. Endpoint: `/auth/users-external`. Usa `Pagination` del core. **Doble validación de seguridad**: `platform.location_id IS NULL` + LEFT JOIN con `user_location_rol` para garantizar separación absoluta de usuarios internos/externos. **Paginación dual adaptativa**. Sistema de filtros flexible (16 campos filtrables). | Equipo de Desarrollo Goluti |
+| 1.4 | Nov 12, 2024 | Agregado Flujo 5: Create Company. Endpoint: `/auth/create-company`. Flujo completo de onboarding de compañía con **clonación inteligente de menús** desde plantilla (`company_id = NULL`). Algoritmo de mapeo para preservar jerarquías padre-hijo. Clonación de permisos. Creación de ubicación principal y usuario admin. **Transaccionalidad completa** con rollback automático. Reutiliza `CreateUserInternalUseCase`. Requiere changelogs v28 y v29. | Equipo de Desarrollo Goluti |
 
 ---
 

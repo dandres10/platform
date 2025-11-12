@@ -48,7 +48,12 @@ Documentación de procesos de negocio complejos que involucran múltiples entida
 - **[03-05-auth-flow-specification.md](./03-business-flow/03-05-auth-flow-specification.md)** - Especificación completa del flujo de autenticación
 
 **Módulos de Negocio:**
-- **Auth**: Login, Logout, Refresh Token, Create API Token
+- **Auth**: Login, Logout, Refresh Token, Create API Token, Create Company
+
+**📁 Organización de Casos de Uso:**
+- Cada flujo de negocio tiene su propia carpeta dentro de `auth/`
+- Todos los casos de uso relacionados (principal + auxiliares) van en la misma carpeta
+- Ver sección 7.6 del Business Flow Overview para detalles completos
 
 ### 🔧 04. Core Components (Componentes Transversales)
 

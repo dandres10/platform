@@ -1,4 +1,5 @@
 from pydantic import UUID4, BaseModel, Field
+from typing import Optional
 
 class Menu(BaseModel):
-    company: UUID4 = Field(...)
+    company: Optional[UUID4] = Field(default=None)
