@@ -45,16 +45,22 @@ def map_to_list_menu_entity(menus: List[Menu]) -> List[MenuEntity]:
     return [map_to_menu_entity(menu) for menu in menus]
 
 def map_to_save_menu_entity(menu: MenuSave) -> MenuEntity:
-    return MenuEntity(
-        company_id=menu.company_id,
-        name=menu.name,
-        label=menu.label,
-        description=menu.description,
-        top_id=menu.top_id,
-        route=menu.route,
-        state=menu.state,
-        icon=menu.icon,
-    )
+    entity_data = {
+        "company_id": menu.company_id,
+        "name": menu.name,
+        "label": menu.label,
+        "description": menu.description,
+        "top_id": menu.top_id,
+        "route": menu.route,
+        "state": menu.state,
+        "icon": menu.icon,
+    }
+    
+    # Si se proporciona un ID (para casos de clonación), usarlo
+    if menu.id is not None:
+        entity_data["id"] = menu.id
+    
+    return MenuEntity(**entity_data)
 
 def map_to_update_menu_entity(menu: MenuUpdate) -> MenuEntity:
     return MenuEntity(

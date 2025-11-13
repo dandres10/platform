@@ -48,7 +48,12 @@ Documentación de procesos de negocio complejos que involucran múltiples entida
 - **[03-05-auth-flow-specification.md](./03-business-flow/03-05-auth-flow-specification.md)** - Especificación completa del flujo de autenticación
 
 **Módulos de Negocio:**
-- **Auth**: Login, Logout, Refresh Token, Create API Token
+- **Auth**: Login, Logout, Refresh Token, Create API Token, Create Company
+
+**📁 Organización de Casos de Uso:**
+- Cada flujo de negocio tiene su propia carpeta dentro de `auth/`
+- Todos los casos de uso relacionados (principal + auxiliares) van en la misma carpeta
+- Ver sección 7.6 del Business Flow Overview para detalles completos
 
 ### 🔧 04. Core Components (Componentes Transversales)
 
@@ -113,6 +118,7 @@ Documentación de desarrollos nuevos, flujos específicos e integraciones.
 - **[Create User Internal](./07-flows/07-01-create-user-internal-flow.md)**: Creación de usuarios internos con múltiples roles por ubicación (requiere rol ADMIN)
 - **[Create User External](./07-flows/07-02-create-user-external-flow.md)**: Registro público de usuarios externos sin roles corporativos (endpoint público)
 - **[List Users by Location](./07-flows/07-03-list-users-by-location-flow.md)**: Consulta paginada de usuarios internos por ubicación (`/auth/users-internal`) con JOINs y filtros avanzados
+- **[List Users External](./07-flows/07-04-list-users-external-flow.md)**: Consulta paginada de usuarios externos/clientes (`/auth/users-external`). INNER JOIN entre `user` y `platform`, LEFT JOIN con `user_location_rol` para doble validación de seguridad: 1) `platform.location_id IS NULL`, 2) `user_location_rol.id IS NULL`. Retorna 16 campos (user + platform, sin password). Filtros flexibles y paginación dual
 
 **Ejemplos Sugeridos:**
 - Onboarding de clientes
@@ -354,8 +360,8 @@ Este proyecto y su documentación son propiedad de **Goluti**.
 
 ## 📅 Última Actualización
 
-**Fecha**: Noviembre 10, 2024  
-**Versión de Documentación**: 1.1  
+**Fecha**: Noviembre 11, 2024  
+**Versión de Documentación**: 1.4  
 **Versión del Proyecto**: 1.0.0
 
 ---

@@ -39,8 +39,20 @@ from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
     UserByLocationItem
 )
+from src.domain.models.business.auth.list_users_external import (
+    UserExternalItem
+)
 from src.domain.services.use_cases.business.auth.users_internal import (
     UsersInternalUseCase,
+)
+from src.domain.services.use_cases.business.auth.users_external import (
+    UsersExternalUseCase,
+)
+from src.domain.models.business.auth.create_company.index import (
+    CreateCompanyRequest,
+)
+from src.domain.services.use_cases.business.auth.create_company.create_company_use_case import (
+    CreateCompanyUseCase,
 )
 
 
@@ -54,6 +66,8 @@ class AuthController:
         self.create_user_internal_use_case = CreateUserInternalUseCase()
         self.create_user_external_use_case = CreateUserExternalUseCase()
         self.users_internal_use_case = UsersInternalUseCase()
+        self.users_external_use_case = UsersExternalUseCase()
+        self.create_company_use_case = CreateCompanyUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -191,4 +205,66 @@ class AuthController:
                     key=KEYS_MESSAGES.CORE_QUERY_MADE.value
                 ),
             ),
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def users_external(
+        self, 
+        config: Config, 
+        params: Pagination
+    ) -> Response[List[UserExternalItem]]:
+        result = await self.users_external_use_case.execute(
+            config=config, 
+            params=params
+        )
+        
+        if not result:
+            return Response.success_temporary_message(
+                response=[],
+                message=await self.message.get_message(
+                    config=config,
+                    message=MessageCoreEntity(
+                        key=KEYS_MESSAGES.CORE_NO_RESULTS_FOUND.value
+                    ),
+                ),
+            )
+        
+        return Response.success_temporary_message(
+            response=result,
+            message=await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.CORE_QUERY_MADE.value
+                ),
+            ),
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def create_company(
+        self, 
+        config: Config, 
+        params: CreateCompanyRequest
+    ) -> Response:
+        result = await self.create_company_use_case.execute(
+            config=config, 
+            params=params
+        )
+        
+        if isinstance(result, str):
+            if "exitosamente" not in result.lower() and "successfully" not in result.lower():
+                return Response.error(response=None, message=result)
+            
+            return Response.success_temporary_message(
+                response=None,
+                message=result
+            )
+        
+        return Response.error(
+            response=None, 
+            message=await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.CORE_ERROR_SAVING_RECORD.value
+                ),
+            )
         )

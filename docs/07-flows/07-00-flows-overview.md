@@ -1,7 +1,7 @@
 # Flujos de Desarrollo - Overview
 
-**Versión**: 1.2  
-**Fecha**: Noviembre 2024  
+**Versión**: 1.6  
+**Fecha**: Noviembre 11, 2024  
 **Estado**: Vigente  
 **Autor(es)**: Equipo de Desarrollo Goluti
 
@@ -660,9 +660,132 @@ async def test_flow_validation_error():
 
 ---
 
-### Ejemplo Sugerido 4: Onboarding de Clientes
+### Flujo Implementado 4: List Users External ✅
 
-**Archivo**: `07-04-onboarding-flow.md`
+**Archivo**: `07-04-list-users-external-flow.md`
+
+**Estado**: Especificado (Versión 2.2)
+
+**Contenido**:
+- **Usa directamente clase `Pagination` del core** (no crea request personalizado - reutilización)
+- **⚠️ Cambio fundamental**: Los usuarios externos **NO tienen registro en `user_location_rol` ni `rol`**
+- Se registran **SOLO** en las tablas `user` y `platform`
+- **Query con doble validación de seguridad**:
+  - INNER JOIN entre `user` y `platform`
+  - LEFT JOIN con `user_location_rol` para validar que NO existe registro
+- **🔒 Doble filtro de seguridad**:
+  - **Filtro 1**: `platform.location_id IS NULL` (identificador principal)
+  - **Filtro 2**: `user_location_rol.id IS NULL` (validación adicional mediante LEFT JOIN)
+- Esta doble capa previene casos edge y garantiza separación absoluta usuarios internos/externos
+- **⚡ Optimización de paginación dual**:
+  - Sin filtros → Paginación en SQL (`offset/limit`) - más eficiente
+  - Con filtros → Paginación en memoria (después de filtrar)
+- Sistema de filtros **flexible y genérico** usando `filters` de `Pagination`
+- **El desarrollador puede filtrar por CUALQUIER campo del response** (`UserExternalItem`)
+- Todos los **16 campos** retornados son filtrables (campos de `user` + `platform`)
+- Retorna información completa del usuario + platform (sin password)
+- **Nota**: `platform_state` removido (no existe en `PlatformEntity`)
+- Requiere autenticación y permiso READ
+
+**Características Destacadas**:
+- **🔒 Seguridad Robusta**: Doble validación SQL para garantizar solo usuarios externos
+- **Reutilización de Código**: Usa directamente `Pagination` del core sin crear modelo personalizado
+- **⚡ Optimización Dual**: Paginación en SQL (sin filtros) o en memoria (con filtros) según el caso
+- **Flexibilidad Total**: El desarrollador puede filtrar por cualquier campo sin restricciones
+- **Performance**: Query optimizado con 1 INNER JOIN + 1 LEFT JOIN (sin N+1 queries)
+- **Prevención de Casos Edge**: Imposible mezclar usuarios internos con externos
+- **Patrón Consistente**: Usa `apply_memory_filters` y `build_alias_map` (patrón del proyecto)
+- **Escalabilidad**: Paginación adaptativa para grandes volúmenes
+
+**Tecnología**:
+- SQLAlchemy con INNER JOIN (`user` ⟷ `platform`) + LEFT JOIN (`user_location_rol`)
+- **Doble validación en SQL**: `platform.location_id IS NULL` AND `user_location_rol.id IS NULL`
+- **Paginación dual adaptativa**:
+  - Sin filtros → `stmt.offset().limit()` en SQL (óptimo)
+  - Con filtros → Paginación en memoria después de filtrar
+- Filtros usando `apply_memory_filters` y `build_alias_map`
+
+**Endpoint**: `POST /auth/users-external`
+
+**Ejemplo de Request 1 - Buscar por email (paginado)**:
+```json
+{
+  "skip": 0,
+  "limit": 10,
+  "filters": [
+    {
+      "field": "email",
+      "condition": "like",
+      "value": "@gmail.com"
+    }
+  ]
+}
+```
+
+**Ejemplo de Request 2 - Filtrar por configuración de token**:
+```json
+{
+  "skip": 0,
+  "limit": 10,
+  "filters": [
+    {
+      "field": "token_expiration_minutes",
+      "condition": "gte",
+      "value": 60
+    }
+  ]
+}
+```
+
+**Ejemplo de Response**:
+```json
+{
+  "response": [
+    {
+      "platform_id": "platform-uuid-1",
+      "user_id": "user-uuid-1",
+      "email": "carlos@gmail.com",
+      "identification": "98765432",
+      "first_name": "Carlos",
+      "last_name": "Ramírez",
+      "phone": "+573009876543",
+      "user_state": true,
+      "user_created_date": "2024-03-20T15:45:00Z",
+      "user_updated_date": "2024-03-20T15:45:00Z",
+      "language_id": "lang-uuid",
+      "currency_id": "currency-uuid",
+      "token_expiration_minutes": 60,
+      "refresh_token_expiration_minutes": 1440,
+      "platform_created_date": "2024-03-20T15:45:00Z",
+      "platform_updated_date": "2024-03-20T15:45:00Z"
+    },
+    {
+      "platform_id": "platform-uuid-2",
+      "user_id": "user-uuid-2",
+      "email": "ana@hotmail.com",
+      "identification": "11223344",
+      "first_name": "Ana",
+      "last_name": "Torres",
+      "phone": "+573001122334",
+      "user_state": true,
+      "user_created_date": "2024-04-10T09:30:00Z",
+      "user_updated_date": "2024-04-10T09:30:00Z",
+      "language_id": "lang-uuid",
+      "currency_id": "currency-uuid",
+      "token_expiration_minutes": 60,
+      "refresh_token_expiration_minutes": 1440,
+      "platform_created_date": "2024-04-10T09:30:00Z",
+      "platform_updated_date": "2024-04-10T09:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Ejemplo Sugerido 5: Onboarding de Clientes
+
+**Archivo**: `07-05-onboarding-flow.md`
 
 **Contenido**:
 - Registro inicial del cliente
@@ -672,9 +795,9 @@ async def test_flow_validation_error():
 - Activación de cuenta
 - Notificaciones
 
-### Ejemplo Sugerido 5: Flujo de Pagos
+### Ejemplo Sugerido 6: Flujo de Pagos
 
-**Archivo**: `07-05-payment-flow.md`
+**Archivo**: `07-06-payment-flow.md`
 
 **Contenido**:
 - Integración con pasarela de pagos
@@ -684,9 +807,9 @@ async def test_flow_validation_error():
 - Conciliación bancaria
 - Generación de comprobantes
 
-### Ejemplo Sugerido 6: Sistema de Notificaciones
+### Ejemplo Sugerido 7: Sistema de Notificaciones
 
-**Archivo**: `07-06-notification-system-flow.md`
+**Archivo**: `07-07-notification-system-flow.md`
 
 **Contenido**:
 - Tipos de notificaciones (email, SMS, push)
@@ -789,12 +912,103 @@ Al cambiar el estado de un flujo:
 
 ---
 
+### Flujo Implementado 5: Create Company ✅
+
+**Archivo**: `07-05-create-company-flow.md`
+
+**Estado**: Especificado (Versión 1.0)
+
+**Contenido**:
+- **Endpoint PÚBLICO** (sin autenticación) para auto-registro de compañías
+- Creación completa de compañía en una sola operación atómica
+- Creación de registro de compañía
+- **Clonación inteligente de menús** desde plantilla global (menús con `company_id = NULL`)
+- **Preservación de jerarquías padre-hijo** en menús clonados:
+  - Menús cabeza: `id == top_id` (mantienen esta característica)
+  - Menús hijo: `top_id` apunta al padre correcto mapeado
+  - Genera nuevos UUIDs usando `uuid.uuid4()` con mapeo bidireccional
+- Clonación de permisos de menú desde plantilla
+- Creación de ubicación principal (`main_location = true`)
+- Creación de usuario administrador inicial usando `CreateUserInternalUseCase`
+- Validaciones exhaustivas (NIT único, email único, referencias existen)
+- **Transaccionalidad completa**: todo o nada (rollback automático si falla cualquier paso)
+- **Medidas de seguridad**: Rate limiting (3/hora), reCAPTCHA, auditoría de intentos
+
+**Características Destacadas**:
+- **Público y Accesible**: No requiere autenticación, ideal para onboarding self-service
+- **Onboarding Rápido**: Una compañía completa en segundos vs horas manuales
+- **Estructura Estándar**: Todas las compañías inician con la misma plantilla de menús
+- **Preservación de Relaciones**: Algoritmo de mapeo mantiene jerarquías complejas
+- **Atomicidad**: Garantiza consistencia total usando transacciones
+- **Reutilización**: Usa `CreateUserInternalUseCase` existente para crear admin
+- **Escalabilidad**: Plantilla centralizada fácil de mantener
+- **Seguro**: Rate limiting, validaciones estrictas, auditoría de intentos, opcional reCAPTCHA
+
+**Algoritmo de Clonación de Menús**:
+1. Consultar menús template (`company_id = NULL`)
+2. Primera pasada: generar mapeo `old_id → new_id` para todos los menús
+3. Segunda pasada: crear menús preservando relaciones:
+   - Si es cabeza (`id == top_id`): `new_top_id = new_id`
+   - Si es hijo (`id != top_id`): `new_top_id = mapping[old_top_id]`
+4. Asociar todos los menús al nuevo `company_id`
+
+**Use Cases Involucrados**:
+- Validación: CompanyListUseCase (NIT), UserListUseCase (email), CountryReadUseCase, LanguageReadUseCase, CurrencyReadUseCase, RolReadUseCase, MenuListUseCase, MenuPermissionListUseCase (N veces)
+- Creación: CompanySaveUseCase, MenuSaveUseCase (N veces), MenuPermissionSaveUseCase (M veces), LocationSaveUseCase, CreateUserInternalUseCase
+
+**Endpoint**: `POST /auth/create-company`
+
+**Ejemplo de Request**:
+```json
+{
+  "company": {
+    "name": "TechStart S.A.S.",
+    "nit": "900555666-1",
+    "inactivity_time": 30
+  },
+  "location": {
+    "country_id": "uuid",
+    "name": "Sede Principal",
+    "address": "Calle 123 #45-67",
+    "city": "Bogotá",
+    "phone": "+57 300 1234567",
+    "email": "info@techstart.com"
+  },
+  "admin_user": {
+    "email": "admin@techstart.com",
+    "password": "SecurePassword123!",
+    "first_name": "María",
+    "last_name": "González",
+    "identification_type": "CC",
+    "identification_number": "1234567890",
+    "phone": "+57 300 1234567",
+    "language_id": "uuid",
+    "currency_id": "uuid",
+    "rol_id": "uuid"
+  }
+}
+```
+
+**Ejemplo de Response**:
+```json
+{
+  "success": true,
+  "data": null,
+  "message": "Compañía creada exitosamente"
+}
+```
+
+---
+
 ## Referencias
 
 - **[00-00] Documentation Methodology**: Metodología de documentación
 - **[02-00] Entity Flow Overview**: Patrón CRUD estándar
 - **[03-00] Business Flow Overview**: Lógica de negocio compleja
 - **[01-00] Architecture Overview**: Arquitectura general del sistema
+- **[07-01] Create User Internal Flow**: Flujo reutilizado para crear usuario admin
+- **Changelog v28**: Script para hacer `company_id` opcional en tabla `menu`
+- **Changelog v29**: Script para insertar menús globales (plantilla)
 
 ---
 
@@ -805,6 +1019,8 @@ Al cambiar el estado de un flujo:
 | 1.0 | Nov 2024 | Creación inicial de carpeta Flows. Documentación de Flujo 1: Create User Internal | Equipo de Desarrollo Goluti |
 | 1.1 | Nov 2024 | Agregado Flujo 2: Create User External. Endpoint público para crear usuarios externos sin roles corporativos. Platform sin ubicación (location_id = null) | Equipo de Desarrollo Goluti |
 | 1.2 | Nov 2024 | Agregado Flujo 3: List Users by Location. Endpoint: `/auth/users-internal`. **Usa directamente clase `Pagination` del core** sin crear request personalizado (reutilización de código). **⚡ Optimización de paginación dual**: Sin filtros → Paginación en SQL (`offset/limit`); Con filtros → Paginación en memoria (después de filtrar). Sistema de filtros flexible y genérico - **el desarrollador puede filtrar por CUALQUIER campo del response** (15 campos filtrables). `location_id` es opcional, se filtra mediante `filters`. Query con JOINs. Filtros aplicados en memoria usando `apply_memory_filters` y `build_alias_map`. Password excluido. Regla de negocio: Un usuario tiene UN SOLO rol por ubicación. | Equipo de Desarrollo Goluti |
+| 1.3 | Nov 12, 2024 | Agregado Flujo 4: List Users External. Endpoint: `/auth/users-external`. Usa `Pagination` del core. **Doble validación de seguridad**: `platform.location_id IS NULL` + LEFT JOIN con `user_location_rol` para garantizar separación absoluta de usuarios internos/externos. **Paginación dual adaptativa**. Sistema de filtros flexible (16 campos filtrables). | Equipo de Desarrollo Goluti |
+| 1.4 | Nov 12, 2024 | Agregado Flujo 5: Create Company. Endpoint: `/auth/create-company`. Flujo completo de onboarding de compañía con **clonación inteligente de menús** desde plantilla (`company_id = NULL`). Algoritmo de mapeo para preservar jerarquías padre-hijo. Clonación de permisos. Creación de ubicación principal y usuario admin. **Transaccionalidad completa** con rollback automático. Reutiliza `CreateUserInternalUseCase`. Requiere changelogs v28 y v29. | Equipo de Desarrollo Goluti |
 
 ---
 

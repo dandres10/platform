@@ -31,6 +31,12 @@ from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
     UserByLocationItem
 )
+from src.domain.models.business.auth.list_users_external import (
+    UserExternalItem
+)
+from src.domain.models.business.auth.create_company.index import (
+    CreateCompanyRequest,
+)
 from src.infrastructure.web.controller.business.auth_controller import AuthController
 from src.core.methods.get_config import get_config, get_config_login
 
@@ -127,3 +133,32 @@ async def users_internal(
     config: Config = Depends(get_config)
 ) -> Response[List[UserByLocationItem]]:
     return await auth_controller.users_internal(config=config, params=params)
+
+
+@auth_router.post(
+    "/users-external",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[List[UserExternalItem]]
+)
+@check_permissions([PERMISSION_TYPE.READ.value])
+@execute_transaction_route(enabled=settings.has_track)
+async def users_external(
+    params: Pagination,
+    config: Config = Depends(get_config)
+) -> Response[List[UserExternalItem]]:
+    return await auth_controller.users_external(config=config, params=params)
+
+
+@auth_router.post(
+    "/create-company",
+    status_code=status.HTTP_201_CREATED,
+    response_model=Response,
+    summary="Crear compañía completa",
+    description="Endpoint para auto-registro de nuevas compañías con toda su estructura inicial"
+)
+@execute_transaction_route(enabled=settings.has_track)
+async def create_company(
+    params: CreateCompanyRequest,
+    config: Config = Depends(get_config_login)
+) -> Response:
+    return await auth_controller.create_company(config=config, params=params)

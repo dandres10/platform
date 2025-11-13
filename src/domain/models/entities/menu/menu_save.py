@@ -3,6 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 class MenuSave(BaseModel):
+    id: Optional[UUID4] = Field(default=None, description="ID opcional para casos de clonación")
     company_id: Optional[UUID4] = Field(default=None)
     name: str = Field(..., max_length=100)
     label: str = Field(..., max_length=300)
