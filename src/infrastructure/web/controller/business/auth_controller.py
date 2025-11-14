@@ -12,9 +12,11 @@ from src.domain.models.business.auth.create_api_token.create_api_token_request i
 from src.domain.models.business.auth.login.auth_login_request import AuthLoginRequest
 from src.domain.models.business.auth.create_user_internal import (
     CreateUserInternalRequest,
+    CreateUserInternalResponse,
 )
 from src.domain.models.business.auth.create_user_external import (
     CreateUserExternalRequest,
+    CreateUserExternalResponse,
 )
 from src.domain.services.use_cases.business.auth.create_api_token.create_api_token_use_case import (
     CreateApiTokenUseCase,
@@ -50,6 +52,7 @@ from src.domain.services.use_cases.business.auth.users_external import (
 )
 from src.domain.models.business.auth.create_company.index import (
     CreateCompanyRequest,
+    CreateCompanyResponse,
 )
 from src.domain.services.use_cases.business.auth.create_company.create_company_use_case import (
     CreateCompanyUseCase,
@@ -136,7 +139,7 @@ class AuthController:
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def create_user_internal(
         self, config: Config, params: CreateUserInternalRequest
-    ) -> Response:
+    ) -> Response[CreateUserInternalResponse]:
         result = await self.create_user_internal_use_case.execute(
             config=config, params=params
         )
@@ -157,7 +160,7 @@ class AuthController:
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def create_user_external(
         self, config: Config, params: CreateUserExternalRequest
-    ) -> Response:
+    ) -> Response[CreateUserExternalResponse]:
         result = await self.create_user_external_use_case.execute(
             config=config, params=params
         )
@@ -244,7 +247,7 @@ class AuthController:
         self, 
         config: Config, 
         params: CreateCompanyRequest
-    ) -> Response:
+    ) -> Response[CreateCompanyResponse]:
         result = await self.create_company_use_case.execute(
             config=config, 
             params=params
