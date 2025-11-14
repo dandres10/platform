@@ -147,14 +147,16 @@ class AuthController:
         if isinstance(result, str):
             return Response.error(message=result)
 
-        return Response.success_temporary_message(
-            response=None,
-            message=await self.message.get_message(
-                config=config,
-                message=MessageCoreEntity(
-                    key=KEYS_MESSAGES.AUTH_CREATE_USER_SUCCESS.value
-                ),
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_CREATE_USER_SUCCESS.value
             ),
+        )
+
+        return Response.success_temporary_message(
+            response=CreateUserInternalResponse(message=success_message),
+            message=success_message,
         )
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
@@ -168,14 +170,16 @@ class AuthController:
         if isinstance(result, str):
             return Response.error(None, result)
 
-        return Response.success_temporary_message(
-            response=None,
-            message=await self.message.get_message(
-                config=config,
-                message=MessageCoreEntity(
-                    key=KEYS_MESSAGES.AUTH_CREATE_USER_EXTERNAL_SUCCESS.value
-                ),
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_CREATE_USER_EXTERNAL_SUCCESS.value
             ),
+        )
+
+        return Response.success_temporary_message(
+            response=CreateUserExternalResponse(message=success_message),
+            message=success_message,
         )
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
@@ -258,16 +262,18 @@ class AuthController:
                 return Response.error(response=None, message=result)
             
             return Response.success_temporary_message(
-                response=None,
+                response=CreateCompanyResponse(message=result),
                 message=result
             )
         
+        error_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.CORE_ERROR_SAVING_RECORD.value
+            ),
+        )
+        
         return Response.error(
             response=None, 
-            message=await self.message.get_message(
-                config=config,
-                message=MessageCoreEntity(
-                    key=KEYS_MESSAGES.CORE_ERROR_SAVING_RECORD.value
-                ),
-            )
+            message=error_message
         )
