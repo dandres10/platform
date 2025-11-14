@@ -7,11 +7,13 @@ from .create_company_request import (
     LocationData,
     AdminUserData
 )
+from .create_company_response import CreateCompanyResponse
 
 __all__ = [
     "CreateCompanyRequest",
     "CompanyData",
     "LocationData",
-    "AdminUserData"
+    "AdminUserData",
+    "CreateCompanyResponse"
 ]
 

@@ -22,9 +22,11 @@ from src.domain.models.business.auth.refresh_token.auth_refresh_token_response i
 )
 from src.domain.models.business.auth.create_user_internal import (
     CreateUserInternalRequest,
+    CreateUserInternalResponse,
 )
 from src.domain.models.business.auth.create_user_external import (
     CreateUserExternalRequest,
+    CreateUserExternalResponse,
 )
 from src.core.models.filter import Pagination
 from typing import List
@@ -36,6 +38,7 @@ from src.domain.models.business.auth.list_users_external import (
 )
 from src.domain.models.business.auth.create_company.index import (
     CreateCompanyRequest,
+    CreateCompanyResponse,
 )
 from src.infrastructure.web.controller.business.auth_controller import AuthController
 from src.core.methods.get_config import get_config, get_config_login
@@ -97,27 +100,27 @@ async def create_api_token(
 
 
 @auth_router.post(
-    "/create-user-internal", status_code=status.HTTP_200_OK, response_model=Response
+    "/create-user-internal", status_code=status.HTTP_200_OK, response_model=Response[CreateUserInternalResponse]
 )
 @check_permissions([PERMISSION_TYPE.SAVE.value])
 @check_roles(["ADMIN"])
 @execute_transaction_route(enabled=settings.has_track)
 async def create_user_internal(
     params: CreateUserInternalRequest, config: Config = Depends(get_config)
-) -> Response:
+) -> Response[CreateUserInternalResponse]:
     return await auth_controller.create_user_internal(config=config, params=params)
 
 
 @auth_router.post(
     "/create-user-external",
     status_code=status.HTTP_200_OK,
-    response_model=Response
+    response_model=Response[CreateUserExternalResponse]
 )
 @execute_transaction_route(enabled=settings.has_track)
 async def create_user_external(
     params: CreateUserExternalRequest,
     config: Config = Depends(get_config_login)
-) -> Response:
+) -> Response[CreateUserExternalResponse]:
     return await auth_controller.create_user_external(config=config, params=params)
 
 
@@ -152,7 +155,7 @@ async def users_external(
 @auth_router.post(
     "/create-company",
     status_code=status.HTTP_201_CREATED,
-    response_model=Response,
+    response_model=Response[CreateCompanyResponse],
     summary="Crear compañía completa",
     description="Endpoint para auto-registro de nuevas compañías con toda su estructura inicial"
 )
@@ -160,5 +163,5 @@ async def users_external(
 async def create_company(
     params: CreateCompanyRequest,
     config: Config = Depends(get_config_login)
-) -> Response:
+) -> Response[CreateCompanyResponse]:
     return await auth_controller.create_company(config=config, params=params)
