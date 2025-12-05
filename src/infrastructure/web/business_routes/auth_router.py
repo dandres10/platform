@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Path
+from uuid import UUID
 from src.core.config import settings
 from src.core.enums.permission_type import PERMISSION_TYPE
+from src.core.enums.rol_type import ROL_TYPE
 from src.core.models.config import Config
 from src.core.models.response import Response
 from src.core.wrappers.check_permissions import check_permissions
@@ -24,6 +26,12 @@ from src.domain.models.business.auth.create_user_internal import (
     CreateUserInternalRequest,
     CreateUserInternalResponse,
 )
+from src.domain.models.business.auth.delete_user_internal import (
+    DeleteUserInternalResponse,
+)
+from src.domain.models.business.auth.delete_user_external import (
+    DeleteUserExternalResponse,
+)
 from src.domain.models.business.auth.create_user_external import (
     CreateUserExternalRequest,
     CreateUserExternalResponse,
@@ -39,6 +47,9 @@ from src.domain.models.business.auth.list_users_external import (
 from src.domain.models.business.auth.create_company.index import (
     CreateCompanyRequest,
     CreateCompanyResponse,
+)
+from src.domain.models.business.auth.delete_company import (
+    DeleteCompanyResponse,
 )
 from src.infrastructure.web.controller.business.auth_controller import AuthController
 from src.core.methods.get_config import get_config, get_config_login
@@ -103,12 +114,27 @@ async def create_api_token(
     "/create-user-internal", status_code=status.HTTP_200_OK, response_model=Response[CreateUserInternalResponse]
 )
 @check_permissions([PERMISSION_TYPE.SAVE.value])
-@check_roles(["ADMIN"])
+@check_roles([ROL_TYPE.ADMIN.value])
 @execute_transaction_route(enabled=settings.has_track)
 async def create_user_internal(
     params: CreateUserInternalRequest, config: Config = Depends(get_config)
 ) -> Response[CreateUserInternalResponse]:
     return await auth_controller.create_user_internal(config=config, params=params)
+
+
+@auth_router.delete(
+    "/delete-user-internal/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[DeleteUserInternalResponse]
+)
+@check_permissions([PERMISSION_TYPE.DELETE.value])
+@check_roles([ROL_TYPE.ADMIN.value])
+@execute_transaction_route(enabled=settings.has_track)
+async def delete_user_internal(
+    user_id: UUID = Path(..., description="ID del usuario interno a eliminar"),
+    config: Config = Depends(get_config)
+) -> Response[DeleteUserInternalResponse]:
+    return await auth_controller.delete_user_internal(config=config, user_id=user_id)
 
 
 @auth_router.post(
@@ -122,6 +148,21 @@ async def create_user_external(
     config: Config = Depends(get_config_login)
 ) -> Response[CreateUserExternalResponse]:
     return await auth_controller.create_user_external(config=config, params=params)
+
+
+@auth_router.delete(
+    "/delete-user-external/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[DeleteUserExternalResponse]
+)
+@check_permissions([PERMISSION_TYPE.DELETE.value])
+@check_roles([ROL_TYPE.USER.value])
+@execute_transaction_route(enabled=settings.has_track)
+async def delete_user_external(
+    user_id: UUID = Path(..., description="ID del usuario externo a eliminar"),
+    config: Config = Depends(get_config)
+) -> Response[DeleteUserExternalResponse]:
+    return await auth_controller.delete_user_external(config=config, user_id=user_id)
 
 
 @auth_router.post(
@@ -165,3 +206,20 @@ async def create_company(
     config: Config = Depends(get_config_login)
 ) -> Response[CreateCompanyResponse]:
     return await auth_controller.create_company(config=config, params=params)
+
+
+@auth_router.delete(
+    "/delete-company/{company_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[DeleteCompanyResponse],
+    summary="Eliminar compañía",
+    description="Elimina una compañía del sistema. Solo un admin de la compañía puede eliminarla."
+)
+@check_permissions([PERMISSION_TYPE.DELETE.value])
+@check_roles([ROL_TYPE.ADMIN.value])
+@execute_transaction_route(enabled=settings.has_track)
+async def delete_company(
+    company_id: UUID = Path(..., description="ID de la compañía a eliminar"),
+    config: Config = Depends(get_config)
+) -> Response[DeleteCompanyResponse]:
+    return await auth_controller.delete_company(config=config, company_id=company_id)
