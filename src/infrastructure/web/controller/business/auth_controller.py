@@ -14,6 +14,15 @@ from src.domain.models.business.auth.create_user_internal import (
     CreateUserInternalRequest,
     CreateUserInternalResponse,
 )
+from src.domain.models.business.auth.delete_user_internal import (
+    DeleteUserInternalRequest,
+    DeleteUserInternalResponse,
+)
+from src.domain.models.business.auth.delete_user_external import (
+    DeleteUserExternalRequest,
+    DeleteUserExternalResponse,
+)
+from uuid import UUID
 from src.domain.models.business.auth.create_user_external import (
     CreateUserExternalRequest,
     CreateUserExternalResponse,
@@ -32,6 +41,12 @@ from src.domain.services.use_cases.business.auth.login.auth_refresh_token_use_ca
 )
 from src.domain.services.use_cases.business.auth.create_user_internal import (
     CreateUserInternalUseCase,
+)
+from src.domain.services.use_cases.business.auth.delete_user_internal import (
+    DeleteUserInternalUseCase,
+)
+from src.domain.services.use_cases.business.auth.delete_user_external import (
+    DeleteUserExternalUseCase,
 )
 from src.domain.services.use_cases.business.auth.create_user_external import (
     CreateUserExternalUseCase,
@@ -54,8 +69,15 @@ from src.domain.models.business.auth.create_company.index import (
     CreateCompanyRequest,
     CreateCompanyResponse,
 )
+from src.domain.models.business.auth.delete_company import (
+    DeleteCompanyRequest,
+    DeleteCompanyResponse,
+)
 from src.domain.services.use_cases.business.auth.create_company.create_company_use_case import (
     CreateCompanyUseCase,
+)
+from src.domain.services.use_cases.business.auth.delete_company import (
+    DeleteCompanyUseCase,
 )
 
 
@@ -67,10 +89,13 @@ class AuthController:
         self.auth_logout_use_case = AuthLogoutUseCase()
         self.create_api_token_use_case = CreateApiTokenUseCase()
         self.create_user_internal_use_case = CreateUserInternalUseCase()
+        self.delete_user_internal_use_case = DeleteUserInternalUseCase()
+        self.delete_user_external_use_case = DeleteUserExternalUseCase()
         self.create_user_external_use_case = CreateUserExternalUseCase()
         self.users_internal_use_case = UsersInternalUseCase()
         self.users_external_use_case = UsersExternalUseCase()
         self.create_company_use_case = CreateCompanyUseCase()
+        self.delete_company_use_case = DeleteCompanyUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -193,6 +218,10 @@ class AuthController:
             params=params
         )
         
+        # Si el resultado es un string, es un mensaje de error
+        if isinstance(result, str):
+            return Response.error(response=None, message=result)
+        
         if not result:
             return Response.success_temporary_message(
                 response=[],
@@ -276,4 +305,76 @@ class AuthController:
         return Response.error(
             response=None, 
             message=error_message
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def delete_user_internal(
+        self, config: Config, user_id: UUID
+    ) -> Response[DeleteUserInternalResponse]:
+        params = DeleteUserInternalRequest(user_id=user_id)
+        result = await self.delete_user_internal_use_case.execute(
+            config=config, params=params
+        )
+
+        if isinstance(result, str):
+            return Response.error(response=None, message=result)
+
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_DELETE_USER_SUCCESS.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=DeleteUserInternalResponse(message=success_message),
+            message=success_message,
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def delete_user_external(
+        self, config: Config, user_id: UUID
+    ) -> Response[DeleteUserExternalResponse]:
+        params = DeleteUserExternalRequest(user_id=user_id)
+        result = await self.delete_user_external_use_case.execute(
+            config=config, params=params
+        )
+
+        if isinstance(result, str):
+            return Response.error(response=None, message=result)
+
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_DELETE_USER_EXTERNAL_SUCCESS.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=DeleteUserExternalResponse(message=success_message),
+            message=success_message,
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def delete_company(
+        self, config: Config, company_id: UUID
+    ) -> Response[DeleteCompanyResponse]:
+        params = DeleteCompanyRequest(company_id=company_id)
+        result = await self.delete_company_use_case.execute(
+            config=config, params=params
+        )
+
+        if isinstance(result, str):
+            return Response.error(response=None, message=result)
+
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.DELETE_COMPANY_SUCCESS.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=DeleteCompanyResponse(message=success_message),
+            message=success_message,
         )

@@ -40,3 +40,43 @@ class KEYS_MESSAGES(str, Enum):
     CREATE_COMPANY_ERROR_CREATING_ADMIN = "create_company_error_creating_admin"
     CREATE_COMPANY_SUCCESS = "create_company_success"
     CREATE_COMPANY_RECAPTCHA_FAILED = "create_company_recaptcha_failed"
+    
+    # Delete User Internal Flow
+    AUTH_DELETE_USER_NOT_FOUND = "auth_delete_user_not_found"
+    AUTH_DELETE_USER_CANNOT_DELETE_SELF = "auth_delete_user_cannot_delete_self"
+    AUTH_DELETE_USER_HAS_ACTIVE_RELATIONS = "auth_delete_user_has_active_relations"
+    AUTH_DELETE_USER_NOT_IN_LOCATION = "auth_delete_user_not_in_location"
+    AUTH_DELETE_USER_ERROR_FETCHING_ROLES = "auth_delete_user_error_fetching_roles"
+    AUTH_DELETE_USER_NO_ROLES_FOUND = "auth_delete_user_no_roles_found"
+    AUTH_DELETE_USER_SOFT_DELETED = "auth_delete_user_soft_deleted"
+    AUTH_DELETE_USER_ERROR_SOFT_DELETE = "auth_delete_user_error_soft_delete"
+    AUTH_DELETE_USER_SUCCESS = "auth_delete_user_success"
+    AUTH_DELETE_USER_ERROR_DELETING_ROLES = "auth_delete_user_error_deleting_roles"
+    AUTH_DELETE_USER_ERROR_DELETING_USER = "auth_delete_user_error_deleting_user"
+    AUTH_DELETE_USER_ERROR_DELETING_PLATFORM = "auth_delete_user_error_deleting_platform"
+    
+    # Delete User External Flow
+    AUTH_DELETE_USER_EXTERNAL_NOT_FOUND = "auth_delete_user_external_not_found"
+    AUTH_DELETE_USER_EXTERNAL_UNAUTHORIZED = "auth_delete_user_external_unauthorized"
+    AUTH_DELETE_USER_EXTERNAL_HAS_ACTIVE_RELATIONS = "auth_delete_user_external_has_active_relations"
+    AUTH_DELETE_USER_EXTERNAL_SOFT_DELETED = "auth_delete_user_external_soft_deleted"
+    AUTH_DELETE_USER_EXTERNAL_ERROR_SOFT_DELETE = "auth_delete_user_external_error_soft_delete"
+    AUTH_DELETE_USER_EXTERNAL_SUCCESS = "auth_delete_user_external_success"
+    AUTH_DELETE_USER_EXTERNAL_ERROR_DELETING_USER = "auth_delete_user_external_error_deleting_user"
+    AUTH_DELETE_USER_EXTERNAL_ERROR_DELETING_PLATFORM = "auth_delete_user_external_error_deleting_platform"
+    
+    # Delete Company Flow
+    DELETE_COMPANY_NOT_FOUND = "delete_company_not_found"
+    DELETE_COMPANY_UNAUTHORIZED = "delete_company_unauthorized"
+    DELETE_COMPANY_HAS_ACTIVE_RELATIONS = "delete_company_has_active_relations"
+    DELETE_COMPANY_ERROR_DELETING_USERS = "delete_company_error_deleting_users"
+    DELETE_COMPANY_ERROR_DELETING_MENUS = "delete_company_error_deleting_menus"
+    DELETE_COMPANY_ERROR_DELETING_LOCATIONS = "delete_company_error_deleting_locations"
+    DELETE_COMPANY_ERROR_DELETING_COMPANY = "delete_company_error_deleting_company"
+    DELETE_COMPANY_SOFT_DELETED = "delete_company_soft_deleted"
+    DELETE_COMPANY_ERROR_SOFT_DELETE = "delete_company_error_soft_delete"
+    DELETE_COMPANY_SUCCESS = "delete_company_success"
+    
+    # Users Internal Flow
+    AUTH_USERS_INTERNAL_LOCATION_REQUIRED = "auth_users_internal_location_required"
+    AUTH_USERS_INTERNAL_LOCATION_MISMATCH = "auth_users_internal_location_mismatch"
