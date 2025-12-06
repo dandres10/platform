@@ -25,6 +25,9 @@ from src.domain.services.use_cases.entities.user.user_read_use_case import (
 from src.domain.services.use_cases.entities.user.user_update_use_case import (
     UserUpdateUseCase
 )
+from src.domain.services.use_cases.entities.user.user_list_use_case import (
+    UserListUseCase
+)
 from src.domain.services.use_cases.entities.user_location_rol.user_location_rol_list_use_case import (
     UserLocationRolListUseCase
 )
@@ -73,6 +76,7 @@ class UpdateUserInternalUseCase:
     def __init__(self):
         self.user_read_uc = UserReadUseCase(user_repository)
         self.user_update_uc = UserUpdateUseCase(user_repository)
+        self.user_list_uc = UserListUseCase(user_repository)
         self.user_location_rol_list_uc = UserLocationRolListUseCase(user_location_rol_repository)
         self.user_location_rol_update_uc = UserLocationRolUpdateUseCase(user_location_rol_repository)
         self.rol_read_uc = RolReadUseCase(rol_repository)
@@ -141,6 +145,33 @@ class UpdateUserInternalUseCase:
                     key=KEYS_MESSAGES.AUTH_UPDATE_USER_NOT_IN_LOCATION.value
                 ),
             )
+
+        # 3.5. Validar email único si se está cambiando
+        if params.email is not None and params.email != user.email:
+            existing_users = await self.user_list_uc.execute(
+                config=config,
+                params=Pagination(
+                    filters=[
+                        FilterManager(
+                            field="email",
+                            condition=CONDITION_TYPE.EQUALS,
+                            value=params.email
+                        ),
+                        FilterManager(
+                            field="id",
+                            condition=CONDITION_TYPE.DIFFERENT_THAN,
+                            value=str(user_id)
+                        )
+                    ]
+                )
+            )
+            if existing_users and not isinstance(existing_users, str) and len(existing_users) > 0:
+                return await self.message.get_message(
+                    config=config,
+                    message=MessageCoreEntity(
+                        key=KEYS_MESSAGES.AUTH_CREATE_USER_EMAIL_ALREADY_EXISTS.value
+                    ),
+                )
 
         # 4. Si se envía rol_id, validar cambio de rol
         if params.rol_id:
