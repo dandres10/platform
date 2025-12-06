@@ -15,3 +15,4 @@ class Config(BaseModel):
     token: Optional[AccessToken] = Field(default=None)
     encoded_token: Optional[str] = None
     token_code: Optional[str] = None
+    rol_code: Optional[str] = None
