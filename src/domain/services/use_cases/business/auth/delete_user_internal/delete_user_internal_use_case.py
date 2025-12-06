@@ -35,6 +35,7 @@ from src.domain.services.use_cases.entities.platform.platform_delete_use_case im
 )
 
 from .check_active_relations_use_case import CheckActiveRelationsUseCase
+from .check_last_admin_use_case import CheckLastAdminUseCase
 from .soft_delete_user_use_case import SoftDeleteUserUseCase
 
 from src.infrastructure.database.repositories.entities.user_repository import (
@@ -65,6 +66,7 @@ class DeleteUserInternalUseCase:
         )
         self.platform_delete_uc = PlatformDeleteUseCase(platform_repository)
         self.check_active_relations_uc = CheckActiveRelationsUseCase()
+        self.check_last_admin_uc = CheckLastAdminUseCase()
         self.soft_delete_user_uc = SoftDeleteUserUseCase()
         self.message = Message()
 
@@ -159,7 +161,23 @@ class DeleteUserInternalUseCase:
                 ),
             )
 
-        # 6. Intentar hard delete
+        # 6. Validar que no sea el único ADMIN de la ubicación
+        is_last_admin = await self.check_last_admin_uc.execute(
+            config=config,
+            user_id=params.user_id,
+            location_id=config.token.location_id,
+            user_location_rols=user_location_rols
+        )
+        
+        if is_last_admin:
+            return await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.AUTH_DELETE_USER_LAST_ADMIN.value
+                ),
+            )
+
+        # 7. Intentar hard delete
         try:
             await self._execute_hard_delete(
                 config=config,

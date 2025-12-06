@@ -54,6 +54,7 @@ class KEYS_MESSAGES(str, Enum):
     AUTH_DELETE_USER_ERROR_DELETING_ROLES = "auth_delete_user_error_deleting_roles"
     AUTH_DELETE_USER_ERROR_DELETING_USER = "auth_delete_user_error_deleting_user"
     AUTH_DELETE_USER_ERROR_DELETING_PLATFORM = "auth_delete_user_error_deleting_platform"
+    AUTH_DELETE_USER_LAST_ADMIN = "auth_delete_user_last_admin"
     
     # Delete User External Flow
     AUTH_DELETE_USER_EXTERNAL_NOT_FOUND = "auth_delete_user_external_not_found"
@@ -80,3 +81,14 @@ class KEYS_MESSAGES(str, Enum):
     # Users Internal Flow
     AUTH_USERS_INTERNAL_LOCATION_REQUIRED = "auth_users_internal_location_required"
     AUTH_USERS_INTERNAL_LOCATION_MISMATCH = "auth_users_internal_location_mismatch"
+    
+    # Update User Internal Flow
+    AUTH_UPDATE_USER_NOT_FOUND = "auth_update_user_not_found"
+    AUTH_UPDATE_USER_NOT_IN_LOCATION = "auth_update_user_not_in_location"
+    AUTH_UPDATE_USER_CANNOT_DEMOTE_SELF = "auth_update_user_cannot_demote_self"
+    AUTH_UPDATE_USER_LAST_ADMIN = "auth_update_user_last_admin"
+    AUTH_UPDATE_USER_ROL_NOT_FOUND = "auth_update_user_rol_not_found"
+    AUTH_UPDATE_USER_ERROR_FETCHING_ROLES = "auth_update_user_error_fetching_roles"
+    AUTH_UPDATE_USER_ERROR = "auth_update_user_error"
+    AUTH_UPDATE_USER_ERROR_UPDATING_ROL = "auth_update_user_error_updating_rol"
+    AUTH_UPDATE_USER_SUCCESS = "auth_update_user_success"

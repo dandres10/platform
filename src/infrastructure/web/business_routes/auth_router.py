@@ -29,6 +29,10 @@ from src.domain.models.business.auth.create_user_internal import (
 from src.domain.models.business.auth.delete_user_internal import (
     DeleteUserInternalResponse,
 )
+from src.domain.models.business.auth.update_user_internal import (
+    UpdateUserInternalRequest,
+    UpdateUserInternalResponse,
+)
 from src.domain.models.business.auth.delete_user_external import (
     DeleteUserExternalResponse,
 )
@@ -135,6 +139,24 @@ async def delete_user_internal(
     config: Config = Depends(get_config)
 ) -> Response[DeleteUserInternalResponse]:
     return await auth_controller.delete_user_internal(config=config, user_id=user_id)
+
+
+@auth_router.put(
+    "/update-user-internal/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[UpdateUserInternalResponse],
+    summary="Actualizar usuario interno",
+    description="Actualiza los datos de un usuario interno. Solo un admin de la misma ubicación puede actualizarlo."
+)
+@check_permissions([PERMISSION_TYPE.UPDATE.value])
+@check_roles([ROL_TYPE.ADMIN.value])
+@execute_transaction_route(enabled=settings.has_track)
+async def update_user_internal(
+    params: UpdateUserInternalRequest,
+    user_id: UUID = Path(..., description="ID del usuario interno a actualizar"),
+    config: Config = Depends(get_config)
+) -> Response[UpdateUserInternalResponse]:
+    return await auth_controller.update_user_internal(config=config, user_id=user_id, params=params)
 
 
 @auth_router.post(

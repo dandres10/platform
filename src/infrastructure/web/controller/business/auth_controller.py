@@ -18,6 +18,10 @@ from src.domain.models.business.auth.delete_user_internal import (
     DeleteUserInternalRequest,
     DeleteUserInternalResponse,
 )
+from src.domain.models.business.auth.update_user_internal import (
+    UpdateUserInternalRequest,
+    UpdateUserInternalResponse,
+)
 from src.domain.models.business.auth.delete_user_external import (
     DeleteUserExternalRequest,
     DeleteUserExternalResponse,
@@ -44,6 +48,9 @@ from src.domain.services.use_cases.business.auth.create_user_internal import (
 )
 from src.domain.services.use_cases.business.auth.delete_user_internal import (
     DeleteUserInternalUseCase,
+)
+from src.domain.services.use_cases.business.auth.update_user_internal import (
+    UpdateUserInternalUseCase,
 )
 from src.domain.services.use_cases.business.auth.delete_user_external import (
     DeleteUserExternalUseCase,
@@ -90,6 +97,7 @@ class AuthController:
         self.create_api_token_use_case = CreateApiTokenUseCase()
         self.create_user_internal_use_case = CreateUserInternalUseCase()
         self.delete_user_internal_use_case = DeleteUserInternalUseCase()
+        self.update_user_internal_use_case = UpdateUserInternalUseCase()
         self.delete_user_external_use_case = DeleteUserExternalUseCase()
         self.create_user_external_use_case = CreateUserExternalUseCase()
         self.users_internal_use_case = UsersInternalUseCase()
@@ -328,6 +336,29 @@ class AuthController:
 
         return Response.success_temporary_message(
             response=DeleteUserInternalResponse(message=success_message),
+            message=success_message,
+        )
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def update_user_internal(
+        self, config: Config, user_id: UUID, params: UpdateUserInternalRequest
+    ) -> Response[UpdateUserInternalResponse]:
+        result = await self.update_user_internal_use_case.execute(
+            config=config, user_id=user_id, params=params
+        )
+
+        if isinstance(result, str):
+            return Response.error(response=None, message=result)
+
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_UPDATE_USER_SUCCESS.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=UpdateUserInternalResponse(message=success_message),
             message=success_message,
         )
 
