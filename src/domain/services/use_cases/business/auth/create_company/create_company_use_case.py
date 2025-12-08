@@ -16,6 +16,7 @@ from src.domain.models.entities.location.index import LocationSave
 from src.domain.models.entities.country.index import CountryRead
 from src.domain.models.entities.language.index import LanguageRead
 from src.domain.models.entities.currency.index import CurrencyRead
+from src.domain.models.entities.currency_location.index import CurrencyLocationSave
 from src.domain.models.entities.rol.index import RolRead
 from src.domain.models.business.auth.create_user_internal.index import (
     CreateUserInternalRequest,
@@ -31,6 +32,7 @@ from src.infrastructure.database.repositories.entities.rol_repository import Rol
 from src.infrastructure.database.repositories.entities.user_repository import UserRepository
 from src.infrastructure.database.repositories.entities.menu_repository import MenuRepository
 from src.infrastructure.database.repositories.entities.location_repository import LocationRepository
+from src.infrastructure.database.repositories.entities.currency_location_repository import CurrencyLocationRepository
 
 # Importar use cases de entidades
 from src.domain.services.use_cases.entities.company.company_save_use_case import CompanySaveUseCase
@@ -42,6 +44,7 @@ from src.domain.services.use_cases.entities.rol.rol_read_use_case import RolRead
 from src.domain.services.use_cases.entities.user.user_list_use_case import UserListUseCase
 from src.domain.services.use_cases.entities.menu.menu_list_use_case import MenuListUseCase
 from src.domain.services.use_cases.entities.location.location_save_use_case import LocationSaveUseCase
+from src.domain.services.use_cases.entities.currency_location.currency_location_save_use_case import CurrencyLocationSaveUseCase
 from src.domain.services.use_cases.business.auth.create_user_internal.create_user_internal_use_case import CreateUserInternalUseCase
 
 # Importar casos de uso auxiliares (misma carpeta - imports relativos)
@@ -57,6 +60,7 @@ rol_repository = RolRepository()
 user_repository = UserRepository()
 menu_repository = MenuRepository()
 location_repository = LocationRepository()
+currency_location_repository = CurrencyLocationRepository()
 
 
 class CreateCompanyUseCase:
@@ -69,8 +73,9 @@ class CreateCompanyUseCase:
     3. Clonar menús template manteniendo jerarquías (usando caso de uso auxiliar)
     4. Clonar permisos de menús (usando caso de uso auxiliar)
     5. Crear Location principal
-    6. Crear User admin inicial (reutilizando CreateUserInternalUseCase)
-    7. Retornar mensaje de éxito traducido
+    6. Crear CurrencyLocation (asociar moneda a la ubicación)
+    7. Crear User admin inicial (reutilizando CreateUserInternalUseCase)
+    8. Retornar mensaje de éxito traducido
     """
     
     def __init__(self):
@@ -86,6 +91,7 @@ class CreateCompanyUseCase:
         # Use cases de creación
         self.company_save_uc = CompanySaveUseCase(company_repository)
         self.location_save_uc = LocationSaveUseCase(location_repository)
+        self.currency_location_save_uc = CurrencyLocationSaveUseCase(currency_location_repository)
         self.create_user_internal_uc = CreateUserInternalUseCase()
         
         # Use cases auxiliares (misma carpeta)
@@ -300,7 +306,28 @@ class CreateCompanyUseCase:
             )
         
         # ============================================
-        # 6. CREAR USUARIO ADMINISTRADOR INICIAL
+        # 6. CREAR CURRENCY_LOCATION (asociar moneda a ubicación)
+        # ============================================
+        
+        currency_location = await self.currency_location_save_uc.execute(
+            config=config,
+            params=CurrencyLocationSave(
+                currency_id=params.admin_user.currency_id,
+                location_id=location.id,
+                state=True
+            )
+        )
+        
+        if isinstance(currency_location, str) or not currency_location:
+            return await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.CREATE_COMPANY_ERROR_CREATING_CURRENCY_LOCATION.value
+                ),
+            )
+        
+        # ============================================
+        # 7. CREAR USUARIO ADMINISTRADOR INICIAL
         # ============================================
         
         user_result = await self.create_user_internal_uc.execute(
@@ -332,7 +359,7 @@ class CreateCompanyUseCase:
             )
         
         # ============================================
-        # 7. RETORNAR MENSAJE DE ÉXITO
+        # 8. RETORNAR MENSAJE DE ÉXITO
         # ============================================
         
         return await self.message.get_message(

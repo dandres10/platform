@@ -37,6 +37,7 @@ class KEYS_MESSAGES(str, Enum):
     CREATE_COMPANY_NO_MENU_TEMPLATES = "create_company_no_menu_templates"
     CREATE_COMPANY_ERROR_CLONING_MENUS = "create_company_error_cloning_menus"
     CREATE_COMPANY_ERROR_CREATING_LOCATION = "create_company_error_creating_location"
+    CREATE_COMPANY_ERROR_CREATING_CURRENCY_LOCATION = "create_company_error_creating_currency_location"
     CREATE_COMPANY_ERROR_CREATING_ADMIN = "create_company_error_creating_admin"
     CREATE_COMPANY_SUCCESS = "create_company_success"
     CREATE_COMPANY_RECAPTCHA_FAILED = "create_company_recaptcha_failed"

@@ -25,7 +25,6 @@ async def get_config(
     config.token = token
     request.state.config = config
     config.token_code = credentials.credentials
-    config.rol_code = token.rol_code if token else None
 
     async with async_session_db() as session:
         config.async_db = session
@@ -49,10 +48,8 @@ async def get_config_ws(ws_resquest: WSRequest):
     token_cls = Token()
     valid_language_header_ws(language=ws_resquest.language)
     config.language = ws_resquest.language
-    token = token_cls.verify_token(token=ws_resquest.token)
-    config.token = token
+    config.token = token_cls.verify_token(token=ws_resquest.token)
     config.token_code = ws_resquest.token
-    config.rol_code = token.rol_code if token else None
 
     async with async_session_db() as session:
         config.async_db = session
