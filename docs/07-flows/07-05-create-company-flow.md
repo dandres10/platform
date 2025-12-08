@@ -270,10 +270,24 @@ Este flujo unifica todo en una sola operación atómica, garantizando:
 │  │ → location_id: UUID (generado)                             │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
-                         │
-                         ▼
+                        │
+                        ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│            8. CREAR USUARIO ADMINISTRADOR INICIAL                │
+│         8. CREAR CURRENCY_LOCATION (asociar moneda)             │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ CurrencyLocationSaveUseCase.execute({                     │  │
+│  │   currency_id: currency_id (del admin_user),              │  │
+│  │   location_id: location_id (del paso 7),                  │  │
+│  │   state: true                                             │  │
+│  │ })                                                        │  │
+│  │                                                           │  │
+│  │ → currency_location_id: UUID (generado)                   │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                        │
+                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│            9. CREAR USUARIO ADMINISTRADOR INICIAL                │
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │ CreateUserInternalUseCase.execute({                        │  │
 │  │   language_id: UUID,                                       │  │
@@ -300,10 +314,10 @@ Este flujo unifica todo en una sola operación atómica, garantizando:
 │  │ → user_created: User                                       │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
-                         │
-                         ▼
+                        │
+                        ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    9. RESPUESTA EXITOSA                          │
+│                    10. RESPUESTA EXITOSA                         │
 │  {                                                               │
 │    "success": true,                                             │
 │    "data": null,                                                │

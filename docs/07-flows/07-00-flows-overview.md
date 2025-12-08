@@ -1,7 +1,7 @@
 # Flujos de Desarrollo - Overview
 
-**Versión**: 1.6  
-**Fecha**: Noviembre 11, 2024  
+**Versión**: 1.7  
+**Fecha**: Diciembre 8, 2024  
 **Estado**: Vigente  
 **Autor(es)**: Equipo de Desarrollo Goluti
 
@@ -1000,6 +1000,96 @@ Al cambiar el estado de un flujo:
 
 ---
 
+### Flujo Implementado 6: Delete User Internal ✅
+
+**Archivo**: `07-08-delete-user-internal-flow.md`
+
+**Estado**: Especificado (Versión 1.0)
+
+**Contenido**:
+- Endpoint para eliminar usuarios internos
+- Solo rol `ADMIN` con permiso `DELETE`
+- Validación de mismo `location_id` del admin
+- **Soft delete** si tiene relaciones activas (state=false)
+- **Hard delete** si no tiene relaciones
+- Validación de último admin (no eliminar si es el único)
+- No auto-eliminación
+
+**Endpoint**: `DELETE /auth/delete-user-internal/{user_id}`
+
+---
+
+### Flujo Implementado 7: Delete User External ✅
+
+**Archivo**: `07-09-delete-user-external-flow.md`
+
+**Estado**: Especificado (Versión 1.0)
+
+**Contenido**:
+- Endpoint para que usuarios externos eliminen su propia cuenta
+- Solo rol `USER` con permiso `DELETE`
+- Validación de auto-eliminación (solo puede eliminar su propia cuenta)
+- **Soft delete** si tiene relaciones activas (state=false)
+- **Hard delete** si no tiene relaciones
+
+**Endpoint**: `DELETE /auth/delete-user-external/{user_id}`
+
+---
+
+### Flujo Implementado 8: Delete Company ✅
+
+**Archivo**: `07-10-delete-company-flow.md`
+
+**Estado**: Especificado (Versión 1.0)
+
+**Contenido**:
+- Endpoint para eliminar compañías
+- Solo rol `ADMIN` de la misma compañía
+- Eliminación en cascada: usuarios, menús, ubicaciones, compañía
+- **Soft delete** si tiene relaciones activas (state=false)
+- **Hard delete** completo si no tiene relaciones
+
+**Endpoint**: `DELETE /auth/delete-company/{company_id}`
+
+---
+
+### Flujo Implementado 9: Update User Internal ✅
+
+**Archivo**: `07-11-update-user-internal-flow.md`
+
+**Estado**: Especificado (Versión 1.0)
+
+**Contenido**:
+- Endpoint para actualizar usuarios internos
+- Solo rol `ADMIN` con permiso `UPDATE`
+- Validación de mismo `location_id` del admin
+- Campos editables: password, email, identification, first_name, last_name, phone, state, rol_id
+- Validación de último admin (no degradar si es el único)
+- No auto-degradación de rol ADMIN
+
+**Endpoint**: `PUT /auth/update-user-internal/{user_id}`
+
+---
+
+### Flujo Implementado 10: Login ✅
+
+**Archivo**: `07-12-login-flow.md`
+
+**Estado**: Especificado (Versión 1.0)
+
+**Contenido**:
+- Endpoint público de autenticación
+- Validación de email y contraseña hasheada
+- Generación de access token y refresh token JWT
+- Retorna configuración completa de plataforma:
+  - user, currency, location, language, platform, country, company, rol, permissions, menu
+- Retorna variaciones disponibles:
+  - currencies, locations, languages, companies
+
+**Endpoint**: `POST /auth/login`
+
+---
+
 ## Referencias
 
 - **[00-00] Documentation Methodology**: Metodología de documentación
@@ -1021,6 +1111,8 @@ Al cambiar el estado de un flujo:
 | 1.2 | Nov 2024 | Agregado Flujo 3: List Users by Location. Endpoint: `/auth/users-internal`. **Usa directamente clase `Pagination` del core** sin crear request personalizado (reutilización de código). **⚡ Optimización de paginación dual**: Sin filtros → Paginación en SQL (`offset/limit`); Con filtros → Paginación en memoria (después de filtrar). Sistema de filtros flexible y genérico - **el desarrollador puede filtrar por CUALQUIER campo del response** (15 campos filtrables). `location_id` es opcional, se filtra mediante `filters`. Query con JOINs. Filtros aplicados en memoria usando `apply_memory_filters` y `build_alias_map`. Password excluido. Regla de negocio: Un usuario tiene UN SOLO rol por ubicación. | Equipo de Desarrollo Goluti |
 | 1.3 | Nov 12, 2024 | Agregado Flujo 4: List Users External. Endpoint: `/auth/users-external`. Usa `Pagination` del core. **Doble validación de seguridad**: `platform.location_id IS NULL` + LEFT JOIN con `user_location_rol` para garantizar separación absoluta de usuarios internos/externos. **Paginación dual adaptativa**. Sistema de filtros flexible (16 campos filtrables). | Equipo de Desarrollo Goluti |
 | 1.4 | Nov 12, 2024 | Agregado Flujo 5: Create Company. Endpoint: `/auth/create-company`. Flujo completo de onboarding de compañía con **clonación inteligente de menús** desde plantilla (`company_id = NULL`). Algoritmo de mapeo para preservar jerarquías padre-hijo. Clonación de permisos. Creación de ubicación principal y usuario admin. **Transaccionalidad completa** con rollback automático. Reutiliza `CreateUserInternalUseCase`. Requiere changelogs v28 y v29. | Equipo de Desarrollo Goluti |
+| 1.5 | Dic 8, 2024 | Agregados Flujos 6-9: Delete User Internal, Delete User External, Delete Company, Update User Internal. Implementación de **soft delete** (inactivación) cuando hay relaciones activas. Validaciones de último admin. Permisos DELETE/UPDATE. | Equipo de Desarrollo Goluti |
+| 1.6 | Dic 8, 2024 | Agregado Flujo 10: Login. Endpoint público `/auth/login`. Validación de credenciales, generación de JWT, retorno de configuración completa de plataforma y variaciones disponibles. | Equipo de Desarrollo Goluti |
 
 ---
 

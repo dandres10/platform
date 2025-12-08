@@ -69,7 +69,8 @@ src/core/
 │   ├── message_type.py          # Tipos de mensaje (temporary/static)
 │   ├── notification_type.py     # Tipos de notificación (success/error/warning)
 │   ├── permission_type.py       # Tipos de permisos
-│   └── response_type.py         # Tipos de respuesta (object/dict)
+│   ├── response_type.py         # Tipos de respuesta (object/dict)
+│   └── rol_type.py              # Tipos de roles de usuario
 │
 ├── methods/                     # Métodos utilitarios
 │   ├── __init__.py
@@ -232,6 +233,24 @@ class NOTIFICATION_TYPE(str, Enum):
     ERROR = "error"
     WARNING = "warning"
     INFO = "info"
+```
+
+#### Rol Types
+```python
+class ROL_TYPE(str, Enum):
+    ADMIN = "ADMIN"
+    COLLA = "COLLA"
+    USER = "USER"
+```
+
+**Uso con `@check_roles`:**
+```python
+from src.core.enums.rol_type import ROL_TYPE
+
+@check_roles([ROL_TYPE.ADMIN.value])
+async def admin_only_endpoint():
+    # Solo usuarios con rol ADMIN pueden acceder
+    pass
 ```
 
 ### 5. Models
@@ -437,6 +456,7 @@ class AuthLoginUseCase:
 | Versión | Fecha | Cambios | Autor |
 |---------|-------|---------|-------|
 | 1.0 | Nov 2024 | Creación inicial del documento de Core Components | Equipo de Desarrollo Goluti |
+| 1.1 | Dic 2024 | Agregado enum `ROL_TYPE` para tipos de roles de usuario (ADMIN, COLLA, USER). Uso con decorador `@check_roles`. | Equipo de Desarrollo Goluti |
 
 ---
 
