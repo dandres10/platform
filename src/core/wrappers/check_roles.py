@@ -9,14 +9,15 @@ def check_roles(accepted_roles: List[str]):
             # Obtener `config` desde los kwargs
             config = kwargs.get("config", None)
 
-            # Verificar que `config` y `rol_code` existen
-            if config is None or not hasattr(config, "rol_code"):
+            # Verificar que `config` y `token` existen
+            if config is None or config.token is None:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Configuration or role code missing"
+                    detail="Configuration or token missing"
                 )
 
-            user_role = config.rol_code
+            # Obtener rol_code desde config.token
+            user_role = config.token.rol_code
 
             # Comprobar si el rol del usuario está en la lista de roles aceptados
             if user_role not in accepted_roles:
