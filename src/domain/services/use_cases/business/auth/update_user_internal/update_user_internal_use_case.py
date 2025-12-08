@@ -10,6 +10,7 @@ from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.core.classes.async_message import Message
+from src.core.classes.password import Password
 from src.core.models.message import MessageCoreEntity
 
 from src.domain.models.business.auth.update_user_internal import (
@@ -230,10 +231,13 @@ class UpdateUserInternalUseCase:
         )
         
         if has_user_changes:
+            # Encriptar contraseña si se envía una nueva
+            new_password = Password.hash_password(params.password) if params.password is not None else user.password
+            
             update_params = UserUpdate(
                 id=user.id,
                 platform_id=user.platform_id,
-                password=params.password if params.password is not None else user.password,
+                password=new_password,
                 email=params.email if params.email is not None else user.email,
                 identification=params.identification if params.identification is not None else user.identification,
                 first_name=params.first_name if params.first_name is not None else user.first_name,
