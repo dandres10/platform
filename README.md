@@ -4,7 +4,7 @@ Este proyecto es una aplicación desarrollada en FastAPI que incluye validación
 
 ## Requisitos previos
 
-- **Python 3.11**
+- **Python 3.12**
 - **pip**
 
 ## Configuración del entorno de desarrollo
@@ -14,7 +14,7 @@ Para comenzar, es necesario crear y activar un entorno virtual para gestionar la
 ### 1. Crear el entorno de desarrollo
 
 ```bash
-python3.11 -m venv env
+python3.12 -m venv env
 ```
 
 ### 2. Activar el entorno de desarrollo
