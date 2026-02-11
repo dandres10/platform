@@ -1,4 +1,5 @@
 from decimal import Decimal
+from uuid import UUID
 from pydantic import BaseModel, Field, UUID4, EmailStr
 from typing import Optional
 
@@ -22,7 +23,7 @@ class CompanyData(BaseModel):
 class LocationData(BaseModel):
     """Datos de la ubicación principal"""
     country_id: UUID4 = Field(..., description="ID del país (geo_division tipo COUNTRY)")
-    city_id: Optional[UUID4] = Field(default=None, description="ID de la ciudad (geo_division tipo CITY)")
+    city_id: Optional[UUID] = Field(default=None, description="ID de la ciudad (geo_division tipo CITY)")  # UUID genérico
     name: str = Field(..., min_length=3, max_length=255, description="Nombre de la ubicación")
     address: str = Field(..., min_length=5, description="Dirección completa")
     phone: str = Field(..., min_length=7, max_length=20, description="Teléfono")

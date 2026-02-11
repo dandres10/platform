@@ -1,4 +1,5 @@
 from decimal import Decimal
+from uuid import UUID
 from pydantic import BaseModel, Field, UUID4
 from typing import Optional
 from datetime import datetime
@@ -7,7 +8,7 @@ class Location(BaseModel):
     id: Optional[UUID4] = Field(default=None)
     company_id: Optional[UUID4] = Field(default=None)
     country_id: Optional[UUID4] = Field(default=None)
-    city_id: Optional[UUID4] = Field(default=None)
+    city_id: Optional[UUID] = Field(default=None)  # UUID genérico (acepta UUIDs fijos de geo_division)
     name: str = Field(..., max_length=255)
     address: str = Field(...)
     phone: str = Field(..., max_length=20)
