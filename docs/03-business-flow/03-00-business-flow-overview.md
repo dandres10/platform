@@ -1,7 +1,7 @@
-# Flujo de Lógica de Negocio (Business Flow) - Overview
+# Especificación de Business Flow - Cómo Construir Flujos de Negocio
 
-**Versión**: 1.0  
-**Fecha**: Noviembre 2024  
+**Versión**: 2.0  
+**Fecha**: Enero 23, 2026  
 **Estado**: Vigente  
 **Autor(es)**: Equipo de Desarrollo Goluti
 
@@ -14,16 +14,17 @@
 3. [Diferencias con Entity Flow](#diferencias-con-entity-flow)
 4. [Flujo de Datos](#flujo-de-datos)
 5. [Componentes del Flujo](#componentes-del-flujo)
-6. [Casos de Uso Disponibles](#casos-de-uso-disponibles)
-7. [Patrones y Convenciones](#patrones-y-convenciones)
-   - 7.1. [Composición de Use Cases](#1-composición-de-use-cases)
-   - 7.2. [Manejo de Errores en Cadena](#2-manejo-de-errores-en-cadena)
-   - 7.3. [Modelos Request/Response Específicos](#3-modelos-requestresponse-específicos)
-   - 7.4. [Mappers Especializados](#4-mappers-especializados)
-   - 7.5. [Decoradores](#5-decoradores)
-   - 7.6. [Organización de Use Cases en Business](#6-organización-de-use-cases-en-business)
-8. [Ejemplo: Auth Login](#ejemplo-auth-login)
-9. [Referencias](#referencias)
+6. [Patrones y Convenciones](#patrones-y-convenciones)
+   - 6.1. [Composición de Use Cases](#1-composición-de-use-cases)
+   - 6.2. [Manejo de Errores en Cadena](#2-manejo-de-errores-en-cadena)
+   - 6.3. [Modelos Request/Response Específicos](#3-modelos-requestresponse-específicos)
+   - 6.4. [Mappers Especializados](#4-mappers-especializados)
+   - 6.5. [Decoradores](#5-decoradores)
+   - 6.6. [Organización de Use Cases en Business](#6-organización-de-use-cases-en-business)
+   - 6.7. [Tipos Genéricos en Response](#7-tipos-genéricos-en-response)
+   - 6.8. [Documentación de Swagger](#8-documentación-de-swagger)
+7. [Guía: Crear un Nuevo Módulo de Negocio](#guía-crear-un-nuevo-módulo-de-negocio)
+8. [Referencias](#referencias)
 
 ---
 
@@ -385,7 +386,7 @@ class AuthController:
         self.auth_create_api_token_use_case = AuthCreateApiTokenUseCase()
         self.message = Message()
 
-    @execute_transaction(layer=LAYER.I_W_C_B.value, enabled=settings.has_track)
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(
         self, config: Config, params: AuthLoginRequest
     ) -> Response[AuthLoginResponse]:
@@ -447,19 +448,6 @@ async def logout(...) -> Response[AuthLogoutResponse]:
 async def create_api_token(...) -> Response[CreateApiTokenResponse]:
     # ...
 ```
-
----
-
-## Casos de Uso Disponibles
-
-### Módulo: Auth (Autenticación)
-
-| Operación | Endpoint | Descripción |
-|-----------|----------|-------------|
-| **Login** | `POST /auth/login` | Autenticación de usuario, generación de tokens |
-| **Refresh Token** | `POST /auth/refresh_token` | Renovación de access token |
-| **Logout** | `POST /auth/logout` | Cierre de sesión, invalidación de refresh token |
-| **Create API Token** | `POST /auth/create-api-token` | Generación de token de API para integraciones |
 
 ---
 
@@ -540,62 +528,95 @@ Nota: Login no requiere `@check_permissions` porque es el punto de entrada.
 
 ### 6. Organización de Use Cases en Business
 
-**Regla**: Cada flujo de negocio debe tener **su propia carpeta** dentro de `auth/` (o el contexto correspondiente). Dentro de esa carpeta van **todos** los casos de uso relacionados con ese flujo.
+**Regla**: Cada flujo de negocio debe tener **su propia carpeta** dentro del módulo correspondiente (`auth/`, `geography/`, etc.). Dentro de esa carpeta van **todos** los casos de uso relacionados con ese flujo, permitiendo que crezca con sub-use-cases si los necesita.
 
-#### Estructura Correcta ✅
+#### Estructura por Módulo
+
+Cada **módulo de negocio** tiene su propia carpeta bajo `use_cases/business/`. Dentro, cada **flujo** tiene su subcarpeta:
 
 ```
-src/domain/services/use_cases/business/auth/
-├── create_company/
-│   ├── create_company_use_case.py (principal)
-│   ├── clone_menus_for_company_use_case.py (auxiliar)
-│   ├── clone_menu_permissions_for_company_use_case.py (auxiliar)
+src/domain/services/use_cases/business/
+├── auth/                              # Módulo: Autenticación
+│   ├── login/                         # Flujo: Login
+│   │   ├── auth_login_use_case.py     #   Principal
+│   │   ├── auth_validate_user_use_case.py  #   Auxiliar
+│   │   ├── auth_menu_use_case.py      #   Auxiliar
+│   │   └── __init__.py
+│   ├── create_company/                # Flujo: Crear empresa
+│   │   ├── create_company_use_case.py #   Principal
+│   │   ├── clone_menus_for_company_use_case.py  #   Auxiliar
+│   │   ├── clone_menu_permissions_for_company_use_case.py
+│   │   └── __init__.py
+│   ├── create_user_external/
+│   │   ├── create_user_external_use_case.py
+│   │   └── __init__.py
+│   ├── logout/
+│   │   ├── auth_logout_use_case.py
+│   │   └── __init__.py
 │   └── __init__.py
-├── create_user_internal/
-│   ├── create_user_internal_use_case.py (principal)
-│   ├── validate_user_internal_use_case.py (auxiliar)
+│
+├── geography/                         # Módulo: Geografía
+│   ├── countries/                     # Flujo: Listar países
+│   │   ├── countries_use_case.py      #   Principal
+│   │   └── __init__.py
+│   ├── types_by_country/              # Flujo: Tipos por país
+│   │   ├── types_by_country_use_case.py
+│   │   └── __init__.py
+│   ├── hierarchy/                     # Flujo: Jerarquía
+│   │   ├── hierarchy_use_case.py
+│   │   └── __init__.py
+│   ├── children/
+│   │   ├── children_use_case.py
+│   │   └── __init__.py
 │   └── __init__.py
-├── create_user_external/
-│   ├── create_user_external_use_case.py (principal)
-│   └── __init__.py
-├── login/
-│   ├── auth_login_use_case.py (principal)
-│   ├── auth_validate_user_use_case.py (auxiliar)
-│   ├── auth_menu_use_case.py (auxiliar)
-│   └── __init__.py
-├── logout/
-│   ├── auth_logout_use_case.py
-│   └── __init__.py
-└── __init__.py
 ```
 
 #### Beneficios de Esta Organización
 
-1. ✅ **Agrupación lógica**: Todos los casos de uso de un flujo están juntos
-2. ✅ **Facilita navegación**: Es fácil encontrar todo lo relacionado con un flujo
-3. ✅ **Escalabilidad**: Cada flujo puede crecer independientemente
-4. ✅ **Claridad**: Se ve inmediatamente qué casos de uso son auxiliares de cuál principal
-5. ✅ **Modularidad**: Cada carpeta es una unidad funcional completa
+1. **Agrupación lógica**: Todos los casos de uso de un flujo están juntos
+2. **Facilita navegación**: Es fácil encontrar todo lo relacionado con un flujo
+3. **Escalabilidad**: Cada flujo puede crecer independientemente con sub-use-cases
+4. **Claridad**: Se ve inmediatamente qué casos de uso son auxiliares de cuál principal
+5. **Modularidad**: Cada carpeta es una unidad funcional completa
 
-#### Nomenclatura
+#### Nomenclatura: Evitar Prefijos Redundantes
 
-- **Carpeta**: Nombre del flujo en snake_case
-  - Ejemplo: `create_company/`, `login/`, `refresh_token/`
-- **Archivo principal**: `{nombre_flujo}_use_case.py`
-  - Ejemplo: `create_company_use_case.py`, `auth_login_use_case.py`
-- **Archivos auxiliares**: `{operacion}_use_case.py` o `{operacion}_for_{contexto}_use_case.py`
-  - Ejemplo: `clone_menus_for_company_use_case.py`
-  - Ejemplo: `validate_user_internal_use_case.py`
+La carpeta del módulo ya provee el contexto. **No repetir el nombre del módulo** en archivos ni clases dentro de esa carpeta:
+
+```
+# ❌ INCORRECTO - Prefijo redundante
+geography/
+├── countries/
+│   └── geography_countries_use_case.py    → GeographyCountriesUseCase
+
+# ✅ CORRECTO - Sin prefijo redundante
+geography/
+├── countries/
+│   └── countries_use_case.py              → CountriesUseCase
+├── hierarchy/
+│   └── hierarchy_use_case.py              → HierarchyUseCase
+├── detail/
+│   └── detail_use_case.py                 → DetailUseCase
+```
+
+> **Nota**: El módulo `auth` es una excepción histórica donde algunos archivos conservan el prefijo `auth_` por claridad semántica (ej: `auth_login_use_case.py`). Para módulos **nuevos**, seguir la convención sin prefijo redundante.
+
+#### Nomenclatura General
+
+- **Carpeta del módulo**: Nombre del módulo en snake_case → `auth/`, `geography/`
+- **Carpeta del flujo**: Nombre del flujo en snake_case → `login/`, `countries/`, `hierarchy/`
+- **Archivo principal**: `{nombre_flujo}_use_case.py` → `countries_use_case.py`
+- **Clase principal**: `{NombreFlujo}UseCase` → `CountriesUseCase`
+- **Archivos auxiliares**: `{operacion}_use_case.py` → `validate_country_use_case.py`
 
 #### Imports
 
 ```python
-# ✅ Correcto
-from src.domain.services.use_cases.business.auth.create_company.create_company_use_case import CreateCompanyUseCase
-from src.domain.services.use_cases.business.auth.create_company.clone_menus_for_company_use_case import CloneMenusForCompanyUseCase
+# ✅ Import desde el controller (path completo)
+from src.domain.services.use_cases.business.geography.countries.countries_use_case import CountriesUseCase
+from src.domain.services.use_cases.business.geography.hierarchy.hierarchy_use_case import HierarchyUseCase
 
-# Los casos de uso auxiliares se importan desde la misma carpeta del flujo
-# create_company_use_case.py
+# ✅ Import relativo entre use cases auxiliares (misma carpeta)
 from .clone_menus_for_company_use_case import CloneMenusForCompanyUseCase
 from .clone_menu_permissions_for_company_use_case import CloneMenuPermissionsForCompanyUseCase
 ```
@@ -615,27 +636,591 @@ class CreateCompanyUseCase:
         self.clone_permissions_uc = CloneMenuPermissionsForCompanyUseCase()
 ```
 
+#### Stack Completo por Módulo de Negocio
+
+Cada módulo de negocio sigue este stack completo. El nombre del módulo se usa como **namespace** en cada capa:
+
+| Capa | Ruta | Ejemplo (geography) |
+|------|------|---------------------|
+| **Router** | `business_routes/{modulo}_router.py` | `geography_router.py` → `geography_router` |
+| **Controller** | `controller/business/{modulo}_controller.py` | `geography_controller.py` → `GeographyController` |
+| **Use Cases** | `use_cases/business/{modulo}/{flujo}/{flujo}_use_case.py` | `geography/countries/countries_use_case.py` → `CountriesUseCase` |
+| **Repository** | `repositories/business/{modulo}_repository.py` | `geography_repository.py` → `GeographyRepository` |
+| **Mapper** | `repositories/business/mappers/{modulo}/{modulo}_mapper.py` | `geography/geography_mapper.py` |
+| **Response Models** | `models/business/{modulo}/` | `geography/geo_division_item_response.py` |
+| **Registro** | `routes/route_business.py` | `app.include_router(geography_router)` |
+
+> **Importante**: El tag del router (`tags=["Geography"]`) debe ser **diferente** al tag de la entidad (`tags=["GeoDivision"]`) para que en Swagger/OpenAPI se muestren como grupos separados.
+
+### 7. Tipos Genéricos en Response
+
+**OBLIGATORIO**: Todos los endpoints de Business Flow deben especificar el tipo genérico de `Response[T]` en:
+- `response_model` del decorador del router
+- Firma de retorno de la función del router
+- Firma de retorno del método del controller
+
+```python
+# ✅ CORRECTO - Tipo específico
+@geography_router.post(
+    "/country/types",
+    response_model=Response[List[GeoDivisionTypeByCountryResponse]],  # ← Tipo específico
+)
+async def types_by_country(
+    params: TypesByCountryRequest, 
+    config: Config = Depends(get_config)
+) -> Response[List[GeoDivisionTypeByCountryResponse]]:  # ← Tipo específico
+    return await geography_controller.types_by_country(config, params)
+
+# Controller
+class GeographyController:
+    async def types_by_country(
+        self, config: Config, params: TypesByCountryRequest
+    ) -> Response[List[GeoDivisionTypeByCountryResponse]]:  # ← Tipo específico
+        result = await self.types_by_country_use_case.execute(config, params)
+        if isinstance(result, str):
+            return Response.error(None, result)
+        return Response.success_temporary_message(response=result, message=...)
+
+# ❌ INCORRECTO - Response genérico
+@geography_router.post("/country/types", response_model=Response)  # ← Demasiado genérico
+async def types_by_country(...) -> Response:  # ← Demasiado genérico
+    ...
+```
+
+**Beneficios:**
+- ✅ Swagger/OpenAPI genera documentación exacta del schema de respuesta
+- ✅ Type safety completo en el stack
+- ✅ Mejor autocompletado en IDEs
+- ✅ Validación de tipos en tiempo de desarrollo
+
+**Tipos comunes:**
+- `Response[T]` - Respuesta única
+- `Response[List[T]]` - Lista de elementos
+- `Response[Dict[str, Any]]` - Diccionario dinámico (evitar si es posible)
+
+### 8. Documentación de Swagger
+
+**OBLIGATORIO**: Cada endpoint debe incluir `summary` y `description` para documentación en Swagger:
+
+```python
+@geography_router.post(
+    "/country/types",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[List[GeoDivisionTypeByCountryResponse]],
+    summary="Tipos de división por país",  # ← Título corto
+    description="""
+    Obtiene todos los tipos de división geográfica disponibles para un país específico 
+    junto con el conteo de registros por tipo.
+    
+    **Caso de uso:**
+    - Mostrar estructura geográfica disponible de un país
+    - Determinar qué niveles de división están implementados
+    - Obtener estadísticas de divisiones por tipo
+    
+    **Respuesta incluye:**
+    - ID del tipo de división
+    - Nombre del tipo (DEPARTMENT, CITY, etc.)
+    - Etiqueta localizada (Departamento, Ciudad, etc.)
+    - Nivel jerárquico (1, 2, 3...)
+    - Cantidad de divisiones de ese tipo
+    
+    **Ejemplo de request:**
+    ```json
+    {
+      "country_id": "uuid-del-pais"
+    }
+    ```
+    """,  # ← Descripción detallada con markdown
+)
+async def types_by_country(...):
+    ...
+```
+
+**Elementos requeridos en `description`:**
+1. **Qué hace**: Descripción clara de la operación
+2. **Caso de uso**: Escenarios concretos de cuándo usar el endpoint
+3. **Respuesta incluye**: Qué campos retorna y su significado
+4. **Ejemplo de request**: JSON de ejemplo (si aplica)
+5. **Notas especiales**: Limitaciones, consideraciones, diferencias con otros endpoints
+
+**Formato:**
+- Usar markdown para formato (negrita, listas, code blocks)
+- Incluir ejemplos JSON cuando sea útil
+- Ser conciso pero completo
+- Usar sección `**Título:**` para organizar
+
 ---
 
-## Ejemplo: Auth Login
+## Guía: Crear un Nuevo Módulo de Negocio
 
-Ver documento **[03-05-auth-flow-specification.md]** para la especificación completa del flujo de autenticación con:
-- Diagrama de secuencia detallado
-- Todos los sub-use cases involucrados
-- Validaciones ejecutadas
-- Estructura completa de la respuesta
-- Ejemplos de peticiones y respuestas
+Esta sección describe **paso a paso** cómo crear un nuevo módulo de Business Flow desde cero.
+
+### Paso 1: Definir el Módulo y sus Flujos
+
+**Decisión inicial:**
+- ¿Qué módulo de negocio estás creando? (ej: `payments`, `notifications`, `reports`)
+- ¿Qué operaciones/flujos necesitas? (ej: `process_payment`, `send_notification`)
+- ¿Qué entidades involucra?
+- ¿Requiere autenticación?
+
+**Ejemplo:** Crearemos un módulo `geography` con operaciones para consultar divisiones geográficas.
+
+### Paso 2: Crear Modelos Request/Response
+
+**Ubicación:** `src/domain/models/business/{modulo}/`
+
+```bash
+mkdir -p src/domain/models/business/geography
+```
+
+**Crear archivos:**
+
+```python
+# types_by_country_request.py
+from pydantic import BaseModel, Field
+from uuid import UUID
+
+class TypesByCountryRequest(BaseModel):
+    country_id: UUID = Field(...)
+```
+
+```python
+# geo_division_type_by_country_response.py
+from pydantic import BaseModel, Field
+from uuid import UUID
+
+class GeoDivisionTypeByCountryResponse(BaseModel):
+    id: UUID = Field(...)
+    name: str = Field(...)
+    label: str = Field(...)
+    level: int = Field(...)
+    count: int = Field(...)
+```
+
+**Crear index.py:**
+```python
+# index.py
+from .types_by_country_request import TypesByCountryRequest
+from .geo_division_type_by_country_response import GeoDivisionTypeByCountryResponse
+
+__all__ = [
+    "TypesByCountryRequest",
+    "GeoDivisionTypeByCountryResponse",
+]
+```
+
+**Consideraciones:**
+- Usar `UUID` (no `UUID4`) si necesitas aceptar UUIDs fijos/predecibles
+- Usar `Field(...)` para campos obligatorios
+- Usar `Field(default=None)` para campos opcionales
+- Agregar `json_schema_extra` con ejemplos si es útil
+
+### Paso 3: Crear Repository (si necesitas queries especiales)
+
+**Ubicación:** `src/infrastructure/database/repositories/business/{modulo}_repository.py`
+
+```python
+# geography_repository.py
+from uuid import UUID
+from typing import List, Optional
+from src.core.config import settings
+from src.core.enums.layer import LAYER
+from src.core.models.config import Config
+from src.core.wrappers.execute_transaction import execute_transaction
+from src.infrastructure.database.entities.geo_division_entity import GeoDivisionEntity
+
+class GeographyRepository:
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def get_types_by_country(
+        self, config: Config, country_id: UUID
+    ) -> Optional[List]:
+        async with config.async_db as db:
+            from sqlalchemy import text as sa_text
+            
+            schema = settings.database_schema
+            raw_sql = sa_text(f"""
+                WITH RECURSIVE descendants AS (
+                    SELECT id, geo_division_type_id, level
+                    FROM {schema}.geo_division
+                    WHERE top_id = :country_id AND state = TRUE
+                    UNION ALL
+                    SELECT gd.id, gd.geo_division_type_id, gd.level
+                    FROM {schema}.geo_division gd
+                    INNER JOIN descendants d ON gd.top_id = d.id
+                    WHERE gd.state = TRUE
+                )
+                SELECT 
+                    gdt.id, gdt.name, gdt.label, d.level, COUNT(d.id) as count
+                FROM descendants d
+                INNER JOIN {schema}.geo_division_type gdt 
+                    ON d.geo_division_type_id = gdt.id
+                WHERE gdt.state = TRUE
+                GROUP BY gdt.id, gdt.name, gdt.label, d.level
+                ORDER BY d.level
+            """)
+            
+            result = await db.execute(raw_sql, {"country_id": str(country_id)})
+            rows = result.all()
+            return rows if rows else None
+```
+
+**Importante cuando uses SQL raw:**
+- ✅ **SIEMPRE** especifica el schema: `{schema}.tabla`
+- ✅ Usa `schema = settings.database_schema`
+- ✅ Usa f-strings para interpolar el schema
+- ❌ NO uses SQL raw sin schema: causará `relation does not exist`
+
+### Paso 4: Crear Mappers (si necesitas transformaciones)
+
+**Ubicación:** `src/infrastructure/database/repositories/business/mappers/{modulo}/{modulo}_mapper.py`
+
+```python
+# mappers/geography/geography_mapper.py
+from src.domain.models.business.geography.index import GeoDivisionTypeByCountryResponse
+from src.infrastructure.database.entities.geo_division_type_entity import GeoDivisionTypeEntity
+
+def map_to_geo_division_type_by_country_response(
+    type_entity: GeoDivisionTypeEntity, level: int, count: int
+) -> GeoDivisionTypeByCountryResponse:
+    return GeoDivisionTypeByCountryResponse(
+        id=type_entity.id,
+        name=type_entity.name,
+        label=type_entity.label,
+        level=level,
+        count=count,
+    )
+```
+
+### Paso 5: Crear Use Cases
+
+**Ubicación:** `src/domain/services/use_cases/business/{modulo}/{flujo}/`
+
+```bash
+mkdir -p src/domain/services/use_cases/business/geography/types_by_country
+```
+
+```python
+# types_by_country_use_case.py
+from typing import List, Union
+from src.core.config import settings
+from src.core.enums.layer import LAYER
+from src.core.models.config import Config
+from src.core.classes.async_message import Message
+from src.core.models.message import MessageCoreEntity
+from src.core.enums.keys_message import KEYS_MESSAGES
+from src.core.wrappers.execute_transaction import execute_transaction
+from src.domain.models.business.geography.index import (
+    GeoDivisionTypeByCountryResponse,
+    TypesByCountryRequest,
+)
+from src.infrastructure.database.repositories.business.geography_repository import (
+    GeographyRepository,
+)
+from src.infrastructure.database.repositories.business.mappers.geography.geography_mapper import (
+    map_to_geo_division_type_by_country_response,
+)
+
+class TypesByCountryUseCase:
+    def __init__(self):
+        self.geography_repository = GeographyRepository()
+        self.message = Message()
+
+    @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
+    async def execute(
+        self, config: Config, params: TypesByCountryRequest
+    ) -> Union[List[GeoDivisionTypeByCountryResponse], str]:
+        # 1. Obtener datos del repositorio
+        rows = await self.geography_repository.get_types_by_country(
+            config=config, country_id=params.country_id
+        )
+        
+        # 2. Validar que se encontraron resultados
+        if not rows:
+            return await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.CORE_NO_RESULTS_FOUND.value
+                ),
+            )
+        
+        # 3. Mapear a Response models
+        result = []
+        for row in rows:
+            # Construir entity temporal desde row
+            type_entity = GeoDivisionTypeEntity()
+            type_entity.id = row.id
+            type_entity.name = row.name
+            type_entity.label = row.label
+            
+            # Mapear usando mapper
+            result.append(
+                map_to_geo_division_type_by_country_response(
+                    type_entity=type_entity,
+                    level=row.level,
+                    count=row.count,
+                )
+            )
+        
+        return result
+```
+
+**Patrón del método `execute`:**
+1. Recibe `config: Config` y `params: XXXRequest`
+2. Retorna `Union[XXXResponse, str]` (respuesta o mensaje de error)
+3. Valida inputs y resultados
+4. Propaga errores como strings
+5. Mapea entities a response models
+6. Retorna response model o lista de response models
+
+### Paso 6: Crear Controller
+
+**Ubicación:** `src/infrastructure/web/controller/business/{modulo}_controller.py`
+
+```python
+# geography_controller.py
+from typing import List
+from src.core.config import settings
+from src.core.enums.layer import LAYER
+from src.core.models.config import Config
+from src.core.models.response import Response
+from src.core.classes.async_message import Message
+from src.core.models.message import MessageCoreEntity
+from src.core.enums.keys_message import KEYS_MESSAGES
+from src.core.wrappers.execute_transaction import execute_transaction
+from src.domain.models.business.geography.index import (
+    TypesByCountryRequest,
+    GeoDivisionTypeByCountryResponse,
+)
+from src.domain.services.use_cases.business.geography.types_by_country.types_by_country_use_case import (
+    TypesByCountryUseCase,
+)
+
+class GeographyController:
+    def __init__(self) -> None:
+        self.types_by_country_use_case = TypesByCountryUseCase()
+        self.message = Message()
+
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def types_by_country(
+        self, config: Config, params: TypesByCountryRequest
+    ) -> Response[List[GeoDivisionTypeByCountryResponse]]:  # ← Tipo específico
+        result = await self.types_by_country_use_case.execute(config, params)
+        
+        if isinstance(result, str):
+            return Response.error(None, result)
+        
+        return Response.success_temporary_message(
+            response=result,
+            message=await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(key=KEYS_MESSAGES.CORE_QUERY_MADE.value),
+            ),
+        )
+```
+
+**Patrón del controller:**
+1. Inicializar todos los use cases en `__init__`
+2. Cada método recibe `config: Config, params: XXXRequest`
+3. Retorna `Response[T]` con tipo genérico específico
+4. Invoca use case y verifica si el resultado es error (string)
+5. Construye `Response.error()` o `Response.success_temporary_message()`
+6. Incluye mensaje localizado
+
+### Paso 7: Crear Router
+
+**Ubicación:** `src/infrastructure/web/business_routes/{modulo}_router.py`
+
+```python
+# geography_router.py
+from typing import List
+from src.core.config import settings
+from src.core.models.config import Config
+from src.core.models.response import Response
+from fastapi import APIRouter, Depends, status
+from src.core.methods.get_config import get_config
+from src.core.wrappers.execute_transaction import execute_transaction_route
+from src.domain.models.business.geography.index import (
+    TypesByCountryRequest,
+    GeoDivisionTypeByCountryResponse,
+)
+from src.infrastructure.web.controller.business.geography_controller import (
+    GeographyController,
+)
+
+geography_router = APIRouter(
+    prefix="/geography",  # ← URL prefix
+    tags=["Geography"],    # ← Tag para Swagger (diferente a entidad)
+    responses={404: {"description": "Not found"}},
+)
+
+geography_controller = GeographyController()
+
+@geography_router.post(
+    "/country/types",  # ← Ruta relativa
+    status_code=status.HTTP_200_OK,
+    response_model=Response[List[GeoDivisionTypeByCountryResponse]],  # ← Tipo específico
+    summary="Tipos de división por país",  # ← Título para Swagger
+    description="""
+    Obtiene todos los tipos de división geográfica disponibles...
+    
+    **Caso de uso:**
+    - Mostrar estructura geográfica
+    - Obtener estadísticas
+    
+    **Respuesta incluye:**
+    - ID, nombre, label, level, count
+    """,  # ← Descripción detallada
+)
+@execute_transaction_route(enabled=settings.has_track)
+async def types_by_country(
+    params: TypesByCountryRequest,  # ← Clase Request con nombre params
+    config: Config = Depends(get_config)
+) -> Response[List[GeoDivisionTypeByCountryResponse]]:  # ← Tipo específico
+    return await geography_controller.types_by_country(config=config, params=params)
+```
+
+**Patrón del router:**
+1. Crear `APIRouter` con `prefix` y `tags` únicos
+2. Instanciar controller **una sola vez** fuera de las funciones
+3. Cada endpoint:
+   - Decorador con `summary` y `description`
+   - Parámetro `params: XXXRequest` (nombre SIEMPRE `params`)
+   - Parámetro `config: Config = Depends(get_config)`
+   - Retorno `Response[T]` con tipo específico
+4. Delegar todo el trabajo al controller
+
+**Métodos HTTP:**
+- `POST`: Para operaciones con body (mayoría de business endpoints)
+- `GET`: Para consultas simples sin parámetros (ej: `/countries`)
+- `DELETE`: Raramente usado en business (usar `POST` con flag de acción)
+
+### Paso 8: Registrar el Router
+
+**Ubicación:** `src/infrastructure/web/routes/route_business.py`
+
+```python
+from src.infrastructure.web.business_routes.geography_router import geography_router
+
+class RouteBusiness:
+    @staticmethod
+    def set_routes(app):
+        app.include_router(geography_router)
+        # ... otros routers
+```
+
+### Paso 9: Verificar el Stack Completo
+
+Checklist de archivos creados para el módulo `geography`:
+
+```
+✅ Modelos:
+   - src/domain/models/business/geography/types_by_country_request.py
+   - src/domain/models/business/geography/geo_division_type_by_country_response.py
+   - src/domain/models/business/geography/index.py
+
+✅ Use Cases:
+   - src/domain/services/use_cases/business/geography/types_by_country/types_by_country_use_case.py
+   - src/domain/services/use_cases/business/geography/types_by_country/__init__.py
+
+✅ Repository (si necesitas):
+   - src/infrastructure/database/repositories/business/geography_repository.py
+
+✅ Mappers (si necesitas):
+   - src/infrastructure/database/repositories/business/mappers/geography/geography_mapper.py
+
+✅ Controller:
+   - src/infrastructure/web/controller/business/geography_controller.py
+
+✅ Router:
+   - src/infrastructure/web/business_routes/geography_router.py
+
+✅ Registro:
+   - src/infrastructure/web/routes/route_business.py (include_router)
+```
+
+### Paso 10: Probar el Endpoint
+
+1. **Reiniciar servidor** si es necesario
+2. **Ir a Swagger**: `http://localhost:8000/docs`
+3. **Verificar** que aparece el tag "Geography" con el endpoint
+4. **Probar** con datos reales usando la interfaz de Swagger
+5. **Verificar response** y ajustar si es necesario
+
+### Ejemplo Completo Mínimo
+
+**Módulo más simple posible** (consulta de lectura):
+
+```
+geography/
+├── models/business/geography/
+│   ├── countries_response.py       # Solo response (GET sin body)
+│   └── index.py
+├── use_cases/business/geography/
+│   └── countries/
+│       └── countries_use_case.py   # Lógica simple
+├── controller/business/
+│   └── geography_controller.py     # Delegación
+└── business_routes/
+    └── geography_router.py         # Endpoint GET
+```
+
+**Código mínimo:**
+
+```python
+# countries_use_case.py (20 líneas)
+class CountriesUseCase:
+    def __init__(self):
+        self.geo_division_repository = GeoDivisionRepository()
+        self.message = Message()
+
+    async def execute(self, config: Config) -> Union[List[GeoDivisionItemResponse], str]:
+        countries = await self.geo_division_repository.list(
+            config=config,
+            params=Pagination(filters=[{"field": "level", "value": 0}])
+        )
+        if not countries:
+            return await self.message.get_message(...)
+        return [map_to_response(c) for c in countries]
+
+# geography_controller.py (15 líneas)
+class GeographyController:
+    def __init__(self):
+        self.countries_use_case = CountriesUseCase()
+        self.message = Message()
+
+    async def countries(self, config: Config) -> Response[List[GeoDivisionItemResponse]]:
+        result = await self.countries_use_case.execute(config)
+        if isinstance(result, str):
+            return Response.error(None, result)
+        return Response.success_temporary_message(response=result, message=...)
+
+# geography_router.py (15 líneas)
+@geography_router.get(
+    "/countries",
+    response_model=Response[List[GeoDivisionItemResponse]],
+    summary="Listar países",
+    description="Obtiene todos los países disponibles..."
+)
+async def countries(config: Config = Depends(get_config)) -> Response[List[GeoDivisionItemResponse]]:
+    return await geography_controller.countries(config)
+```
+
+**Total:** ~50 líneas de código para un endpoint funcional completo.
 
 ---
 
 ## Referencias
 
-- **[03-01] Business Models**: Especificación de modelos de negocio
-- **[03-02] Business Use Cases**: Especificación de casos de uso de negocio
-- **[03-03] Business Controllers**: Especificación de controladores de negocio
-- **[03-04] Business Routers**: Especificación de routers de negocio
-- **[03-05] Auth Flow Specification**: Especificación completa del flujo de autenticación
-- **[03-06] Business Flow Examples**: Ejemplos prácticos completos
+- **[02] Entity Flow**: Documentación de CRUD estándar para entidades simples
+- **[03-05] Auth Flow Specification**: Ejemplo completo del flujo de autenticación
+- **[05] Arquitectura General**: Capas, separación de responsabilidades, principios SOLID
+
+**Documentación relacionada:**
+- Convenciones de código y estilo
+- Guía de migrations (Liquibase)
+- Manejo de errores y mensajes localizados
+- Configuración de permisos y decoradores
 
 ---
 
@@ -645,6 +1230,8 @@ Ver documento **[03-05-auth-flow-specification.md]** para la especificación com
 |---------|-------|---------|-------|
 | 1.0 | Nov 2024 | Creación inicial del documento de Business Flow | Equipo de Desarrollo Goluti |
 | 1.1 | Nov 12, 2024 | Agregada sección 7.6 "Organización de Use Cases en Business": Cada flujo de negocio tiene su propia carpeta dentro de auth/ con todos sus casos de uso (principal + auxiliares). Incluye ejemplos de estructura, nomenclatura e imports. | Equipo de Desarrollo Goluti |
+| 1.2 | Ene 23, 2026 | Actualizada sección 7.6: Documentado patrón completo para módulos de negocio. Agregado: estructura por módulo (auth, geography), convención de nomenclatura sin prefijos redundantes, stack completo por módulo (router → controller → use cases → repository → mapper → models), tabla de rutas por capa, nota sobre separación de tags en Swagger. | Equipo de Desarrollo Goluti |
+| 2.0 | Ene 23, 2026 | **Refactorización completa como especificación de construcción**: Eliminada sección de "Casos de Uso Disponibles" (listado de endpoints específicos). Documento reenfocado como guía de "cómo construir" flujos de negocio. Agregadas secciones 6.7 (Tipos Genéricos en Response), 6.8 (Documentación de Swagger). Nueva sección 7: "Guía: Crear un Nuevo Módulo de Negocio" con paso a paso completo, ejemplos de código, checklist y ejemplo mínimo de 50 líneas. Documento ahora es prescriptivo, no descriptivo. | Equipo de Desarrollo Goluti |
 
 ---
 

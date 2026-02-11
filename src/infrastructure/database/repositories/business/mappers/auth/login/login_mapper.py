@@ -16,7 +16,7 @@ from src.domain.models.entities.language.language import Language
 from src.domain.models.entities.user.user_read import UserRead
 from src.domain.models.entities.user.user_update import UserUpdate
 from src.infrastructure.database.entities.company_entity import CompanyEntity
-from src.infrastructure.database.entities.country_entity import CountryEntity
+from src.infrastructure.database.entities.geo_division_entity import GeoDivisionEntity
 from src.infrastructure.database.entities.currency_entity import CurrencyEntity
 from src.infrastructure.database.entities.language_entity import LanguageEntity
 from src.infrastructure.database.entities.location_entity import LocationEntity
@@ -59,10 +59,13 @@ def map_to_location_login_response(
         id=location_entity.id,
         name=location_entity.name,
         address=location_entity.address,
-        city=location_entity.city,
+        city_id=location_entity.city_id,
         phone=location_entity.phone,
         email=location_entity.email,
         main_location=location_entity.main_location,
+        latitude=location_entity.latitude,
+        longitude=location_entity.longitude,
+        google_place_id=location_entity.google_place_id,
         state=location_entity.state,
     )
 
@@ -104,8 +107,13 @@ def map_to_platform_login_response(
 
 
 def map_to_country_login_response(
-    country_entity: CountryEntity,
+    country_entity: GeoDivisionEntity,
 ) -> CountryLoginResponse:
+    """
+    Mapea un GeoDivisionEntity (tipo COUNTRY) a CountryLoginResponse.
+    
+    Ahora el country viene de geo_division en vez de la tabla country eliminada.
+    """
     return CountryLoginResponse(
         id=country_entity.id,
         name=country_entity.name,

@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, UUID4
 
 class UserByLocationItem(BaseModel):
     user_location_rol_id: UUID4 = Field(..., description="ID de la asignación user-location-rol")
-    location_id: UUID4 = Field(..., description="ID de la ubicación")
+    location_id: Optional[UUID4] = Field(None, description="ID de la ubicación (NULL para usuarios externos)")
     user_id: UUID4 = Field(..., description="ID del usuario")
     email: str = Field(..., description="Email del usuario")
     identification: str = Field(..., description="Identificación del usuario")

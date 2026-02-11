@@ -13,7 +13,7 @@ from src.core.models.message import MessageCoreEntity
 from src.domain.models.business.auth.create_company.index import CreateCompanyRequest
 from src.domain.models.entities.company.index import CompanySave
 from src.domain.models.entities.location.index import LocationSave
-from src.domain.models.entities.country.index import CountryRead
+from src.domain.models.entities.geo_division.index import GeoDivisionRead
 from src.domain.models.entities.language.index import LanguageRead
 from src.domain.models.entities.currency.index import CurrencyRead
 from src.domain.models.entities.currency_location.index import CurrencyLocationSave
@@ -25,7 +25,7 @@ from src.domain.models.business.auth.create_user_internal.index import (
 
 # Importar repositorios
 from src.infrastructure.database.repositories.entities.company_repository import CompanyRepository
-from src.infrastructure.database.repositories.entities.country_repository import CountryRepository
+from src.infrastructure.database.repositories.entities.geo_division_repository import GeoDivisionRepository
 from src.infrastructure.database.repositories.entities.language_repository import LanguageRepository
 from src.infrastructure.database.repositories.entities.currency_repository import CurrencyRepository
 from src.infrastructure.database.repositories.entities.rol_repository import RolRepository
@@ -37,7 +37,7 @@ from src.infrastructure.database.repositories.entities.currency_location_reposit
 # Importar use cases de entidades
 from src.domain.services.use_cases.entities.company.company_save_use_case import CompanySaveUseCase
 from src.domain.services.use_cases.entities.company.company_list_use_case import CompanyListUseCase
-from src.domain.services.use_cases.entities.country.country_read_use_case import CountryReadUseCase
+from src.domain.services.use_cases.entities.geo_division.geo_division_read_use_case import GeoDivisionReadUseCase
 from src.domain.services.use_cases.entities.language.language_read_use_case import LanguageReadUseCase
 from src.domain.services.use_cases.entities.currency.currency_read_use_case import CurrencyReadUseCase
 from src.domain.services.use_cases.entities.rol.rol_read_use_case import RolReadUseCase
@@ -53,7 +53,7 @@ from .clone_menu_permissions_for_company_use_case import CloneMenuPermissionsFor
 
 # Instanciar repositorios
 company_repository = CompanyRepository()
-country_repository = CountryRepository()
+geo_division_repository = GeoDivisionRepository()
 language_repository = LanguageRepository()
 currency_repository = CurrencyRepository()
 rol_repository = RolRepository()
@@ -81,7 +81,7 @@ class CreateCompanyUseCase:
     def __init__(self):
         # Use cases de validación
         self.company_list_uc = CompanyListUseCase(company_repository)
-        self.country_read_uc = CountryReadUseCase(country_repository)
+        self.geo_division_read_uc = GeoDivisionReadUseCase(geo_division_repository)
         self.language_read_uc = LanguageReadUseCase(language_repository)
         self.currency_read_uc = CurrencyReadUseCase(currency_repository)
         self.rol_read_uc = RolReadUseCase(rol_repository)
@@ -150,10 +150,10 @@ class CreateCompanyUseCase:
                 ),
             )
         
-        # Validar country existe
-        country = await self.country_read_uc.execute(
+        # Validar country existe (ahora es un nodo geo_division de tipo COUNTRY)
+        country = await self.geo_division_read_uc.execute(
             config=config,
-            params=CountryRead(id=params.location.country_id)
+            params=GeoDivisionRead(id=params.location.country_id)
         )
         if isinstance(country, str) or not country:
             return await self.message.get_message(
@@ -202,7 +202,8 @@ class CreateCompanyUseCase:
                 ),
             )
         
-        # Validar que existan menús template (company_id = NULL)
+        # Validar que existan menús template (company_id = NULL y type = 'INTERNAL')
+        # IMPORTANTE: Solo clonar menús INTERNAL, los EXTERNAL son globales
         template_menus = await self.menu_list_uc.execute(
             config=config,
             params=Pagination(
@@ -210,6 +211,11 @@ class CreateCompanyUseCase:
                     FilterManager(
                         field="company_id",
                         value=None,
+                        condition=CONDITION_TYPE.EQUALS
+                    ),
+                    FilterManager(
+                        field="type",
+                        value="INTERNAL",
                         condition=CONDITION_TYPE.EQUALS
                     )
                 ],
@@ -287,12 +293,15 @@ class CreateCompanyUseCase:
             params=LocationSave(
                 company_id=company.id,
                 country_id=params.location.country_id,
+                city_id=params.location.city_id,
                 name=params.location.name,
                 address=params.location.address,
-                city=params.location.city,
                 phone=params.location.phone,
                 email=params.location.email,
                 main_location=True,
+                latitude=params.location.latitude,
+                longitude=params.location.longitude,
+                google_place_id=params.location.google_place_id,
                 state=True
             )
         )

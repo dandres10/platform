@@ -713,7 +713,7 @@ class DeleteUserInternalUseCase:
         # Por ahora retorna False (sin relaciones adicionales)
         return False
     
-    @execute_transaction(layer=LAYER.D_S_U_B.value, enabled=settings.has_track)
+    @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
         self,
         config: Config,
@@ -820,7 +820,7 @@ class DeleteUserInternalUseCase:
 Agregar el método al controlador existente:
 
 ```python
-@execute_transaction(layer=LAYER.I_W_C_B.value, enabled=settings.has_track)
+@execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
 async def delete_user_internal(
     self, 
     config: Config, 

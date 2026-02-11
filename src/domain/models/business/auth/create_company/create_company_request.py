@@ -1,3 +1,4 @@
+from decimal import Decimal
 from pydantic import BaseModel, Field, UUID4, EmailStr
 from typing import Optional
 
@@ -20,22 +21,27 @@ class CompanyData(BaseModel):
 
 class LocationData(BaseModel):
     """Datos de la ubicación principal"""
-    country_id: UUID4 = Field(..., description="ID del país")
+    country_id: UUID4 = Field(..., description="ID del país (geo_division tipo COUNTRY)")
+    city_id: Optional[UUID4] = Field(default=None, description="ID de la ciudad (geo_division tipo CITY)")
     name: str = Field(..., min_length=3, max_length=255, description="Nombre de la ubicación")
     address: str = Field(..., min_length=5, description="Dirección completa")
-    city: str = Field(..., min_length=2, max_length=100, description="Ciudad")
     phone: str = Field(..., min_length=7, max_length=20, description="Teléfono")
     email: EmailStr = Field(..., description="Email de contacto de la ubicación")
+    latitude: Optional[Decimal] = Field(default=None, description="Latitud (-90 a 90)")
+    longitude: Optional[Decimal] = Field(default=None, description="Longitud (-180 a 180)")
+    google_place_id: Optional[str] = Field(default=None, max_length=255, description="Google Places API ID")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "country_id": "550e8400-e29b-41d4-a716-446655440000",
+                "city_id": "660e8400-e29b-41d4-a716-446655440000",
                 "name": "Sede Principal",
                 "address": "Calle 123 #45-67",
-                "city": "Bogotá",
                 "phone": "+57 300 1234567",
-                "email": "contacto@empresaejemplo.com"
+                "email": "contacto@empresaejemplo.com",
+                "latitude": 4.6097100,
+                "longitude": -74.0817500
             }
         }
 
@@ -84,9 +90,9 @@ class CreateCompanyRequest(BaseModel):
                 },
                 "location": {
                     "country_id": "550e8400-e29b-41d4-a716-446655440000",
+                    "city_id": "660e8400-e29b-41d4-a716-446655440000",
                     "name": "Sede Principal",
                     "address": "Calle 123 #45-67",
-                    "city": "Bogotá",
                     "phone": "+57 300 1234567",
                     "email": "contacto@empresaejemplo.com"
                 },

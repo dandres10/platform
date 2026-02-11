@@ -1,4 +1,5 @@
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
+from uuid import UUID
 from src.core.config import settings
 from src.core.enums.layer import LAYER
 from sqlalchemy.future import select
@@ -29,10 +30,11 @@ from src.domain.models.business.auth.login.auth_user_role_and_permissions import
 )
 from src.domain.models.business.auth.login.companies_by_user import CompaniesByUser
 from src.domain.models.business.auth.login.menu import Menu
+from src.domain.models.business.auth.login.user_rol_info import UserRolInfo
 from src.domain.models.entities.company.company import Company
 from src.domain.services.repositories.business.i_auth_repository import IAuthRepository
 from src.infrastructure.database.entities.company_entity import CompanyEntity
-from src.infrastructure.database.entities.country_entity import CountryEntity
+from src.infrastructure.database.entities.geo_division_entity import GeoDivisionEntity
 from src.infrastructure.database.entities.currency_entity import CurrencyEntity
 from src.infrastructure.database.entities.currency_location_entity import (
     CurrencyLocationEntity,
@@ -75,7 +77,7 @@ class AuthRepository(IAuthRepository):
             LanguageEntity,
             LocationEntity,
             CurrencyEntity,
-            CountryEntity,
+            GeoDivisionEntity,
             CompanyEntity,
         ],
         None,
@@ -88,14 +90,14 @@ class AuthRepository(IAuthRepository):
                     LanguageEntity,
                     LocationEntity,
                     CurrencyEntity,
-                    CountryEntity,
+                    GeoDivisionEntity,
                     CompanyEntity,
                 )
                 .join(PlatformEntity, PlatformEntity.id == UserEntity.platform_id)
                 .join(LanguageEntity, LanguageEntity.id == PlatformEntity.language_id)
                 .join(LocationEntity, LocationEntity.id == PlatformEntity.location_id)
                 .join(CurrencyEntity, CurrencyEntity.id == PlatformEntity.currency_id)
-                .join(CountryEntity, CountryEntity.id == LocationEntity.country_id)
+                .join(GeoDivisionEntity, GeoDivisionEntity.id == LocationEntity.country_id)
                 .join(CompanyEntity, CompanyEntity.id == LocationEntity.company_id)
                 .filter(UserEntity.email == params.email)
                 .filter(UserEntity.state == True)
@@ -162,6 +164,12 @@ class AuthRepository(IAuthRepository):
         List[Tuple[MenuPermissionEntity, MenuEntity]],
         None,
     ]:
+        """
+        Obtiene menús para usuarios internos.
+        
+        IMPORTANTE: Solo retorna menús con type='INTERNAL' por seguridad.
+        Los menús EXTERNAL son exclusivos para usuarios externos.
+        """
         async with config.async_db as db:
             stmt = (
                 select(MenuPermissionEntity, MenuEntity)
@@ -169,6 +177,8 @@ class AuthRepository(IAuthRepository):
                     MenuPermissionEntity, MenuPermissionEntity.menu_id == MenuEntity.id
                 )
                 .filter(MenuEntity.company_id == params.company)
+                .filter(MenuEntity.type == "INTERNAL")  # Seguridad: solo menús internos
+                .filter(MenuEntity.state == True)
             )
 
             result = await db.execute(stmt)
@@ -418,3 +428,195 @@ class AuthRepository(IAuthRepository):
                     users_external = users_external[skip : skip + limit]
 
             return users_external
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def get_user_rol_info(
+        self, config: Config, user_id: UUID
+    ) -> Optional[UserRolInfo]:
+        """
+        Obtiene información del rol del usuario desde user_location_rol.
+        
+        Todos los usuarios (internos y externos) deben tener un registro aquí.
+        Para usuarios externos, location_id será NULL pero el rol estará asignado.
+        
+        Args:
+            config: Configuración de la solicitud
+            user_id: ID del usuario
+            
+        Returns:
+            UserRolInfo con rol_id y rol_code si existe
+            None si el usuario no tiene rol asignado
+        """
+        async with config.async_db as db:
+            stmt = (
+                select(
+                    UserLocationRolEntity.rol_id,
+                    RolEntity.code.label('rol_code')
+                )
+                .join(RolEntity, UserLocationRolEntity.rol_id == RolEntity.id)
+                .filter(UserLocationRolEntity.user_id == user_id)
+                .filter(UserLocationRolEntity.state == True)
+            )
+
+            result = await db.execute(stmt)
+            row = result.first()
+
+            if row is None:
+                return None
+
+            return UserRolInfo(
+                rol_id=row.rol_id,
+                rol_code=row.rol_code
+            )
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def initial_external_user_data(
+        self, config: Config, email: str
+    ) -> Union[
+        Tuple[PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity],
+        None,
+    ]:
+        """
+        Obtiene datos iniciales de un usuario externo.
+        
+        A diferencia de los internos, no tiene location, country ni company.
+        Se identifica por platform.location_id IS NULL.
+        
+        Args:
+            config: Configuración de la solicitud
+            email: Email del usuario
+            
+        Returns:
+            Tupla (PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity)
+            None si no se encuentra
+        """
+        async with config.async_db as db:
+            stmt = (
+                select(PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity)
+                .join(PlatformEntity, PlatformEntity.id == UserEntity.platform_id)
+                .join(LanguageEntity, LanguageEntity.id == PlatformEntity.language_id)
+                .join(CurrencyEntity, CurrencyEntity.id == PlatformEntity.currency_id)
+                .filter(UserEntity.email == email)
+                .filter(UserEntity.state == True)
+                .filter(PlatformEntity.location_id.is_(None))  # Solo usuarios externos
+            )
+
+            result = await db.execute(stmt)
+            return result.first()
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def external_rol_and_permissions_by_code(
+        self, config: Config, rol_code: str
+    ) -> Union[List[Tuple[RolEntity, RolPermissionEntity, PermissionEntity]], None]:
+        """
+        Obtiene el rol y sus permisos para usuarios externos buscando por código.
+        
+        Args:
+            config: Configuración de la solicitud
+            rol_code: Código del rol (ej: 'USER')
+            
+        Returns:
+            Lista de tuplas (RolEntity, RolPermissionEntity, PermissionEntity)
+            None si no se encuentra
+        """
+        async with config.async_db as db:
+            stmt = (
+                select(RolEntity, RolPermissionEntity, PermissionEntity)
+                .join(RolPermissionEntity, RolPermissionEntity.rol_id == RolEntity.id)
+                .join(PermissionEntity, PermissionEntity.id == RolPermissionEntity.permission_id)
+                .filter(RolEntity.code == rol_code)
+                .filter(RolEntity.state == True)
+            )
+
+            result = await db.execute(stmt)
+            return result.all()
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def menu_external(
+        self, config: Config, permission_ids: List[str]
+    ) -> Union[List[Tuple[MenuPermissionEntity, MenuEntity]], None]:
+        """
+        Obtiene menús para usuarios externos.
+        
+        Solo retorna menús con type='EXTERNAL' asociados a los permisos dados.
+        
+        Args:
+            config: Configuración de la solicitud
+            permission_ids: Lista de IDs de permisos del rol
+            
+        Returns:
+            Lista de tuplas (MenuPermissionEntity, MenuEntity)
+            None si no se encuentra
+        """
+        async with config.async_db as db:
+            stmt = (
+                select(MenuPermissionEntity, MenuEntity)
+                .join(MenuPermissionEntity, MenuPermissionEntity.menu_id == MenuEntity.id)
+                .filter(MenuEntity.type == "EXTERNAL")
+                .filter(MenuPermissionEntity.permission_id.in_(permission_ids))
+                .filter(MenuEntity.state == True)
+            )
+
+            result = await db.execute(stmt)
+            return result.all()
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def all_currencies(
+        self, config: Config
+    ) -> Union[List[CurrencyEntity], None]:
+        """
+        Obtiene todas las currencies activas del sistema.
+        
+        Se usa para usuarios externos que no tienen currencies por location.
+        
+        Args:
+            config: Configuración de la solicitud
+            
+        Returns:
+            Lista de CurrencyEntity activas
+            None si no hay currencies
+        """
+        async with config.async_db as db:
+            stmt = (
+                select(CurrencyEntity)
+                .filter(CurrencyEntity.state == True)
+                .order_by(CurrencyEntity.name)
+            )
+
+            result = await db.execute(stmt)
+            currencies = result.scalars().all()
+
+            return currencies if currencies else None
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def user_country(
+        self, config: Config, user_id: UUID
+    ) -> Union[GeoDivisionEntity, None]:
+        """
+        Obtiene el país asociado a un usuario externo desde user_country.
+        
+        user_country.country_id ahora apunta a geo_division(id) con tipo COUNTRY.
+        
+        Args:
+            config: Configuración de la solicitud
+            user_id: ID del usuario
+            
+        Returns:
+            GeoDivisionEntity (tipo COUNTRY) si el usuario tiene país asociado
+            None si no tiene
+        """
+        from src.infrastructure.database.entities.user_country_entity import (
+            UserCountryEntity,
+        )
+        
+        async with config.async_db as db:
+            stmt = (
+                select(GeoDivisionEntity)
+                .join(UserCountryEntity, UserCountryEntity.country_id == GeoDivisionEntity.id)
+                .filter(UserCountryEntity.user_id == user_id)
+                .filter(UserCountryEntity.state == True)
+                .filter(GeoDivisionEntity.state == True)
+            )
+
+            result = await db.execute(stmt)
+            return result.scalar_one_or_none()

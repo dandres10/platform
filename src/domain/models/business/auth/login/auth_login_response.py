@@ -1,4 +1,6 @@
+from decimal import Decimal
 from typing import List, Optional
+from uuid import UUID
 from pydantic import UUID4, BaseModel
 from pydantic import BaseModel, Field
 
@@ -26,10 +28,13 @@ class LocationLoginResponse(BaseModel):
     id: UUID4 = Field(...)
     name: str = Field(..., max_length=255)
     address: str = Field(...)
-    city: str = Field(..., max_length=100)
+    city_id: Optional[UUID] = Field(default=None)  # UUID genérico (acepta UUIDs fijos)
     phone: str = Field(..., max_length=20)
     email: str = Field(..., max_length=100)
     main_location: bool = Field(...)
+    latitude: Optional[Decimal] = Field(default=None)
+    longitude: Optional[Decimal] = Field(default=None)
+    google_place_id: Optional[str] = Field(default=None, max_length=255)
     state: bool = Field(...)
 
 
@@ -44,7 +49,7 @@ class LanguageLoginResponse(BaseModel):
 class PlatformLoginResponse(BaseModel):
     id: UUID4 = Field(...)
     language_id: UUID4 = Field(...)
-    location_id: UUID4 = Field(...)
+    location_id: Optional[UUID4] = Field(default=None)  # None para usuarios externos
     token_expiration_minutes: int = Field(...)
     currency_id: UUID4 = Field(...)
 
@@ -98,11 +103,11 @@ class MenuLoginResponse(BaseModel):
 class PlatformConfiguration(BaseModel):
     user: UserLoginResponse = Field(...)
     currency: CurrencyLoginResponse = Field(...)
-    location: LocationLoginResponse = Field(...)
+    location: Optional[LocationLoginResponse] = Field(default=None)  # None para usuarios externos
     language: LanguageLoginResponse = Field(...)
     platform: PlatformLoginResponse = Field(...)
-    country: CountryLoginResponse = Field(...)
-    company: CompanyLoginResponse = Field(...)
+    country: Optional[CountryLoginResponse] = Field(default=None)    # None para usuarios externos sin país
+    company: Optional[CompanyLoginResponse] = Field(default=None)    # None para usuarios externos
     rol: RolLoginResponse = Field(...)
     permissions: List[PermissionLoginResponse] = Field(...)
     menu: List[MenuLoginResponse] = Field(...)

@@ -16,7 +16,8 @@ from src.infrastructure.web.entities_routes.rol_permission_router import rol_per
 from src.infrastructure.web.entities_routes.platform_router import platform_router
 from src.infrastructure.web.entities_routes.menu_permission_router import menu_permission_router
 from src.infrastructure.web.entities_routes.company_router import company_router
-from src.infrastructure.web.entities_routes.country_router import country_router
+from src.infrastructure.web.entities_routes.geo_division_type_router import geo_division_type_router
+from src.infrastructure.web.entities_routes.geo_division_router import geo_division_router
 
 
 
@@ -39,5 +40,6 @@ class Route:
         app.include_router(platform_router)
         app.include_router(menu_permission_router)
         app.include_router(company_router)
-        app.include_router(country_router)
+        app.include_router(geo_division_type_router)
+        app.include_router(geo_division_router)
         

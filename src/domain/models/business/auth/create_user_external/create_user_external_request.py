@@ -5,6 +5,7 @@ from typing import Optional
 class CreateUserExternalRequest(BaseModel):
     language_id: UUID4 = Field(..., description="ID del idioma del usuario")
     currency_id: UUID4 = Field(..., description="ID de la moneda")
+    country_id: Optional[UUID4] = Field(None, description="ID del país del usuario - FK a geo_division(id) tipo COUNTRY (opcional)")
     email: EmailStr = Field(..., description="Email único del usuario")
     password: str = Field(..., min_length=8, max_length=255, description="Contraseña (será hasheada)")
     identification: str = Field(..., min_length=3, max_length=30, description="Documento de identificación único")
@@ -19,6 +20,7 @@ class CreateUserExternalRequest(BaseModel):
             "example": {
                 "language_id": "550e8400-e29b-41d4-a716-446655440000",
                 "currency_id": "770e8400-e29b-41d4-a716-446655440000",
+                "country_id": "880e8400-e29b-41d4-a716-446655440000",
                 "email": "usuario@example.com",
                 "password": "SecurePassword123!",
                 "identification": "12345678",

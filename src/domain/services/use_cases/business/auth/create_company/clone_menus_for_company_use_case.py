@@ -58,7 +58,8 @@ class CloneMenusForCompanyUseCase:
                     top_id=new_top_id,
                     route=template_menu.route,
                     state=template_menu.state,
-                    icon=template_menu.icon
+                    icon=template_menu.icon,
+                    type=template_menu.type  # Preservar el tipo del menú
                 )
             )
             

@@ -7,7 +7,7 @@ from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_initial_user_data import AuthInitialUserData
 from src.infrastructure.database.entities.company_entity import CompanyEntity
-from src.infrastructure.database.entities.country_entity import CountryEntity
+from src.infrastructure.database.entities.geo_division_entity import GeoDivisionEntity
 from src.infrastructure.database.entities.currency_entity import CurrencyEntity
 from src.infrastructure.database.entities.language_entity import LanguageEntity
 from src.infrastructure.database.entities.location_entity import LocationEntity
@@ -39,7 +39,7 @@ class AuthInitialUserDataUseCase:
             LanguageEntity,
             LocationEntity,
             CurrencyEntity,
-            CountryEntity,
+            GeoDivisionEntity,
             CompanyEntity,
         ],
         str,

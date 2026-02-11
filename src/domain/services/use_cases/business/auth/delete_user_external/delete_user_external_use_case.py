@@ -34,10 +34,18 @@ from src.infrastructure.database.repositories.entities.user_repository import (
 from src.infrastructure.database.repositories.entities.platform_repository import (
     PlatformRepository
 )
+from src.infrastructure.database.repositories.entities.user_location_rol_repository import (
+    UserLocationRolRepository
+)
+from src.infrastructure.database.repositories.entities.user_country_repository import (
+    UserCountryRepository
+)
 
 
 user_repository = UserRepository()
 platform_repository = PlatformRepository()
+user_location_rol_repository = UserLocationRolRepository()
+user_country_repository = UserCountryRepository()
 
 
 class DeleteUserExternalUseCase:
@@ -45,6 +53,8 @@ class DeleteUserExternalUseCase:
         self.user_read_uc = UserReadUseCase(user_repository)
         self.user_delete_uc = UserDeleteUseCase(user_repository)
         self.platform_delete_uc = PlatformDeleteUseCase(platform_repository)
+        self.user_location_rol_repository = user_location_rol_repository
+        self.user_country_repository = user_country_repository
         self.check_active_relations_uc = CheckActiveRelationsExternalUseCase()
         self.soft_delete_user_uc = SoftDeleteUserExternalUseCase()
         self.message = Message()
@@ -110,6 +120,18 @@ class DeleteUserExternalUseCase:
         platform_id: UUID4
     ) -> None:
         """Ejecuta la eliminación física del usuario y sus registros relacionados."""
+        
+        # Eliminar user_location_rol (si existe)
+        await self.user_location_rol_repository.delete_by_user_id(
+            config=config,
+            user_id=params.user_id
+        )
+
+        # Eliminar user_country (si existe)
+        await self.user_country_repository.delete_by_user_id(
+            config=config,
+            user_id=params.user_id
+        )
         
         # Eliminar user
         user_deleted = await self.user_delete_uc.execute(

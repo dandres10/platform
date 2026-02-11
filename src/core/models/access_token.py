@@ -7,9 +7,9 @@ class AccessToken(BaseModel):
     rol_id: str = Field(...)
     rol_code: str = Field(...)
     user_id: str = Field(...)
-    location_id: str = Field(...)
+    location_id: Optional[str] = Field(default=None)  # None para usuarios externos
     currency_id: str = Field(...)
-    company_id: str = Field(...)
+    company_id: Optional[str] = Field(default=None)   # None para usuarios externos
     token_expiration_minutes: int = Field(...)
     exp: Optional[datetime] = Field(default=None)
     permissions: List[str] = Field(...)

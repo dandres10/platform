@@ -3,6 +3,8 @@ from .auth_login_response import AuthLoginResponse
 from .auth_initial_user_data import AuthInitialUserData
 from .auth_menu import AuthMenu
 from .auth_user_role_and_permissions import AuthUserRoleAndPermissions
+from .user_type_info import UserTypeInfo
+from .user_rol_info import UserRolInfo
 
 __all__ = [
     "AuthLoginRequest",
@@ -11,4 +13,6 @@ __all__ = [
     "AuthInitialUserData",
     "AuthMenu",
     "AuthUserRoleAndPermissions",
+    "UserTypeInfo",
+    "UserRolInfo",
 ]

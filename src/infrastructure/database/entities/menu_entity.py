@@ -17,5 +17,6 @@ class MenuEntity(Base):
     route = Column(String(300), nullable=False)
     state = Column(Boolean, nullable=False, server_default=text('true'))
     icon = Column(String(50), nullable=False)
+    type = Column(String(20), nullable=False, server_default=text("'INTERNAL'"))
     created_date = Column(DateTime, nullable=False, server_default=text('now()'))
     updated_date = Column(DateTime, nullable=False, server_default=text('now()'), onupdate=text('now()'))

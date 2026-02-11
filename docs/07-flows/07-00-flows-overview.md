@@ -1,7 +1,7 @@
 # Flujos de Desarrollo - Overview
 
-**Versión**: 1.7  
-**Fecha**: Diciembre 8, 2024  
+**Versión**: 1.8  
+**Fecha**: Enero 23, 2026  
 **Estado**: Vigente  
 **Autor(es)**: Equipo de Desarrollo Goluti
 
@@ -953,7 +953,7 @@ Al cambiar el estado de un flujo:
 4. Asociar todos los menús al nuevo `company_id`
 
 **Use Cases Involucrados**:
-- Validación: CompanyListUseCase (NIT), UserListUseCase (email), CountryReadUseCase, LanguageReadUseCase, CurrencyReadUseCase, RolReadUseCase, MenuListUseCase, MenuPermissionListUseCase (N veces)
+- Validación: CompanyListUseCase (NIT), UserListUseCase (email), GeoDivisionReadUseCase (country), LanguageReadUseCase, CurrencyReadUseCase, RolReadUseCase, MenuListUseCase, MenuPermissionListUseCase (N veces)
 - Creación: CompanySaveUseCase, MenuSaveUseCase (N veces), MenuPermissionSaveUseCase (M veces), LocationSaveUseCase, CreateUserInternalUseCase
 
 **Endpoint**: `POST /auth/create-company`
@@ -968,9 +968,9 @@ Al cambiar el estado de un flujo:
   },
   "location": {
     "country_id": "uuid",
+    "city_id": "uuid",
     "name": "Sede Principal",
     "address": "Calle 123 #45-67",
-    "city": "Bogotá",
     "phone": "+57 300 1234567",
     "email": "info@techstart.com"
   },
@@ -1113,6 +1113,7 @@ Al cambiar el estado de un flujo:
 | 1.4 | Nov 12, 2024 | Agregado Flujo 5: Create Company. Endpoint: `/auth/create-company`. Flujo completo de onboarding de compañía con **clonación inteligente de menús** desde plantilla (`company_id = NULL`). Algoritmo de mapeo para preservar jerarquías padre-hijo. Clonación de permisos. Creación de ubicación principal y usuario admin. **Transaccionalidad completa** con rollback automático. Reutiliza `CreateUserInternalUseCase`. Requiere changelogs v28 y v29. | Equipo de Desarrollo Goluti |
 | 1.5 | Dic 8, 2024 | Agregados Flujos 6-9: Delete User Internal, Delete User External, Delete Company, Update User Internal. Implementación de **soft delete** (inactivación) cuando hay relaciones activas. Validaciones de último admin. Permisos DELETE/UPDATE. | Equipo de Desarrollo Goluti |
 | 1.6 | Dic 8, 2024 | Agregado Flujo 10: Login. Endpoint público `/auth/login`. Validación de credenciales, generación de JWT, retorno de configuración completa de plataforma y variaciones disponibles. | Equipo de Desarrollo Goluti |
+| 1.8 | Ene 23, 2026 | Actualización por migración de `country` a `geo_division`. `CountryReadUseCase` → `GeoDivisionReadUseCase` en Create Company. Ejemplos de request: `city` reemplazado por `city_id`. | Equipo de Desarrollo Goluti |
 
 ---
 

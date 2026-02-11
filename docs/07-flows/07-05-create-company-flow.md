@@ -1,7 +1,7 @@
 # Flujo de Creación de Compañía (Create Company)
 
-**Versión**: 1.0  
-**Fecha**: Noviembre 12, 2024  
+**Versión**: 1.1  
+**Fecha**: Enero 23, 2026  
 **Estado**: Especificado  
 **Autor(es)**: Equipo de Desarrollo Goluti  
 **Responsable**: [Nombre del líder técnico]
@@ -130,7 +130,7 @@ Este flujo unifica todo en una sola operación atómica, garantizando:
 │                 Request POST /auth/create-company                │
 │  {                                                               │
 │    company: { name, nit, inactivity_time },                     │
-│    location: { name, address, city, phone, email, country_id }, │
+│    location: { name, address, phone, email, country_id, city_id }, │
 │    admin_user: {                                                │
 │      email, password, first_name, last_name,                    │
 │      language_id, currency_id, rol_id                           │
@@ -144,7 +144,7 @@ Este flujo unifica todo en una sola operación atómica, garantizando:
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │ ✓ NIT único (no existe otra compañía con ese NIT)?        │  │
 │  │ ✓ Email único (no existe usuario con ese email)?          │  │
-│  │ ✓ Country existe?                                          │  │
+│  │ ✓ GeoDivision (country) existe y es tipo COUNTRY?           │  │
 │  │ ✓ Language existe?                                         │  │
 │  │ ✓ Currency existe?                                         │  │
 │  │ ✓ Rol existe?                                              │  │
@@ -258,11 +258,14 @@ Este flujo unifica todo en una sola operación atómica, garantizando:
 │  │ LocationSaveUseCase.execute({                              │  │
 │  │   company_id: company_id,                                  │  │
 │  │   country_id: country_id,                                  │  │
+│  │   city_id: city_id,              ← geo_division tipo CITY  │  │
 │  │   name: string,                                            │  │
 │  │   address: string,                                         │  │
-│  │   city: string,                                            │  │
 │  │   phone: string,                                           │  │
 │  │   email: string,                                           │  │
+│  │   latitude: decimal,             ← Opcional                │  │
+│  │   longitude: decimal,            ← Opcional                │  │
+│  │   google_place_id: string,       ← Opcional                │  │
 │  │   main_location: true,  ← Ubicación principal             │  │
 │  │   state: true                                              │  │
 │  │ })                                                         │  │
@@ -340,7 +343,7 @@ Controller (Business)
     │   ├── 1. Validaciones
     │   │   ├── CompanyListUseCase (validar NIT único)
     │   │   ├── UserListUseCase (validar email único)
-    │   │   ├── CountryReadUseCase
+    │   │   ├── GeoDivisionReadUseCase (country)
     │   │   ├── LanguageReadUseCase
     │   │   ├── CurrencyReadUseCase
     │   │   └── RolReadUseCase
@@ -397,9 +400,9 @@ src/domain/services/use_cases/business/auth/create_company/
   },
   "location": {
     "country_id": "550e8400-e29b-41d4-a716-446655440000",
+    "city_id": "660e8400-e29b-41d4-a716-446655440000",
     "name": "Sede Principal",
     "address": "Calle 123 #45-67",
-    "city": "Bogotá",
     "phone": "+57 300 1234567",
     "email": "contacto@empresaejemplo.com"
   },
@@ -480,12 +483,15 @@ class CompanyData(BaseModel):
 
 class LocationData(BaseModel):
     """Datos de la ubicación principal"""
-    country_id: UUID4 = Field(..., description="ID del país")
+    country_id: UUID4 = Field(..., description="ID del país (geo_division tipo COUNTRY)")
+    city_id: Optional[UUID4] = Field(default=None, description="ID de la ciudad (geo_division tipo CITY)")
     name: str = Field(..., min_length=3, max_length=255, description="Nombre de la ubicación")
     address: str = Field(..., min_length=5, description="Dirección completa")
-    city: str = Field(..., min_length=2, max_length=100, description="Ciudad")
     phone: str = Field(..., min_length=7, max_length=20, description="Teléfono")
     email: EmailStr = Field(..., description="Email de contacto de la ubicación")
+    latitude: Optional[Decimal] = Field(default=None, description="Latitud (-90 a 90)")
+    longitude: Optional[Decimal] = Field(default=None, description="Longitud (-180 a 180)")
+    google_place_id: Optional[str] = Field(default=None, max_length=255, description="Google Places API ID")
 
 class AdminUserData(BaseModel):
     """Datos del usuario administrador inicial"""
@@ -561,7 +567,8 @@ class MenuCloneMapping(BaseModel):
 | `company.name` | Mínimo 3 caracteres, máximo 255 | "El nombre de la compañía debe tener entre 3 y 255 caracteres" |
 | `company.nit` | Mínimo 5 caracteres, único en BD | "El NIT ya está registrado en el sistema" |
 | `company.inactivity_time` | Entre 1 y 1440 minutos | "El tiempo de inactividad debe estar entre 1 y 1440 minutos" |
-| `location.country_id` | Debe existir en BD | "El país especificado no existe" |
+| `location.country_id` | Debe existir en `geo_division` (tipo COUNTRY) | "El país especificado no existe" |
+| `location.city_id` | Si se provee, debe existir en `geo_division` (tipo CITY) | "La ciudad especificada no existe" |
 | `location.email` | Formato email válido | "Email de ubicación inválido" |
 | `admin_user.email` | Formato email válido, único en BD | "El email ya está registrado en el sistema" |
 | `admin_user.password` | Mínimo 8 caracteres, complejidad | "La contraseña no cumple los requisitos de seguridad" |
@@ -642,7 +649,7 @@ class MenuCloneMapping(BaseModel):
 |----------|-----------|-------------|
 | `CompanyListUseCase` | Validar NIT único | 1 vez |
 | `UserListUseCase` | Validar email único | 1 vez |
-| `CountryReadUseCase` | Validar país existe | 1 vez |
+| `GeoDivisionReadUseCase` | Validar país existe (geo_division tipo COUNTRY) | 1 vez |
 | `LanguageReadUseCase` | Validar idioma existe | 1 vez |
 | `CurrencyReadUseCase` | Validar moneda existe | 1 vez |
 | `RolReadUseCase` | Validar rol existe | 1 vez |
@@ -713,6 +720,7 @@ from src.domain.models.business.auth.create_company.index import (
     CreateCompanyRequest
 )
 from src.domain.models.entities.company.index import CompanySave
+from src.domain.models.entities.geo_division.index import GeoDivisionRead
 from src.domain.models.entities.location.index import LocationSave
 from src.domain.models.entities.menu.index import Menu, MenuSave
 from src.domain.models.entities.menu_permission.index import MenuPermissionSave
@@ -723,7 +731,7 @@ from src.domain.models.business.auth.create_user_internal.index import (
 
 # Importar repositorios
 from src.infrastructure.database.repositories.entities.company_repository import CompanyRepository
-from src.infrastructure.database.repositories.entities.country_repository import CountryRepository
+from src.infrastructure.database.repositories.entities.geo_division_repository import GeoDivisionRepository
 from src.infrastructure.database.repositories.entities.language_repository import LanguageRepository
 from src.infrastructure.database.repositories.entities.currency_repository import CurrencyRepository
 from src.infrastructure.database.repositories.entities.rol_repository import RolRepository
@@ -735,7 +743,7 @@ from src.infrastructure.database.repositories.entities.location_repository impor
 # Importar use cases
 from src.domain.services.use_cases.entities.company.company_save_use_case import CompanySaveUseCase
 from src.domain.services.use_cases.entities.company.company_list_use_case import CompanyListUseCase
-from src.domain.services.use_cases.entities.country.country_read_use_case import CountryReadUseCase
+from src.domain.services.use_cases.entities.geo_division.geo_division_read_use_case import GeoDivisionReadUseCase
 from src.domain.services.use_cases.entities.language.language_read_use_case import LanguageReadUseCase
 from src.domain.services.use_cases.entities.currency.currency_read_use_case import CurrencyReadUseCase
 from src.domain.services.use_cases.entities.rol.rol_read_use_case import RolReadUseCase
@@ -753,7 +761,7 @@ from .clone_menu_permissions_for_company_use_case import CloneMenuPermissionsFor
 
 # Instanciar repositorios
 company_repository = CompanyRepository()
-country_repository = CountryRepository()
+geo_division_repository = GeoDivisionRepository()
 language_repository = LanguageRepository()
 currency_repository = CurrencyRepository()
 rol_repository = RolRepository()
@@ -780,7 +788,7 @@ class CreateCompanyUseCase:
     def __init__(self):
         # Use cases de validación
         self.company_list_uc = CompanyListUseCase(company_repository)
-        self.country_read_uc = CountryReadUseCase(country_repository)
+        self.geo_division_read_uc = GeoDivisionReadUseCase(geo_division_repository)
         self.language_read_uc = LanguageReadUseCase(language_repository)
         self.currency_read_uc = CurrencyReadUseCase(currency_repository)
         self.rol_read_uc = RolReadUseCase(rol_repository)
@@ -801,7 +809,7 @@ class CreateCompanyUseCase:
         
         self.message = Message()
     
-    @execute_transaction(layer=LAYER.D_S_U_B.value, enabled=settings.has_track)
+    @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
         self,
         config: Config,
@@ -861,10 +869,10 @@ class CreateCompanyUseCase:
                 ),
             )
         
-        # Validar country existe
-        country = await self.country_read_uc.execute(
+        # Validar country existe (geo_division tipo COUNTRY)
+        country = await self.geo_division_read_uc.execute(
             config=config,
-            params={"id": params.location.country_id}
+            params=GeoDivisionRead(id=params.location.country_id)
         )
         if isinstance(country, str):
             return await self.message.get_message(
@@ -998,11 +1006,14 @@ class CreateCompanyUseCase:
             params=LocationSave(
                 company_id=company.id,
                 country_id=params.location.country_id,
+                city_id=params.location.city_id,
                 name=params.location.name,
                 address=params.location.address,
-                city=params.location.city,
                 phone=params.location.phone,
                 email=params.location.email,
+                latitude=params.location.latitude,
+                longitude=params.location.longitude,
+                google_place_id=params.location.google_place_id,
                 main_location=True,
                 state=True
             )
@@ -1106,7 +1117,7 @@ class CloneMenusForCompanyUseCase:
         self.menu_save_uc = MenuSaveUseCase(menu_repository)
         self.message = Message()
     
-    @execute_transaction(layer=LAYER.D_S_U_B.value, enabled=settings.has_track)
+    @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
         self,
         config: Config,
@@ -1220,7 +1231,7 @@ class CloneMenuPermissionsForCompanyUseCase:
         self.menu_permission_save_uc = MenuPermissionSaveUseCase(menu_permission_repository)
         self.message = Message()
     
-    @execute_transaction(layer=LAYER.D_S_U_B.value, enabled=settings.has_track)
+    @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
         self,
         config: Config,
@@ -1302,7 +1313,7 @@ class AuthController:
     def __init__(self):
         self.create_company_uc = CreateCompanyUseCase()
     
-    @execute_transaction(layer=LAYER.I_W_C_B.value, enabled=settings.has_track)
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def create_company(
         self, 
         config: Config, 
@@ -1571,9 +1582,9 @@ curl -X POST "https://api.goluti.com/auth/create-company" \
     },
     "location": {
       "country_id": "550e8400-e29b-41d4-a716-446655440000",
+      "city_id": "660e8400-e29b-41d4-a716-446655440000",
       "name": "Sede Principal Bogotá",
       "address": "Calle 100 #15-20 Oficina 501",
-      "city": "Bogotá",
       "phone": "+57 601 7654321",
       "email": "info@techstart.com"
     },
@@ -1661,9 +1672,11 @@ curl -X POST "https://api.goluti.com/auth/create-company" \
 ### Tablas de Base de Datos
 
 - `company` - Datos de compañías
+- `geo_division` - Divisiones geográficas jerárquicas (países, departamentos, ciudades)
+- `geo_division_type` - Tipos de división geográfica (COUNTRY, STATE, CITY, etc.)
 - `menu` - Menús del sistema (con `company_id` opcional)
 - `menu_permission` - Permisos asociados a menús
-- `location` - Ubicaciones de compañías
+- `location` - Ubicaciones de compañías (ahora con `city_id`, `latitude`, `longitude`, `google_place_id`)
 - `platform` - Configuración de plataforma de usuarios
 - `user` - Usuarios del sistema
 - `user_location_rol` - Asignación de roles por ubicación
@@ -1679,6 +1692,7 @@ Ninguna. Este flujo es completamente interno.
 | Versión | Fecha | Autor | Cambios |
 |---------|-------|-------|---------|
 | 1.0 | 2024-11-12 | Equipo Goluti | Versión inicial del documento |
+| 1.1 | 2026-01-23 | Equipo Goluti | Migración de `country` a `geo_division`: `CountryReadUseCase` → `GeoDivisionReadUseCase`, `CountryRepository` → `GeoDivisionRepository`. Modelo `LocationData`: `city` (string) reemplazado por `city_id` (UUID, FK a geo_division tipo CITY), agregados `latitude`, `longitude`, `google_place_id`. `LocationSave` actualizado con los nuevos campos. Ejemplos de request actualizados. |
 
 ---
 

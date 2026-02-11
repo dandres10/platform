@@ -19,6 +19,7 @@ def map_to_menu(menu_entity: MenuEntity) -> Menu:
         route=menu_entity.route,
         state=menu_entity.state,
         icon=menu_entity.icon,
+        type=menu_entity.type,
         created_date=menu_entity.created_date,
         updated_date=menu_entity.updated_date,
     )
@@ -37,6 +38,7 @@ def map_to_menu_entity(menu: Menu) -> MenuEntity:
         route=menu.route,
         state=menu.state,
         icon=menu.icon,
+        type=menu.type,
         created_date=menu.created_date,
         updated_date=menu.updated_date,
     )
@@ -54,6 +56,7 @@ def map_to_save_menu_entity(menu: MenuSave) -> MenuEntity:
         "route": menu.route,
         "state": menu.state,
         "icon": menu.icon,
+        "type": menu.type,
     }
     
     # Si se proporciona un ID (para casos de clonación), usarlo
@@ -73,5 +76,6 @@ def map_to_update_menu_entity(menu: MenuUpdate) -> MenuEntity:
         route=menu.route,
         state=menu.state,
         icon=menu.icon,
+        type=menu.type,
     )
 

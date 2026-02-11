@@ -107,4 +107,23 @@ class UserLocationRolRepository(IUserLocationRolRepository):
                 return None
 
             return map_to_user_location_rol(user_location_rol)
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def delete_by_user_id(
+        self,
+        config: Config,
+        user_id: UUID4,
+    ) -> Union[UserLocationRol, None]:
+        """Elimina el registro de user_location_rol por user_id"""
+        async with config.async_db as db:
+            stmt = select(UserLocationRolEntity).filter(UserLocationRolEntity.user_id == user_id)
+            result = await db.execute(stmt)
+            user_location_rol = result.scalars().first()
+
+            if not user_location_rol:
+                return None
+
+            await db.delete(user_location_rol)
+            await db.commit()
+            return map_to_user_location_rol(user_location_rol)
         

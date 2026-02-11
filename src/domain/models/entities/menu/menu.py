@@ -12,6 +12,7 @@ class Menu(BaseModel):
     route: str = Field(..., max_length=300)
     state: bool = Field(default=True)
     icon: str = Field(..., max_length=50)
+    type: str = Field(default="INTERNAL", max_length=20)
     created_date: Optional[datetime] = Field(default_factory=datetime.now)
     updated_date: Optional[datetime] = Field(default_factory=datetime.now)
 

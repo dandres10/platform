@@ -34,14 +34,14 @@ from src.domain.models.business.auth.create_user_external import (
 from src.domain.services.use_cases.business.auth.create_api_token.create_api_token_use_case import (
     CreateApiTokenUseCase,
 )
-from src.domain.services.use_cases.business.auth.login.auth_login_use_case import (
-    AuthLoginUseCase,
+from src.domain.services.use_cases.business.auth.login.auth_login_orchestrator_use_case import (
+    AuthLoginOrchestratorUseCase,
 )
 from src.domain.services.use_cases.business.auth.login.auth_logout_use_case import (
     AuthLogoutUseCase,
 )
-from src.domain.services.use_cases.business.auth.login.auth_refresh_token_use_case import (
-    AuthRefreshTokenUseCase,
+from src.domain.services.use_cases.business.auth.login.auth_refresh_token_orchestrator_use_case import (
+    AuthRefreshTokenOrchestratorUseCase,
 )
 from src.domain.services.use_cases.business.auth.create_user_internal import (
     CreateUserInternalUseCase,
@@ -91,8 +91,8 @@ from src.domain.services.use_cases.business.auth.delete_company import (
 class AuthController:
     def __init__(self) -> None:
         self.message = Message()
-        self.auth_login_use_case = AuthLoginUseCase()
-        self.auth_refresh_token_use_case = AuthRefreshTokenUseCase()
+        self.auth_login_orchestrator_use_case = AuthLoginOrchestratorUseCase()
+        self.auth_refresh_token_orchestrator_use_case = AuthRefreshTokenOrchestratorUseCase()
         self.auth_logout_use_case = AuthLogoutUseCase()
         self.create_api_token_use_case = CreateApiTokenUseCase()
         self.create_user_internal_use_case = CreateUserInternalUseCase()
@@ -107,7 +107,10 @@ class AuthController:
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
-        result = await self.auth_login_use_case.execute(config=config, params=params)
+        # Usar orquestador que detecta tipo de usuario y redirige al flujo correspondiente
+        result = await self.auth_login_orchestrator_use_case.execute(
+            config=config, params=params
+        )
         if isinstance(result, str):
             return Response.error(None, result)
         return Response.success_temporary_message(
@@ -122,7 +125,8 @@ class AuthController:
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def refresh_token(self, config: Config) -> Response:
-        result = await self.auth_refresh_token_use_case.execute(config=config)
+        # Usar orquestador que detecta tipo de usuario y redirige al flujo correspondiente
+        result = await self.auth_refresh_token_orchestrator_use_case.execute(config=config)
         if isinstance(result, str):
             return Response.error(None, result)
         return Response.success_temporary_message(
