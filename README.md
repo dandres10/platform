@@ -103,7 +103,56 @@ subir imagen de docker a docker-hub que sea compatible con la arq de linux del s
 
 ---
 
+## Claude Code Agents
 
+Este proyecto incluye agentes personalizados para Claude Code en `.claude/agents/`.
+
+### Agentes Disponibles
+
+- **backend-developer-platform**: Especializado en crear Entity Flows (CRUD) y Business Flows complejos
+- **database-expert-platform**: Especializado en PostgreSQL, SQLAlchemy, migraciones y optimización de queries
+- **code-reviewer-platform**: Especializado en revisar código siguiendo Clean Architecture y patrones del proyecto
+
+### Instalar agentes de forma global
+
+Para usar los agentes desde cualquier proyecto, copia todos los agentes a tu directorio global:
+
+```bash
+cp -r .claude/agents ~/.claude/
+```
+
+### Instalar agentes de forma local (solo este proyecto)
+
+Si prefieres que los agentes estén disponibles solo en este proyecto, ya están configurados en `.claude/agents/` y puedes invocarlos directamente.
+
+### Uso
+
+En una conversación de Claude Code, invócalos con:
+
+```
+@backend-developer-platform <tu solicitud>
+@database-expert-platform <tu solicitud>
+@code-reviewer-platform <tu solicitud>
+```
+
+**Ejemplos:**
+
+```
+@backend-developer-platform Necesito crear una nueva entidad "Product" con CRUD completo
+
+@database-expert-platform Optimiza este query que está lento: SELECT * FROM user WHERE platform_id = '...'
+
+@code-reviewer-platform Revisa este código y verifica que cumple con Clean Architecture
+```
+
+### Documentación
+
+Para más información sobre qué hace cada agente y cuándo usarlo, consulta:
+
+- **Guía completa**: `.claude/README.md`
+- **Agentes**: `.claude/agents/`
+
+---
 
 
 

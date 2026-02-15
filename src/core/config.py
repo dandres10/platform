@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "")
     jwt_algorithm: str = os.getenv("JWT_ALGORITHM", "")
     app_environment: str = os.getenv("APP_ENVIRONMENT", "")
+    app_port: int = int(os.getenv("APP_PORT", "8000"))
 
     model_config = SettingsConfigDict(env_file=".env")
 

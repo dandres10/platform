@@ -1,10 +1,11 @@
-from pydantic import BaseModel, Field, UUID4
+from pydantic import BaseModel, Field
 from typing import Optional
+from uuid import UUID
 
 class GeoDivisionUpdate(BaseModel):
-    id: UUID4 = Field(...)
-    top_id: Optional[UUID4] = Field(default=None)
-    geo_division_type_id: UUID4 = Field(...)
+    id: UUID = Field(...)
+    top_id: Optional[UUID] = Field(default=None)
+    geo_division_type_id: UUID = Field(...)
     name: str = Field(..., max_length=255)
     code: Optional[str] = Field(default=None, max_length=20)
     phone_code: Optional[str] = Field(default=None, max_length=10)

@@ -43,6 +43,17 @@ async def get_config_login(request: Request, language: str = Header(...)):
         yield config
 
 
+async def get_config_public(request: Request, language: str = Header(...)):
+    config = Config()
+    valid_language_header(request=request)
+    config.language = language
+    config.request = request
+
+    async with async_session_db() as session:
+        config.async_db = session
+        yield config
+
+
 async def get_config_ws(ws_resquest: WSRequest):
     config = Config()
     token_cls = Token()

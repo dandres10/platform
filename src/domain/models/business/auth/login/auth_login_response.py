@@ -71,7 +71,7 @@ class CompanyLoginResponse(BaseModel):
 
 
 class RolLoginResponse(BaseModel):
-    id: UUID4 = Field(...)
+    id: UUID = Field(...)
     name: str = Field(..., max_length=255)
     code: str = Field(..., max_length=255)
     description: str = Field(...)
@@ -79,7 +79,7 @@ class RolLoginResponse(BaseModel):
 
 
 class PermissionLoginResponse(BaseModel):
-    id: UUID4 = Field(...)
+    id: UUID = Field(...)
     name: str = Field(..., max_length=255)
     description: str = Field(...)
     state: bool = Field(...)
@@ -90,11 +90,11 @@ class PermissionToken(BaseModel):
 
 
 class MenuLoginResponse(BaseModel):
-    id: UUID4 = Field(...)
+    id: UUID = Field(...)
     name: str = Field(..., max_length=100)
     label: str = Field(..., max_length=300)
     description: str = Field(..., max_length=300)
-    top_id: UUID4 = Field(...)
+    top_id: UUID = Field(...)
     route: str = Field(..., max_length=300)
     state: bool = Field(default=True)
     icon: str = Field(..., max_length=50)

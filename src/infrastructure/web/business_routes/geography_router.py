@@ -4,7 +4,7 @@ from src.core.config import settings
 from src.core.models.config import Config
 from src.core.models.response import Response
 from fastapi import APIRouter, Depends, status
-from src.core.methods.get_config import get_config
+from src.core.methods.get_config import get_config_public
 from src.core.wrappers.execute_transaction import execute_transaction_route
 from src.domain.models.business.geography.index import (
     TypesByCountryRequest,
@@ -46,7 +46,7 @@ geography_controller = GeographyController()
     """,
 )
 @execute_transaction_route(enabled=settings.has_track)
-async def countries(config: Config = Depends(get_config)) -> Response[List[GeoDivisionItemResponse]]:
+async def countries(config: Config = Depends(get_config_public)) -> Response[List[GeoDivisionItemResponse]]:
     return await geography_controller.countries(config=config)
 
 
@@ -66,7 +66,7 @@ async def countries(config: Config = Depends(get_config)) -> Response[List[GeoDi
 )
 @execute_transaction_route(enabled=settings.has_track)
 async def types_by_country(
-    params: TypesByCountryRequest, config: Config = Depends(get_config)
+    params: TypesByCountryRequest, config: Config = Depends(get_config_public)
 ) -> Response[List[GeoDivisionTypeByCountryResponse]]:
     return await geography_controller.types_by_country(
         config=config, params=params
@@ -89,7 +89,7 @@ async def types_by_country(
 )
 @execute_transaction_route(enabled=settings.has_track)
 async def by_country_and_type(
-    params: ByCountryAndTypeRequest, config: Config = Depends(get_config)
+    params: ByCountryAndTypeRequest, config: Config = Depends(get_config_public)
 ) -> Response[List[GeoDivisionItemResponse]]:
     return await geography_controller.by_country_and_type(
         config=config, params=params
@@ -111,7 +111,7 @@ async def by_country_and_type(
     """,
 )
 @execute_transaction_route(enabled=settings.has_track)
-async def children(params: ChildrenRequest, config: Config = Depends(get_config)) -> Response[List[GeoDivisionItemResponse]]:
+async def children(params: ChildrenRequest, config: Config = Depends(get_config_public)) -> Response[List[GeoDivisionItemResponse]]:
     return await geography_controller.children(
         config=config, params=params
     )
@@ -133,7 +133,7 @@ async def children(params: ChildrenRequest, config: Config = Depends(get_config)
 )
 @execute_transaction_route(enabled=settings.has_track)
 async def children_by_type(
-    params: ChildrenByTypeRequest, config: Config = Depends(get_config)
+    params: ChildrenByTypeRequest, config: Config = Depends(get_config_public)
 ) -> Response[List[GeoDivisionItemResponse]]:
     return await geography_controller.children_by_type(
         config=config, params=params
@@ -155,7 +155,7 @@ async def children_by_type(
     """,
 )
 @execute_transaction_route(enabled=settings.has_track)
-async def hierarchy(params: HierarchyRequest, config: Config = Depends(get_config)) -> Response[GeoDivisionHierarchyResponse]:
+async def hierarchy(params: HierarchyRequest, config: Config = Depends(get_config_public)) -> Response[GeoDivisionHierarchyResponse]:
     return await geography_controller.hierarchy(
         config=config, params=params
     )
@@ -176,7 +176,7 @@ async def hierarchy(params: HierarchyRequest, config: Config = Depends(get_confi
     """,
 )
 @execute_transaction_route(enabled=settings.has_track)
-async def detail(params: DetailRequest, config: Config = Depends(get_config)) -> Response[GeoDivisionItemResponse]:
+async def detail(params: DetailRequest, config: Config = Depends(get_config_public)) -> Response[GeoDivisionItemResponse]:
     return await geography_controller.detail(
         config=config, params=params
     )
