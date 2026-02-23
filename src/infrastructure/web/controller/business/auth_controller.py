@@ -113,7 +113,7 @@ class AuthController:
         )
         if isinstance(result, str):
             return Response.error(None, result)
-        return Response.success_temporary_message(
+        return Response.success(
             response=result,
             message=await self.message.get_message(
                 config=config,

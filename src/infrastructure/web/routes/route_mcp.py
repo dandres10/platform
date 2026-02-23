@@ -2,6 +2,7 @@ from fastapi import APIRouter, status
 from src.infrastructure.web.mcp_routes.business.server import mcp as mcp_business
 import src.infrastructure.web.mcp_routes.business.tools.auth_tools      # noqa: F401
 import src.infrastructure.web.mcp_routes.business.tools.geography_tools  # noqa: F401
+import src.infrastructure.web.mcp_routes.business.tools.catalog_tools   # noqa: F401
 
 mcp_info_router = APIRouter(
     prefix="/mcp",

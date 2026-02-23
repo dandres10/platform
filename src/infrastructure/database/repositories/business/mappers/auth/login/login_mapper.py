@@ -187,6 +187,7 @@ def map_to_user_read(user_read= UserRead) -> UserUpdate:
         platform_id=user_read.platform_id,
         password=user_read.password,
         email=user_read.email,
+        identification=user_read.identification,
         first_name=user_read.first_name,
         last_name=user_read.last_name,
         phone=user_read.phone,
