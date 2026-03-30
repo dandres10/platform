@@ -1,6 +1,6 @@
-from dataclasses import dataclass
-from typing import Any, Generic, List, TypeVar, Union
+from typing import Generic, List, TypeVar, Union
 
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from src.core.enums.message_type import MESSAGE_TYPE
 from src.core.enums.notification_type import NOTIFICATION_TYPE
@@ -13,6 +13,14 @@ class Response(BaseModel, Generic[T]):
     notification_type: NOTIFICATION_TYPE
     message: str
     response: Union[T, List[Union[T, None]], None] = None
+
+    def to_http_response(self, status_code: int = 200) -> "JSONResponse | Response[T]":
+        if status_code == 200:
+            return self
+        return JSONResponse(
+            status_code=status_code,
+            content=self.model_dump(mode="json"),
+        )
 
     @classmethod
     def success(

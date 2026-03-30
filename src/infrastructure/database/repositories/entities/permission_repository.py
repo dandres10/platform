@@ -29,50 +29,50 @@ class PermissionRepository(IPermissionRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def save(self, config: Config, params: PermissionEntity) -> Union[Permission, None]:
-        async with config.async_db as db:
-            db.add(params)
-            await db.commit()
-            await db.refresh(params)
-            return map_to_permission(params)
+        db = config.async_db
+        db.add(params)
+        await db.commit()
+        await db.refresh(params)
+        return map_to_permission(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: PermissionUpdate) -> Union[Permission, None]:
-        async with config.async_db as db:
-            stmt = select(PermissionEntity).filter(PermissionEntity.id == params.id)
-            stmt.updated_date = datetime.now()
-            result = await db.execute(stmt)
-            permission = result.scalars().first()
+        db = config.async_db
+        stmt = select(PermissionEntity).filter(PermissionEntity.id == params.id)
+        stmt.updated_date = datetime.now()
+        result = await db.execute(stmt)
+        permission = result.scalars().first()
 
-            if not permission:
-                return None
+        if not permission:
+            return None
 
-            update_data = params.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(permission, key, value)
+        update_data = params.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(permission, key, value)
 
-            await db.commit()
-            await db.refresh(permission)
-            return map_to_permission(permission)
+        await db.commit()
+        await db.refresh(permission)
+        return map_to_permission(permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def list(self, config: Config, params: Pagination) -> Union[List[Permission], None]:
-        async with config.async_db as db:
-            stmt = select(PermissionEntity)
+        db = config.async_db
+        stmt = select(PermissionEntity)
 
-            if params.filters:
-                stmt = get_filter(
-                    query=stmt, filters=params.filters, entity=PermissionEntity
-                )
+        if params.filters:
+            stmt = get_filter(
+                query=stmt, filters=params.filters, entity=PermissionEntity
+            )
 
-            if not params.all_data:
-                stmt = stmt.offset(params.skip).limit(params.limit)
+        if not params.all_data:
+            stmt = stmt.offset(params.skip).limit(params.limit)
 
-            result = await db.execute(stmt)
-            permissions = result.scalars().all()
+        result = await db.execute(stmt)
+        permissions = result.scalars().all()
 
-            if not permissions:
-                return None
-            return map_to_list_permission(permissions)
+        if not permissions:
+            return None
+        return map_to_list_permission(permissions)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def delete(
@@ -80,17 +80,17 @@ class PermissionRepository(IPermissionRepository):
         config: Config,
         params: PermissionDelete,
     ) -> Union[Permission, None]:
-        async with config.async_db as db:
-            stmt = select(PermissionEntity).filter(PermissionEntity.id == params.id)
-            result = await db.execute(stmt)
-            permission = result.scalars().first()
+        db = config.async_db
+        stmt = select(PermissionEntity).filter(PermissionEntity.id == params.id)
+        result = await db.execute(stmt)
+        permission = result.scalars().first()
 
-            if not permission:
-                return None
+        if not permission:
+            return None
 
-            await db.delete(permission)
-            await db.commit()
-            return map_to_permission(permission)
+        await db.delete(permission)
+        await db.commit()
+        return map_to_permission(permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def read(
@@ -98,13 +98,13 @@ class PermissionRepository(IPermissionRepository):
         config: Config,
         params: PermissionRead,
     ) -> Union[Permission, None]:
-        async with config.async_db as db:
-            stmt = select(PermissionEntity).filter(PermissionEntity.id == params.id)
-            result = await db.execute(stmt)
-            permission = result.scalars().first()
+        db = config.async_db
+        stmt = select(PermissionEntity).filter(PermissionEntity.id == params.id)
+        result = await db.execute(stmt)
+        permission = result.scalars().first()
 
-            if not permission:
-                return None
+        if not permission:
+            return None
 
-            return map_to_permission(permission)
+        return map_to_permission(permission)
         

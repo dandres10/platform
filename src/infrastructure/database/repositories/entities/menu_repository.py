@@ -29,50 +29,50 @@ class MenuRepository(IMenuRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def save(self, config: Config, params: MenuEntity) -> Union[Menu, None]:
-        async with config.async_db as db:
-            db.add(params)
-            await db.commit()
-            await db.refresh(params)
-            return map_to_menu(params)
+        db = config.async_db
+        db.add(params)
+        await db.commit()
+        await db.refresh(params)
+        return map_to_menu(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: MenuUpdate) -> Union[Menu, None]:
-        async with config.async_db as db:
-            stmt = select(MenuEntity).filter(MenuEntity.id == params.id)
-            stmt.updated_date = datetime.now()
-            result = await db.execute(stmt)
-            menu = result.scalars().first()
+        db = config.async_db
+        stmt = select(MenuEntity).filter(MenuEntity.id == params.id)
+        stmt.updated_date = datetime.now()
+        result = await db.execute(stmt)
+        menu = result.scalars().first()
 
-            if not menu:
-                return None
+        if not menu:
+            return None
 
-            update_data = params.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(menu, key, value)
+        update_data = params.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(menu, key, value)
 
-            await db.commit()
-            await db.refresh(menu)
-            return map_to_menu(menu)
+        await db.commit()
+        await db.refresh(menu)
+        return map_to_menu(menu)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def list(self, config: Config, params: Pagination) -> Union[List[Menu], None]:
-        async with config.async_db as db:
-            stmt = select(MenuEntity)
+        db = config.async_db
+        stmt = select(MenuEntity)
 
-            if params.filters:
-                stmt = get_filter(
-                    query=stmt, filters=params.filters, entity=MenuEntity
-                )
+        if params.filters:
+            stmt = get_filter(
+                query=stmt, filters=params.filters, entity=MenuEntity
+            )
 
-            if not params.all_data:
-                stmt = stmt.offset(params.skip).limit(params.limit)
+        if not params.all_data:
+            stmt = stmt.offset(params.skip).limit(params.limit)
 
-            result = await db.execute(stmt)
-            menus = result.scalars().all()
+        result = await db.execute(stmt)
+        menus = result.scalars().all()
 
-            if not menus:
-                return None
-            return map_to_list_menu(menus)
+        if not menus:
+            return None
+        return map_to_list_menu(menus)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def delete(
@@ -80,17 +80,17 @@ class MenuRepository(IMenuRepository):
         config: Config,
         params: MenuDelete,
     ) -> Union[Menu, None]:
-        async with config.async_db as db:
-            stmt = select(MenuEntity).filter(MenuEntity.id == params.id)
-            result = await db.execute(stmt)
-            menu = result.scalars().first()
+        db = config.async_db
+        stmt = select(MenuEntity).filter(MenuEntity.id == params.id)
+        result = await db.execute(stmt)
+        menu = result.scalars().first()
 
-            if not menu:
-                return None
+        if not menu:
+            return None
 
-            await db.delete(menu)
-            await db.commit()
-            return map_to_menu(menu)
+        await db.delete(menu)
+        await db.commit()
+        return map_to_menu(menu)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def read(
@@ -98,13 +98,13 @@ class MenuRepository(IMenuRepository):
         config: Config,
         params: MenuRead,
     ) -> Union[Menu, None]:
-        async with config.async_db as db:
-            stmt = select(MenuEntity).filter(MenuEntity.id == params.id)
-            result = await db.execute(stmt)
-            menu = result.scalars().first()
+        db = config.async_db
+        stmt = select(MenuEntity).filter(MenuEntity.id == params.id)
+        result = await db.execute(stmt)
+        menu = result.scalars().first()
 
-            if not menu:
-                return None
+        if not menu:
+            return None
 
-            return map_to_menu(menu)
+        return map_to_menu(menu)
         

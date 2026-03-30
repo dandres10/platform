@@ -33,7 +33,7 @@ def get_filter(query: Any, filters: list[FilterManager], entity: Any) -> Any:
             elif filter_obj.condition == CONDITION_TYPE.DIFFERENT_THAN:
                 condition = column != filter_obj.value
             elif filter_obj.condition == CONDITION_TYPE.LIKE:
-                condition = column.like(f"%{filter_obj.value}%")
+                condition = column.ilike(f"%{filter_obj.value}%")
             elif filter_obj.condition == CONDITION_TYPE.IN:
                 if isinstance(filter_obj.value, (list, set, tuple)):
                     condition = column.in_(filter_obj.value)

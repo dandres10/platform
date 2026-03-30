@@ -29,50 +29,50 @@ class GeoDivisionTypeRepository(IGeoDivisionTypeRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def save(self, config: Config, params: GeoDivisionTypeEntity) -> Union[GeoDivisionType, None]:
-        async with config.async_db as db:
-            db.add(params)
-            await db.commit()
-            await db.refresh(params)
-            return map_to_geo_division_type(params)
+        db = config.async_db
+        db.add(params)
+        await db.commit()
+        await db.refresh(params)
+        return map_to_geo_division_type(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: GeoDivisionTypeUpdate) -> Union[GeoDivisionType, None]:
-        async with config.async_db as db:
-            stmt = select(GeoDivisionTypeEntity).filter(GeoDivisionTypeEntity.id == params.id)
-            stmt.updated_date = datetime.now()
-            result = await db.execute(stmt)
-            geo_division_type = result.scalars().first()
+        db = config.async_db
+        stmt = select(GeoDivisionTypeEntity).filter(GeoDivisionTypeEntity.id == params.id)
+        stmt.updated_date = datetime.now()
+        result = await db.execute(stmt)
+        geo_division_type = result.scalars().first()
 
-            if not geo_division_type:
-                return None
+        if not geo_division_type:
+            return None
 
-            update_data = params.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(geo_division_type, key, value)
+        update_data = params.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(geo_division_type, key, value)
 
-            await db.commit()
-            await db.refresh(geo_division_type)
-            return map_to_geo_division_type(geo_division_type)
+        await db.commit()
+        await db.refresh(geo_division_type)
+        return map_to_geo_division_type(geo_division_type)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def list(self, config: Config, params: Pagination) -> Union[List[GeoDivisionType], None]:
-        async with config.async_db as db:
-            stmt = select(GeoDivisionTypeEntity)
+        db = config.async_db
+        stmt = select(GeoDivisionTypeEntity)
 
-            if params.filters:
-                stmt = get_filter(
-                    query=stmt, filters=params.filters, entity=GeoDivisionTypeEntity
-                )
+        if params.filters:
+            stmt = get_filter(
+                query=stmt, filters=params.filters, entity=GeoDivisionTypeEntity
+            )
 
-            if not params.all_data:
-                stmt = stmt.offset(params.skip).limit(params.limit)
+        if not params.all_data:
+            stmt = stmt.offset(params.skip).limit(params.limit)
 
-            result = await db.execute(stmt)
-            items = result.scalars().all()
+        result = await db.execute(stmt)
+        items = result.scalars().all()
 
-            if not items:
-                return None
-            return map_to_list_geo_division_type(items)
+        if not items:
+            return None
+        return map_to_list_geo_division_type(items)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def delete(
@@ -80,17 +80,17 @@ class GeoDivisionTypeRepository(IGeoDivisionTypeRepository):
         config: Config,
         params: GeoDivisionTypeDelete,
     ) -> Union[GeoDivisionType, None]:
-        async with config.async_db as db:
-            stmt = select(GeoDivisionTypeEntity).filter(GeoDivisionTypeEntity.id == params.id)
-            result = await db.execute(stmt)
-            geo_division_type = result.scalars().first()
+        db = config.async_db
+        stmt = select(GeoDivisionTypeEntity).filter(GeoDivisionTypeEntity.id == params.id)
+        result = await db.execute(stmt)
+        geo_division_type = result.scalars().first()
 
-            if not geo_division_type:
-                return None
+        if not geo_division_type:
+            return None
 
-            await db.delete(geo_division_type)
-            await db.commit()
-            return map_to_geo_division_type(geo_division_type)
+        await db.delete(geo_division_type)
+        await db.commit()
+        return map_to_geo_division_type(geo_division_type)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def read(
@@ -98,12 +98,12 @@ class GeoDivisionTypeRepository(IGeoDivisionTypeRepository):
         config: Config,
         params: GeoDivisionTypeRead,
     ) -> Union[GeoDivisionType, None]:
-        async with config.async_db as db:
-            stmt = select(GeoDivisionTypeEntity).filter(GeoDivisionTypeEntity.id == params.id)
-            result = await db.execute(stmt)
-            geo_division_type = result.scalars().first()
+        db = config.async_db
+        stmt = select(GeoDivisionTypeEntity).filter(GeoDivisionTypeEntity.id == params.id)
+        result = await db.execute(stmt)
+        geo_division_type = result.scalars().first()
 
-            if not geo_division_type:
-                return None
+        if not geo_division_type:
+            return None
 
-            return map_to_geo_division_type(geo_division_type)
+        return map_to_geo_division_type(geo_division_type)

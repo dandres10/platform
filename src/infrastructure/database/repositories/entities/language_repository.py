@@ -29,50 +29,50 @@ class LanguageRepository(ILanguageRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def save(self, config: Config, params: LanguageEntity) -> Union[Language, None]:
-        async with config.async_db as db:
-            db.add(params)
-            await db.commit()
-            await db.refresh(params)
-            return map_to_language(params)
+        db = config.async_db
+        db.add(params)
+        await db.commit()
+        await db.refresh(params)
+        return map_to_language(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: LanguageUpdate) -> Union[Language, None]:
-        async with config.async_db as db:
-            stmt = select(LanguageEntity).filter(LanguageEntity.id == params.id)
-            stmt.updated_date = datetime.now()
-            result = await db.execute(stmt)
-            language = result.scalars().first()
+        db = config.async_db
+        stmt = select(LanguageEntity).filter(LanguageEntity.id == params.id)
+        stmt.updated_date = datetime.now()
+        result = await db.execute(stmt)
+        language = result.scalars().first()
 
-            if not language:
-                return None
+        if not language:
+            return None
 
-            update_data = params.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(language, key, value)
+        update_data = params.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(language, key, value)
 
-            await db.commit()
-            await db.refresh(language)
-            return map_to_language(language)
+        await db.commit()
+        await db.refresh(language)
+        return map_to_language(language)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def list(self, config: Config, params: Pagination) -> Union[List[Language], None]:
-        async with config.async_db as db:
-            stmt = select(LanguageEntity)
+        db = config.async_db
+        stmt = select(LanguageEntity)
 
-            if params.filters:
-                stmt = get_filter(
-                    query=stmt, filters=params.filters, entity=LanguageEntity
-                )
+        if params.filters:
+            stmt = get_filter(
+                query=stmt, filters=params.filters, entity=LanguageEntity
+            )
 
-            if not params.all_data:
-                stmt = stmt.offset(params.skip).limit(params.limit)
+        if not params.all_data:
+            stmt = stmt.offset(params.skip).limit(params.limit)
 
-            result = await db.execute(stmt)
-            languages = result.scalars().all()
+        result = await db.execute(stmt)
+        languages = result.scalars().all()
 
-            if not languages:
-                return None
-            return map_to_list_language(languages)
+        if not languages:
+            return None
+        return map_to_list_language(languages)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def delete(
@@ -80,17 +80,17 @@ class LanguageRepository(ILanguageRepository):
         config: Config,
         params: LanguageDelete,
     ) -> Union[Language, None]:
-        async with config.async_db as db:
-            stmt = select(LanguageEntity).filter(LanguageEntity.id == params.id)
-            result = await db.execute(stmt)
-            language = result.scalars().first()
+        db = config.async_db
+        stmt = select(LanguageEntity).filter(LanguageEntity.id == params.id)
+        result = await db.execute(stmt)
+        language = result.scalars().first()
 
-            if not language:
-                return None
+        if not language:
+            return None
 
-            await db.delete(language)
-            await db.commit()
-            return map_to_language(language)
+        await db.delete(language)
+        await db.commit()
+        return map_to_language(language)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def read(
@@ -98,13 +98,13 @@ class LanguageRepository(ILanguageRepository):
         config: Config,
         params: LanguageRead,
     ) -> Union[Language, None]:
-        async with config.async_db as db:
-            stmt = select(LanguageEntity).filter(LanguageEntity.id == params.id)
-            result = await db.execute(stmt)
-            language = result.scalars().first()
+        db = config.async_db
+        stmt = select(LanguageEntity).filter(LanguageEntity.id == params.id)
+        result = await db.execute(stmt)
+        language = result.scalars().first()
 
-            if not language:
-                return None
+        if not language:
+            return None
 
-            return map_to_language(language)
+        return map_to_language(language)
         

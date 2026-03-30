@@ -29,50 +29,50 @@ class LocationRepository(ILocationRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def save(self, config: Config, params: LocationEntity) -> Union[Location, None]:
-        async with config.async_db as db:
-            db.add(params)
-            await db.commit()
-            await db.refresh(params)
-            return map_to_location(params)
+        db = config.async_db
+        db.add(params)
+        await db.commit()
+        await db.refresh(params)
+        return map_to_location(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: LocationUpdate) -> Union[Location, None]:
-        async with config.async_db as db:
-            stmt = select(LocationEntity).filter(LocationEntity.id == params.id)
-            stmt.updated_date = datetime.now()
-            result = await db.execute(stmt)
-            location = result.scalars().first()
+        db = config.async_db
+        stmt = select(LocationEntity).filter(LocationEntity.id == params.id)
+        stmt.updated_date = datetime.now()
+        result = await db.execute(stmt)
+        location = result.scalars().first()
 
-            if not location:
-                return None
+        if not location:
+            return None
 
-            update_data = params.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(location, key, value)
+        update_data = params.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(location, key, value)
 
-            await db.commit()
-            await db.refresh(location)
-            return map_to_location(location)
+        await db.commit()
+        await db.refresh(location)
+        return map_to_location(location)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def list(self, config: Config, params: Pagination) -> Union[List[Location], None]:
-        async with config.async_db as db:
-            stmt = select(LocationEntity)
+        db = config.async_db
+        stmt = select(LocationEntity)
 
-            if params.filters:
-                stmt = get_filter(
-                    query=stmt, filters=params.filters, entity=LocationEntity
-                )
+        if params.filters:
+            stmt = get_filter(
+                query=stmt, filters=params.filters, entity=LocationEntity
+            )
 
-            if not params.all_data:
-                stmt = stmt.offset(params.skip).limit(params.limit)
+        if not params.all_data:
+            stmt = stmt.offset(params.skip).limit(params.limit)
 
-            result = await db.execute(stmt)
-            locations = result.scalars().all()
+        result = await db.execute(stmt)
+        locations = result.scalars().all()
 
-            if not locations:
-                return None
-            return map_to_list_location(locations)
+        if not locations:
+            return None
+        return map_to_list_location(locations)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def delete(
@@ -80,17 +80,17 @@ class LocationRepository(ILocationRepository):
         config: Config,
         params: LocationDelete,
     ) -> Union[Location, None]:
-        async with config.async_db as db:
-            stmt = select(LocationEntity).filter(LocationEntity.id == params.id)
-            result = await db.execute(stmt)
-            location = result.scalars().first()
+        db = config.async_db
+        stmt = select(LocationEntity).filter(LocationEntity.id == params.id)
+        result = await db.execute(stmt)
+        location = result.scalars().first()
 
-            if not location:
-                return None
+        if not location:
+            return None
 
-            await db.delete(location)
-            await db.commit()
-            return map_to_location(location)
+        await db.delete(location)
+        await db.commit()
+        return map_to_location(location)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def read(
@@ -98,13 +98,13 @@ class LocationRepository(ILocationRepository):
         config: Config,
         params: LocationRead,
     ) -> Union[Location, None]:
-        async with config.async_db as db:
-            stmt = select(LocationEntity).filter(LocationEntity.id == params.id)
-            result = await db.execute(stmt)
-            location = result.scalars().first()
+        db = config.async_db
+        stmt = select(LocationEntity).filter(LocationEntity.id == params.id)
+        result = await db.execute(stmt)
+        location = result.scalars().first()
 
-            if not location:
-                return None
+        if not location:
+            return None
 
-            return map_to_location(location)
+        return map_to_location(location)
         

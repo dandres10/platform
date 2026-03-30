@@ -29,50 +29,50 @@ class PlatformRepository(IPlatformRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def save(self, config: Config, params: PlatformEntity) -> Union[Platform, None]:
-        async with config.async_db as db:
-            db.add(params)
-            await db.commit()
-            await db.refresh(params)
-            return map_to_platform(params)
+        db = config.async_db
+        db.add(params)
+        await db.commit()
+        await db.refresh(params)
+        return map_to_platform(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: PlatformUpdate) -> Union[Platform, None]:
-        async with config.async_db as db:
-            stmt = select(PlatformEntity).filter(PlatformEntity.id == params.id)
-            stmt.updated_date = datetime.now()
-            result = await db.execute(stmt)
-            platform = result.scalars().first()
+        db = config.async_db
+        stmt = select(PlatformEntity).filter(PlatformEntity.id == params.id)
+        stmt.updated_date = datetime.now()
+        result = await db.execute(stmt)
+        platform = result.scalars().first()
 
-            if not platform:
-                return None
+        if not platform:
+            return None
 
-            update_data = params.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(platform, key, value)
+        update_data = params.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(platform, key, value)
 
-            await db.commit()
-            await db.refresh(platform)
-            return map_to_platform(platform)
+        await db.commit()
+        await db.refresh(platform)
+        return map_to_platform(platform)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def list(self, config: Config, params: Pagination) -> Union[List[Platform], None]:
-        async with config.async_db as db:
-            stmt = select(PlatformEntity)
+        db = config.async_db
+        stmt = select(PlatformEntity)
 
-            if params.filters:
-                stmt = get_filter(
-                    query=stmt, filters=params.filters, entity=PlatformEntity
-                )
+        if params.filters:
+            stmt = get_filter(
+                query=stmt, filters=params.filters, entity=PlatformEntity
+            )
 
-            if not params.all_data:
-                stmt = stmt.offset(params.skip).limit(params.limit)
+        if not params.all_data:
+            stmt = stmt.offset(params.skip).limit(params.limit)
 
-            result = await db.execute(stmt)
-            platforms = result.scalars().all()
+        result = await db.execute(stmt)
+        platforms = result.scalars().all()
 
-            if not platforms:
-                return None
-            return map_to_list_platform(platforms)
+        if not platforms:
+            return None
+        return map_to_list_platform(platforms)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def delete(
@@ -80,17 +80,17 @@ class PlatformRepository(IPlatformRepository):
         config: Config,
         params: PlatformDelete,
     ) -> Union[Platform, None]:
-        async with config.async_db as db:
-            stmt = select(PlatformEntity).filter(PlatformEntity.id == params.id)
-            result = await db.execute(stmt)
-            platform = result.scalars().first()
+        db = config.async_db
+        stmt = select(PlatformEntity).filter(PlatformEntity.id == params.id)
+        result = await db.execute(stmt)
+        platform = result.scalars().first()
 
-            if not platform:
-                return None
+        if not platform:
+            return None
 
-            await db.delete(platform)
-            await db.commit()
-            return map_to_platform(platform)
+        await db.delete(platform)
+        await db.commit()
+        return map_to_platform(platform)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def read(
@@ -98,13 +98,13 @@ class PlatformRepository(IPlatformRepository):
         config: Config,
         params: PlatformRead,
     ) -> Union[Platform, None]:
-        async with config.async_db as db:
-            stmt = select(PlatformEntity).filter(PlatformEntity.id == params.id)
-            result = await db.execute(stmt)
-            platform = result.scalars().first()
+        db = config.async_db
+        stmt = select(PlatformEntity).filter(PlatformEntity.id == params.id)
+        result = await db.execute(stmt)
+        platform = result.scalars().first()
 
-            if not platform:
-                return None
+        if not platform:
+            return None
 
-            return map_to_platform(platform)
+        return map_to_platform(platform)
         

@@ -29,50 +29,50 @@ class RolRepository(IRolRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def save(self, config: Config, params: RolEntity) -> Union[Rol, None]:
-        async with config.async_db as db:
-            db.add(params)
-            await db.commit()
-            await db.refresh(params)
-            return map_to_rol(params)
+        db = config.async_db
+        db.add(params)
+        await db.commit()
+        await db.refresh(params)
+        return map_to_rol(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: RolUpdate) -> Union[Rol, None]:
-        async with config.async_db as db:
-            stmt = select(RolEntity).filter(RolEntity.id == params.id)
-            stmt.updated_date = datetime.now()
-            result = await db.execute(stmt)
-            rol = result.scalars().first()
+        db = config.async_db
+        stmt = select(RolEntity).filter(RolEntity.id == params.id)
+        stmt.updated_date = datetime.now()
+        result = await db.execute(stmt)
+        rol = result.scalars().first()
 
-            if not rol:
-                return None
+        if not rol:
+            return None
 
-            update_data = params.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(rol, key, value)
+        update_data = params.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(rol, key, value)
 
-            await db.commit()
-            await db.refresh(rol)
-            return map_to_rol(rol)
+        await db.commit()
+        await db.refresh(rol)
+        return map_to_rol(rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def list(self, config: Config, params: Pagination) -> Union[List[Rol], None]:
-        async with config.async_db as db:
-            stmt = select(RolEntity)
+        db = config.async_db
+        stmt = select(RolEntity)
 
-            if params.filters:
-                stmt = get_filter(
-                    query=stmt, filters=params.filters, entity=RolEntity
-                )
+        if params.filters:
+            stmt = get_filter(
+                query=stmt, filters=params.filters, entity=RolEntity
+            )
 
-            if not params.all_data:
-                stmt = stmt.offset(params.skip).limit(params.limit)
+        if not params.all_data:
+            stmt = stmt.offset(params.skip).limit(params.limit)
 
-            result = await db.execute(stmt)
-            rols = result.scalars().all()
+        result = await db.execute(stmt)
+        rols = result.scalars().all()
 
-            if not rols:
-                return None
-            return map_to_list_rol(rols)
+        if not rols:
+            return None
+        return map_to_list_rol(rols)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def delete(
@@ -80,17 +80,17 @@ class RolRepository(IRolRepository):
         config: Config,
         params: RolDelete,
     ) -> Union[Rol, None]:
-        async with config.async_db as db:
-            stmt = select(RolEntity).filter(RolEntity.id == params.id)
-            result = await db.execute(stmt)
-            rol = result.scalars().first()
+        db = config.async_db
+        stmt = select(RolEntity).filter(RolEntity.id == params.id)
+        result = await db.execute(stmt)
+        rol = result.scalars().first()
 
-            if not rol:
-                return None
+        if not rol:
+            return None
 
-            await db.delete(rol)
-            await db.commit()
-            return map_to_rol(rol)
+        await db.delete(rol)
+        await db.commit()
+        return map_to_rol(rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def read(
@@ -98,13 +98,13 @@ class RolRepository(IRolRepository):
         config: Config,
         params: RolRead,
     ) -> Union[Rol, None]:
-        async with config.async_db as db:
-            stmt = select(RolEntity).filter(RolEntity.id == params.id)
-            result = await db.execute(stmt)
-            rol = result.scalars().first()
+        db = config.async_db
+        stmt = select(RolEntity).filter(RolEntity.id == params.id)
+        result = await db.execute(stmt)
+        rol = result.scalars().first()
 
-            if not rol:
-                return None
+        if not rol:
+            return None
 
-            return map_to_rol(rol)
+        return map_to_rol(rol)
         

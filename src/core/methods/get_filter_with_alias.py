@@ -31,7 +31,7 @@ def get_filter_with_alias(
             elif filter_obj.condition == CONDITION_TYPE.DIFFERENT_THAN:
                 condition = column != filter_obj.value
             elif filter_obj.condition == CONDITION_TYPE.LIKE:
-                condition = column.like(f"%{filter_obj.value}%")
+                condition = column.ilike(f"%{filter_obj.value}%")
             elif filter_obj.condition == CONDITION_TYPE.IN:
                 to_list = ast.literal_eval(filter_obj.value)
                 if isinstance(to_list, (list, set, tuple)):

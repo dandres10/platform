@@ -29,50 +29,50 @@ class UserRepository(IUserRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def save(self, config: Config, params: UserEntity) -> Union[User, None]:
-        async with config.async_db as db:
-            db.add(params)
-            await db.commit()
-            await db.refresh(params)
-            return map_to_user(params)
+        db = config.async_db
+        db.add(params)
+        await db.commit()
+        await db.refresh(params)
+        return map_to_user(params)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: UserUpdate) -> Union[User, None]:
-        async with config.async_db as db:
-            stmt = select(UserEntity).filter(UserEntity.id == params.id)
-            stmt.updated_date = datetime.now()
-            result = await db.execute(stmt)
-            user = result.scalars().first()
+        db = config.async_db
+        stmt = select(UserEntity).filter(UserEntity.id == params.id)
+        stmt.updated_date = datetime.now()
+        result = await db.execute(stmt)
+        user = result.scalars().first()
 
-            if not user:
-                return None
+        if not user:
+            return None
 
-            update_data = params.model_dump(exclude_unset=True)
-            for key, value in update_data.items():
-                setattr(user, key, value)
+        update_data = params.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(user, key, value)
 
-            await db.commit()
-            await db.refresh(user)
-            return map_to_user(user)
+        await db.commit()
+        await db.refresh(user)
+        return map_to_user(user)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def list(self, config: Config, params: Pagination) -> Union[List[User], None]:
-        async with config.async_db as db:
-            stmt = select(UserEntity)
+        db = config.async_db
+        stmt = select(UserEntity)
 
-            if params.filters:
-                stmt = get_filter(
-                    query=stmt, filters=params.filters, entity=UserEntity
-                )
+        if params.filters:
+            stmt = get_filter(
+                query=stmt, filters=params.filters, entity=UserEntity
+            )
 
-            if not params.all_data:
-                stmt = stmt.offset(params.skip).limit(params.limit)
+        if not params.all_data:
+            stmt = stmt.offset(params.skip).limit(params.limit)
 
-            result = await db.execute(stmt)
-            users = result.scalars().all()
+        result = await db.execute(stmt)
+        users = result.scalars().all()
 
-            if not users:
-                return None
-            return map_to_list_user(users)
+        if not users:
+            return None
+        return map_to_list_user(users)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def delete(
@@ -80,17 +80,17 @@ class UserRepository(IUserRepository):
         config: Config,
         params: UserDelete,
     ) -> Union[User, None]:
-        async with config.async_db as db:
-            stmt = select(UserEntity).filter(UserEntity.id == params.id)
-            result = await db.execute(stmt)
-            user = result.scalars().first()
+        db = config.async_db
+        stmt = select(UserEntity).filter(UserEntity.id == params.id)
+        result = await db.execute(stmt)
+        user = result.scalars().first()
 
-            if not user:
-                return None
+        if not user:
+            return None
 
-            await db.delete(user)
-            await db.commit()
-            return map_to_user(user)
+        await db.delete(user)
+        await db.commit()
+        return map_to_user(user)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def read(
@@ -98,13 +98,13 @@ class UserRepository(IUserRepository):
         config: Config,
         params: UserRead,
     ) -> Union[User, None]:
-        async with config.async_db as db:
-            stmt = select(UserEntity).filter(UserEntity.id == params.id)
-            result = await db.execute(stmt)
-            user = result.scalars().first()
+        db = config.async_db
+        stmt = select(UserEntity).filter(UserEntity.id == params.id)
+        result = await db.execute(stmt)
+        user = result.scalars().first()
 
-            if not user:
-                return None
+        if not user:
+            return None
 
-            return map_to_user(user)
+        return map_to_user(user)
         
