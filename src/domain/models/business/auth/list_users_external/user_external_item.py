@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, UUID4, EmailStr
+from pydantic import BaseModel, Field, UUID4, EmailStr, validator
 from typing import Optional
 from datetime import datetime
 
@@ -10,6 +10,11 @@ class UserExternalItem(BaseModel):
     identification: str = Field(..., description="Documento de identificación")
     first_name: str = Field(..., description="Primer nombre")
     last_name: str = Field(..., description="Apellido")
+    full_name: Optional[str] = Field(None, description="Nombre completo")
+
+    @validator("full_name", always=True, pre=False)
+    def compute_full_name(cls, v, values):
+        return f"{values.get('first_name', '')} {values.get('last_name', '')}".strip()
     phone: Optional[str] = Field(None, description="Teléfono")
     user_state: bool = Field(..., description="Estado del usuario (activo/inactivo)")
     user_created_date: datetime = Field(..., description="Fecha de creación del usuario")
