@@ -100,3 +100,8 @@ class KEYS_MESSAGES(str, Enum):
     PLT_COMPANY_CURRENCY_NOT_FOUND = "plt_company_currency_not_found"
     PLT_COMPANY_CURRENCY_FIRST_MUST_BE_BASE = "plt_company_currency_first_must_be_base"
     PLT_CURRENCY_NOT_ALLOWED_FOR_COMPANY = "plt_currency_not_allowed_for_company"
+
+    # SPEC-014 — auth api_token + logout
+    AUTH_API_TOKEN_ROL_NOT_FOUND = "auth_api_token_rol_not_found"
+    AUTH_API_TOKEN_ALREADY_EXISTS = "auth_api_token_already_exists"
+    AUTH_LOGOUT_SUCCESS = "auth_logout_success"
