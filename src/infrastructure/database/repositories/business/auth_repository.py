@@ -32,6 +32,10 @@ from src.domain.models.business.auth.login.companies_by_user import CompaniesByU
 from src.domain.models.business.auth.login.menu import Menu
 from src.domain.models.business.auth.login.user_rol_info import UserRolInfo
 from src.domain.models.entities.company.company import Company
+from src.domain.models.entities.currency.currency import Currency
+from src.domain.models.entities.language.language import Language
+from src.domain.models.entities.platform.platform import Platform
+from src.domain.models.entities.user.user import User
 from src.domain.services.repositories.business.i_auth_repository import IAuthRepository
 from src.infrastructure.database.entities.company_entity import CompanyEntity
 from src.infrastructure.database.entities.geo_division_entity import GeoDivisionEntity
@@ -56,6 +60,10 @@ from src.infrastructure.database.entities.user_location_rol_entity import (
     UserLocationRolEntity,
 )
 from src.infrastructure.database.mappers.company_mapper import map_to_list_company
+from src.infrastructure.database.mappers.currency_mapper import map_to_currency
+from src.infrastructure.database.mappers.language_mapper import map_to_language
+from src.infrastructure.database.mappers.platform_mapper import map_to_platform
+from src.infrastructure.database.mappers.user_mapper import map_to_user
 from src.domain.models.business.auth.login.auth_login_response import (
     MenuLoginResponse,
     PermissionLoginResponse,
@@ -492,24 +500,8 @@ class AuthRepository(IAuthRepository):
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def initial_external_user_data(
         self, config: Config, email: str
-    ) -> Union[
-        Tuple[PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity],
-        None,
-    ]:
-        """
-        Obtiene datos iniciales de un usuario externo.
-        
-        A diferencia de los internos, no tiene location, country ni company.
-        Se identifica por platform.location_id IS NULL.
-        
-        Args:
-            config: Configuración de la solicitud
-            email: Email del usuario
-            
-        Returns:
-            Tupla (PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity)
-            None si no se encuentra
-        """
+    ) -> Optional[Tuple[Platform, User, Language, Currency]]:
+        """Datos iniciales de un usuario externo (sin location, country ni company)."""
         db = config.async_db
         stmt = (
             select(PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity)
@@ -518,11 +510,22 @@ class AuthRepository(IAuthRepository):
             .join(CurrencyEntity, CurrencyEntity.id == PlatformEntity.currency_id)
             .filter(UserEntity.email == email)
             .filter(UserEntity.state == True)
-            .filter(PlatformEntity.location_id.is_(None))  # Solo usuarios externos
+            .filter(PlatformEntity.location_id.is_(None))
         )
 
         result = await db.execute(stmt)
-        return result.first()
+        row = result.first()
+        if not row:
+            return None
+
+        # SPEC-015 T6
+        platform_entity, user_entity, language_entity, currency_entity = row
+        return (
+            map_to_platform(platform_entity=platform_entity),
+            map_to_user(user_entity=user_entity),
+            map_to_language(language_entity=language_entity),
+            map_to_currency(currency_entity=currency_entity),
+        )
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def external_rol_and_permissions_by_code(

@@ -7,23 +7,16 @@ from src.core.classes.async_message import Message
 from src.core.models.message import MessageCoreEntity
 from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.wrappers.execute_transaction import execute_transaction
+from src.domain.models.entities.currency.currency import Currency
+from src.domain.models.entities.language.language import Language
+from src.domain.models.entities.platform.platform import Platform
+from src.domain.models.entities.user.user import User
 from src.infrastructure.database.repositories.business.auth_repository import (
     AuthRepository,
 )
-from src.infrastructure.database.entities.platform_entity import PlatformEntity
-from src.infrastructure.database.entities.user_entity import UserEntity
-from src.infrastructure.database.entities.language_entity import LanguageEntity
-from src.infrastructure.database.entities.currency_entity import CurrencyEntity
 
 
 class AuthInitialExternalUserDataUseCase:
-    """
-    Obtiene los datos iniciales de un usuario externo para el login.
-    
-    A diferencia del interno, no tiene location, country ni company.
-    Solo obtiene: platform, user, language, currency.
-    """
-    
     def __init__(self):
         self.auth_repository = AuthRepository()
         self.message = Message()
@@ -33,10 +26,7 @@ class AuthInitialExternalUserDataUseCase:
         self,
         config: Config,
         email: str,
-    ) -> Union[
-        Tuple[PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity],
-        str,
-    ]:
+    ) -> Union[Tuple[Platform, User, Language, Currency], str]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
         result = await self.auth_repository.initial_external_user_data(
