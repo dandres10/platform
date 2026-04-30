@@ -57,11 +57,14 @@ from src.infrastructure.database.entities.user_location_rol_entity import (
 )
 from src.infrastructure.database.mappers.company_mapper import map_to_list_company
 from src.domain.models.business.auth.login.auth_login_response import (
+    MenuLoginResponse,
     PermissionLoginResponse,
     RolLoginResponse,
 )
+from src.domain.models.entities.menu_permission.menu_permission import MenuPermission
 from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_company_login_response,
+    map_to_menu_response,
     map_to_permission_response,
     map_to_rol_login_response,
 )
@@ -163,15 +166,11 @@ class AuthRepository(IAuthRepository):
         return (permissions, rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def menu(self, config: Config, params: Menu) -> Union[
-        List[Tuple[MenuPermissionEntity, MenuEntity]],
-        None,
-    ]:
+    async def menu(
+        self, config: Config, params: Menu
+    ) -> Optional[Tuple[List[MenuPermission], List[MenuLoginResponse]]]:
         """
-        Obtiene menús para usuarios internos.
-        
-        IMPORTANTE: Solo retorna menús con type='INTERNAL' por seguridad.
-        Los menús EXTERNAL son exclusivos para usuarios externos.
+        Obtiene menús para usuarios internos. Solo type='INTERNAL'.
         """
         db = config.async_db
         stmt = (
@@ -180,14 +179,32 @@ class AuthRepository(IAuthRepository):
                 MenuPermissionEntity, MenuPermissionEntity.menu_id == MenuEntity.id
             )
             .filter(MenuEntity.company_id == params.company)
-            .filter(MenuEntity.type == "INTERNAL")  # Seguridad: solo menús internos
+            .filter(MenuEntity.type == "INTERNAL")
             .filter(MenuEntity.state == True)
         )
 
         result = await db.execute(stmt)
-        results = result.all()
+        rows = result.all()
 
-        return results
+        if not rows:
+            return None
+
+        # SPEC-015 T5
+        menu_permissions: List[MenuPermission] = []
+        menus_by_id: dict = {}
+        for menu_permission_entity, menu_entity in rows:
+            menu_permissions.append(
+                MenuPermission(
+                    id=menu_permission_entity.id,
+                    menu_id=menu_permission_entity.menu_id,
+                    permission_id=menu_permission_entity.permission_id,
+                    state=menu_permission_entity.state,
+                )
+            )
+            if menu_entity.id not in menus_by_id:
+                menus_by_id[menu_entity.id] = map_to_menu_response(menu_entity=menu_entity)
+
+        return (menu_permissions, list(menus_by_id.values()))
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def currencies_by_location(

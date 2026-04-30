@@ -8,17 +8,10 @@ from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_login_response import MenuLoginResponse
 from src.domain.models.business.auth.login.auth_menu import AuthMenu
 from src.domain.models.business.auth.login.menu import Menu
-from src.infrastructure.database.entities.menu_entity import MenuEntity
-from src.infrastructure.database.entities.menu_permission_entity import (
-    MenuPermissionEntity,
-)
 from src.infrastructure.database.repositories.business.auth_repository import (
     AuthRepository,
 )
 from src.core.config import settings
-from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
-    map_to_menu_response,
-)
 from src.core.classes.async_message import Message
 
 
@@ -34,13 +27,9 @@ class AuthMenuUseCase:
         self,
         config: Config,
         params: AuthMenu,
-    ) -> Union[
-        List[MenuLoginResponse],
-        str,
-    ]:
+    ) -> Union[List[MenuLoginResponse], str]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
-        # Validar que company sea proporcionado
         if not params.company:
             return await self.message.get_message(
                 config=config,
@@ -49,13 +38,12 @@ class AuthMenuUseCase:
                 ),
             )
 
-        menus = await self.auth_repository.menu(
+        result = await self.auth_repository.menu(
             config=config,
             params=Menu(company=params.company),
         )
 
-        if not menus:
-            print("no se encontro el menu de la empresa")
+        if not result:
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
@@ -63,27 +51,10 @@ class AuthMenuUseCase:
                 ),
             )
 
-        list_menu_permission_entity: List[MenuPermissionEntity] = []
-        list_menu_entity: List[MenuEntity] = []
-
-        for menu in menus:
-            menu_permission_entity, menu_entity = menu
-            list_menu_permission_entity.append(menu_permission_entity)
-            list_menu_entity.append(menu_entity)
-
+        # SPEC-015 T5
+        menu_permissions, menus = result
         permission_ids = {permission.id for permission in params.permissions}
-        menu_permissions = [
-            menu_permission
-            for menu_permission in list_menu_permission_entity
-            if menu_permission.permission_id in permission_ids
-        ]
-
-        menu_ids = {menu_permission.menu_id for menu_permission in menu_permissions}
-
-        result = [
-            map_to_menu_response(menu_entity=menuu)
-            for menuu in list_menu_entity
-            if menuu.id in menu_ids
-        ]
-
-        return result
+        allowed_menu_ids = {
+            mp.menu_id for mp in menu_permissions if mp.permission_id in permission_ids
+        }
+        return [menu for menu in menus if menu.id in allowed_menu_ids]
