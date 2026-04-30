@@ -33,6 +33,8 @@ from src.infrastructure.database.repositories.entities.user_repository import Us
 from src.infrastructure.database.repositories.entities.menu_repository import MenuRepository
 from src.infrastructure.database.repositories.entities.location_repository import LocationRepository
 from src.infrastructure.database.repositories.entities.currency_location_repository import CurrencyLocationRepository
+# SPEC-001 T6.6
+from src.infrastructure.database.repositories.entities.company_currency_repository import CompanyCurrencyRepository
 
 # Importar use cases de entidades
 from src.domain.services.use_cases.entities.company.company_save_use_case import CompanySaveUseCase
@@ -45,6 +47,10 @@ from src.domain.services.use_cases.entities.user.user_list_use_case import UserL
 from src.domain.services.use_cases.entities.menu.menu_list_use_case import MenuListUseCase
 from src.domain.services.use_cases.entities.location.location_save_use_case import LocationSaveUseCase
 from src.domain.services.use_cases.entities.currency_location.currency_location_save_use_case import CurrencyLocationSaveUseCase
+# SPEC-001 T6.6
+from src.domain.services.use_cases.entities.company_currency.save_company_currency_use_case import SaveCompanyCurrencyUseCase
+# SPEC-001 T6.6
+from src.domain.services.use_cases.entities.company_currency.list_company_currency_use_case import ListCompanyCurrencyUseCase
 from src.domain.services.use_cases.business.auth.create_user_internal.create_user_internal_use_case import CreateUserInternalUseCase
 
 # Importar casos de uso auxiliares (misma carpeta - imports relativos)
@@ -61,6 +67,8 @@ user_repository = UserRepository()
 menu_repository = MenuRepository()
 location_repository = LocationRepository()
 currency_location_repository = CurrencyLocationRepository()
+# SPEC-001 T6.6
+company_currency_repository = CompanyCurrencyRepository()
 
 
 class CreateCompanyUseCase:
@@ -89,9 +97,14 @@ class CreateCompanyUseCase:
         self.menu_list_uc = MenuListUseCase(menu_repository)
         
         # Use cases de creación
-        self.company_save_uc = CompanySaveUseCase(company_repository)
+        # SPEC-001 T6.6
+        save_company_currency_uc = SaveCompanyCurrencyUseCase(company_currency_repository)
+        # SPEC-001 T6.6
+        list_company_currency_uc = ListCompanyCurrencyUseCase(company_currency_repository)
+        self.company_save_uc = CompanySaveUseCase(company_repository, save_company_currency_uc)
         self.location_save_uc = LocationSaveUseCase(location_repository)
-        self.currency_location_save_uc = CurrencyLocationSaveUseCase(currency_location_repository)
+        # SPEC-001 T6.6
+        self.currency_location_save_uc = CurrencyLocationSaveUseCase(currency_location_repository, list_company_currency_uc)
         self.create_user_internal_uc = CreateUserInternalUseCase()
         
         # Use cases auxiliares (misma carpeta)
@@ -240,6 +253,8 @@ class CreateCompanyUseCase:
                 name=params.company.name,
                 nit=params.company.nit,
                 inactivity_time=params.company.inactivity_time,
+                # SPEC-001 T6.6
+                base_currency_id=params.company.company_base_currency_id,
                 state=True
             )
         )

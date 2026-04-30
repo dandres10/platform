@@ -9,13 +9,16 @@ class CompanyData(BaseModel):
     name: str = Field(..., min_length=3, max_length=255, description="Nombre de la compañía")
     nit: str = Field(..., min_length=5, max_length=255, description="NIT de la compañía")
     inactivity_time: int = Field(default=30, ge=1, le=1440, description="Tiempo de inactividad en minutos")
+    # SPEC-001 T6.6
+    company_base_currency_id: UUID4 = Field(..., description="ID de la moneda base contable de la empresa")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "name": "Empresa Ejemplo S.A.S.",
                 "nit": "900123456-7",
-                "inactivity_time": 30
+                "inactivity_time": 30,
+                "company_base_currency_id": "770e8400-e29b-41d4-a716-446655440000"
             }
         }
 
@@ -87,7 +90,8 @@ class CreateCompanyRequest(BaseModel):
                 "company": {
                     "name": "Empresa Ejemplo S.A.S.",
                     "nit": "900123456-7",
-                    "inactivity_time": 30
+                    "inactivity_time": 30,
+                    "company_base_currency_id": "770e8400-e29b-41d4-a716-446655440000"
                 },
                 "location": {
                     "country_id": "550e8400-e29b-41d4-a716-446655440000",

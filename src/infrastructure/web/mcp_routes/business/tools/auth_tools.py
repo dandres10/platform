@@ -1,3 +1,4 @@
+import re
 from src.infrastructure.web.mcp_routes.business.server import mcp
 from src.core.classes.mcp_client import McpClient
 from src.core.wrappers.check_mcp_roles import check_mcp_roles
@@ -18,6 +19,11 @@ from src.domain.models.business.auth.list_users_by_location.user_by_location_ite
 from src.domain.models.business.auth.list_users_external.user_external_item import UserExternalItem
 from src.domain.models.business.auth.create_company.create_company_response import CreateCompanyResponse
 from src.domain.models.business.auth.delete_company.delete_company_response import DeleteCompanyResponse
+
+# SPEC-001 T6.6
+_UUID_PATTERN = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
 
 
 @mcp.tool()
@@ -251,6 +257,7 @@ Endpoint: POST platform /auth/users-external"""
 async def create_company(
     company_name: str,
     company_nit: str,
+    company_base_currency_id: str,
     location_name: str,
     location_address: str,
     location_phone: str,
@@ -273,9 +280,22 @@ async def create_company(
     language: str = "ES",
 ) -> Response[CreateCompanyResponse]:
     """Onboarding completo: crea empresa + primera sede + usuario admin en una sola llamada. Necesita datos de empresa, ubicacion y admin.
+IMPORTANTE: company_base_currency_id y admin_currency_id son campos DISTINTOS:
+- company_base_currency_id: moneda contable principal de la empresa (fuente de is_base=true en company_currency).
+- admin_currency_id: preferencia de visualizacion del usuario admin.
+Ambos son UUID validos y pueden ser iguales o diferentes.
 Endpoint: POST platform /auth/create-company"""
+    # SPEC-001 T6.6
+    if not _UUID_PATTERN.match(company_base_currency_id):
+        return Response.error(message=f'company_base_currency_id invalido: "{company_base_currency_id}". Debe ser un UUID valido.')
     client = McpClient(language=language)
-    company = {"name": company_name, "nit": company_nit, "inactivity_time": company_inactivity_time}
+    # SPEC-001 T6.6
+    company = {
+        "name": company_name,
+        "nit": company_nit,
+        "inactivity_time": company_inactivity_time,
+        "company_base_currency_id": company_base_currency_id,
+    }
     location = {
         "country_id": location_country_id,
         "name": location_name,
