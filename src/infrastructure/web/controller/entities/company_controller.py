@@ -21,18 +21,35 @@ from src.domain.services.use_cases.entities.company.index import (
     CompanySaveUseCase,
     CompanyUpdateUseCase,
 )
+# SPEC-001 T6.5
+from src.domain.services.use_cases.entities.company_currency.save_company_currency_use_case import (
+    SaveCompanyCurrencyUseCase,
+)
 from src.infrastructure.database.repositories.entities.company_repository import (
     CompanyRepository,
+)
+# SPEC-001 T6.5
+from src.infrastructure.database.repositories.entities.company_currency_repository import (
+    CompanyCurrencyRepository,
 )
 
 
 
 company_repository = CompanyRepository()
+# SPEC-001 T6.5
+company_currency_repository = CompanyCurrencyRepository()
 
 
 class CompanyController:
     def __init__(self) -> None:
-        self.company_save_use_case = CompanySaveUseCase(company_repository)
+        # SPEC-001 T6.5
+        save_company_currency_use_case = SaveCompanyCurrencyUseCase(
+            company_currency_repository
+        )
+        self.company_save_use_case = CompanySaveUseCase(
+            company_repository,
+            save_company_currency_use_case,
+        )
         self.company_update_use_case = CompanyUpdateUseCase(company_repository)
         self.company_list_use_case = CompanyListUseCase(company_repository)
         self.company_delete_use_case = CompanyDeleteUseCase(company_repository)
@@ -109,4 +126,3 @@ class CompanyController:
                 message=MessageCoreEntity(key=KEYS_MESSAGES.CORE_QUERY_MADE.value),
             ),
         )
-        

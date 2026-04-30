@@ -9,8 +9,13 @@ from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.entities.company.index import Company, CompanySave
+from src.domain.models.entities.company_currency.index import CompanyCurrencySave
 from src.domain.services.repositories.entities.i_company_repository import (
     ICompanyRepository,
+)
+# SPEC-001 T6.5
+from src.domain.services.use_cases.entities.company_currency.save_company_currency_use_case import (
+    SaveCompanyCurrencyUseCase,
 )
 from src.infrastructure.database.mappers.company_mapper import (
     map_to_save_company_entity,
@@ -18,8 +23,15 @@ from src.infrastructure.database.mappers.company_mapper import (
 
 
 class CompanySaveUseCase:
-    def __init__(self, company_repository: ICompanyRepository):
+    def __init__(
+        self,
+        company_repository: ICompanyRepository,
+        # SPEC-001 T6.5
+        save_company_currency_use_case: SaveCompanyCurrencyUseCase,
+    ):
         self.company_repository = company_repository
+        # SPEC-001 T6.5
+        self.save_company_currency_use_case = save_company_currency_use_case
         self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
@@ -37,6 +49,16 @@ class CompanySaveUseCase:
                     key=KEYS_MESSAGES.CORE_ERROR_SAVING_RECORD.value
                 ),
             )
+
+        # SPEC-001 T6.5
+        await self.save_company_currency_use_case.execute(
+            config=config,
+            params=CompanyCurrencySave(
+                company_id=result.id,
+                currency_id=params.base_currency_id,
+                is_base=True,
+            ),
+        )
 
         if config.response_type == RESPONSE_TYPE.OBJECT.value:
             return result
