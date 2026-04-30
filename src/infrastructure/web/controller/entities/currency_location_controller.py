@@ -21,18 +21,32 @@ from src.domain.services.use_cases.entities.currency_location.index import (
     CurrencyLocationSaveUseCase,
     CurrencyLocationUpdateUseCase,
 )
+from src.domain.services.use_cases.entities.company_currency.list_company_currency_use_case import (
+    ListCompanyCurrencyUseCase,
+)
 from src.infrastructure.database.repositories.entities.currency_location_repository import (
     CurrencyLocationRepository,
+)
+from src.infrastructure.database.repositories.entities.company_currency_repository import (
+    CompanyCurrencyRepository,
 )
 
 
 
 currency_location_repository = CurrencyLocationRepository()
+# SPEC-001 T6
+company_currency_repository = CompanyCurrencyRepository()
 
 
 class CurrencyLocationController:
     def __init__(self) -> None:
-        self.currency_location_save_use_case = CurrencyLocationSaveUseCase(currency_location_repository)
+        list_company_currency_use_case = ListCompanyCurrencyUseCase(
+            company_currency_repository
+        )
+        self.currency_location_save_use_case = CurrencyLocationSaveUseCase(
+            currency_location_repository,
+            list_company_currency_use_case,
+        )
         self.currency_location_update_use_case = CurrencyLocationUpdateUseCase(currency_location_repository)
         self.currency_location_list_use_case = CurrencyLocationListUseCase(currency_location_repository)
         self.currency_location_delete_use_case = CurrencyLocationDeleteUseCase(currency_location_repository)
@@ -109,4 +123,3 @@ class CurrencyLocationController:
                 message=MessageCoreEntity(key=KEYS_MESSAGES.CORE_QUERY_MADE.value),
             ),
         )
-        
