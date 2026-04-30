@@ -92,4 +92,11 @@ class KEYS_MESSAGES(str, Enum):
     AUTH_UPDATE_USER_ERROR_FETCHING_ROLES = "auth_update_user_error_fetching_roles"
     AUTH_UPDATE_USER_ERROR = "auth_update_user_error"
     AUTH_UPDATE_USER_ERROR_UPDATING_ROL = "auth_update_user_error_updating_rol"
-    AUTH_UPDATE_USER_SUCCESS = "auth_update_user_success"
+    AUTH_UPDATE_USER_SUCCESS = "auth_update_user_success"    
+    # SPEC-001 — company_currency business rules
+    PLT_COMPANY_CURRENCY_DUPLICATE = "plt_company_currency_duplicate"
+    PLT_COMPANY_CURRENCY_BASE_ALREADY_EXISTS = "plt_company_currency_base_already_exists"
+    PLT_COMPANY_CURRENCY_BASE_REQUIRED = "plt_company_currency_base_required"
+    PLT_COMPANY_CURRENCY_NOT_FOUND = "plt_company_currency_not_found"
+    PLT_COMPANY_CURRENCY_FIRST_MUST_BE_BASE = "plt_company_currency_first_must_be_base"
+    PLT_CURRENCY_NOT_ALLOWED_FOR_COMPANY = "plt_currency_not_allowed_for_company"

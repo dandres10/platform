@@ -4,6 +4,8 @@ from fastapi import HTTPException
 from termcolor import colored
 import traceback
 
+from src.core.exceptions import BusinessException
+
 
 import asyncio
 import traceback
@@ -23,6 +25,13 @@ def execute_transaction(layer, enabled=True):
             try:
                 # Ejecutar la función original
                 return await func(*args, **kwargs)
+            except BusinessException as be:
+                # SPEC-001 T4: BusinessException viaja como HTTP 409 con code+key.
+                # No es un error inesperado: se propaga sin spam de stacktrace.
+                raise HTTPException(
+                    status_code=409,
+                    detail={"code": be.code or "PLT-INVALID", "key": be.key},
+                )
             except Exception as e:
                 # Obtener la clase y el nombre del método
                 class_name = func.__qualname__.split(".")[0]
@@ -172,6 +181,15 @@ def execute_transaction_route(enabled=True):
                     )
 
                 return await func(*args, **kwargs)
+            except BusinessException as be:
+                # SPEC-001 T4: si un UC ya levantó BusinessException, propagar
+                # como HTTP 409. El except Exception del UC wrapper ya tradujo,
+                # pero si el UC se ejecuta sin decorador o el HTTPException
+                # bubble-up llega aquí, mantenemos consistencia.
+                raise HTTPException(
+                    status_code=409,
+                    detail={"code": be.code or "PLT-INVALID", "key": be.key},
+                )
             except Exception as e:
                 route_info = {}
 
