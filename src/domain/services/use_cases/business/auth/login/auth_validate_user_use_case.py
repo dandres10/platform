@@ -70,7 +70,6 @@ class AuthValidateUserUseCase:
         )
 
         if not check_password:
-            print("contraseña es incorrecta")
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
