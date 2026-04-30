@@ -11,10 +11,17 @@ string_db = (
     f"{settings.database_name}"
 )
 
+# SPEC-012: pool conservador para `db.t4g.micro` (1 GB RAM, ~100 conexiones
+# efectivas) compartida entre los 4 backends del ecosistema. Con UoW por request,
+# cada conexión queda tomada toda la duración del request, así que el pool debe
+# quedar bajo el límite total: 4 backends × 25 max = 100. Alineado con inventory
+# (SPEC-099 T9). Si métricas en prod muestran saturación, revisar.
 engine = create_async_engine(
     string_db,
-    pool_size=20,
+    pool_size=15,
     max_overflow=10,
+    pool_timeout=10,
+    pool_recycle=3600,
     echo=False,
 )
 
