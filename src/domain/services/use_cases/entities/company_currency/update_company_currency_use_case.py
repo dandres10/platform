@@ -21,19 +21,7 @@ from src.domain.services.repositories.entities.i_company_currency_repository imp
 
 
 class UpdateCompanyCurrencyUseCase:
-    """Actualiza una company_currency con SWAP ATÓMICO transparente (R6).
-
-    Si `params.is_base=True` y la fila existente tiene `is_base=False`, busca
-    la base actual de la company. Si existe y es otra fila distinta, primero
-    le hace UPDATE a `is_base=False` y luego UPDATE a la fila objetivo. Todo
-    corre dentro de la misma transacción del UoW (request-level), por lo que
-    si cualquier parte falla, todo hace rollback.
-
-    Multi-tenant: el repo ya filtra por `config.token.company_id` en `read`
-    y `update`. Si la fila no existe o no pertenece a la company del token,
-    el repo retorna None y este UC eleva PLT_COMPANY_CURRENCY_NOT_FOUND.
-    """
-
+    # SPEC-001 T4
     def __init__(self, company_currency_repository: ICompanyCurrencyRepository):
         self.company_currency_repository = company_currency_repository
         self.message = Message()
@@ -44,7 +32,6 @@ class UpdateCompanyCurrencyUseCase:
         config: Config,
         params: CompanyCurrencyUpdate,
     ) -> Union[CompanyCurrency, str, None]:
-        # Validar existencia + multi-tenant antes de cualquier mutación.
         existing = await self.company_currency_repository.read(
             config=config,
             params=CompanyCurrencyRead(id=params.id),
@@ -55,8 +42,6 @@ class UpdateCompanyCurrencyUseCase:
                 KEYS_ERRORS.PLT_COMPANY_CURRENCY_NOT_FOUND.value,
             )
 
-        # SWAP ATÓMICO (R6): si se quiere promover esta fila a base y antes
-        # no lo era, asegurar que la base previa pase a is_base=false primero.
         if params.is_base is True and not existing.is_base:
             current_base = await self.company_currency_repository.find_base_by_company(
                 config=config,

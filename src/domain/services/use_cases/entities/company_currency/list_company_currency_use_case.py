@@ -16,8 +16,6 @@ from src.domain.services.repositories.entities.i_company_currency_repository imp
 
 
 class ListCompanyCurrencyUseCase:
-    """Lista paginada con filtros. Multi-tenant ya lo aplica el repo (R9)."""
-
     def __init__(self, company_currency_repository: ICompanyCurrencyRepository):
         self.company_currency_repository = company_currency_repository
         self.message = Message()

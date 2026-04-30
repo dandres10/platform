@@ -18,8 +18,6 @@ from src.domain.services.repositories.entities.i_company_currency_repository imp
 
 
 class ReadCompanyCurrencyUseCase:
-    """Lee una company_currency por id. Multi-tenant aplicado por el repo (R9)."""
-
     def __init__(self, company_currency_repository: ICompanyCurrencyRepository):
         self.company_currency_repository = company_currency_repository
         self.message = Message()

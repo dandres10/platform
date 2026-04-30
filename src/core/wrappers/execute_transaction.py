@@ -26,8 +26,7 @@ def execute_transaction(layer, enabled=True):
                 # Ejecutar la función original
                 return await func(*args, **kwargs)
             except BusinessException as be:
-                # SPEC-001 T4: BusinessException viaja como HTTP 409 con code+key.
-                # No es un error inesperado: se propaga sin spam de stacktrace.
+                # SPEC-001 T4
                 raise HTTPException(
                     status_code=409,
                     detail={"code": be.code or "PLT-INVALID", "key": be.key},
@@ -182,10 +181,7 @@ def execute_transaction_route(enabled=True):
 
                 return await func(*args, **kwargs)
             except BusinessException as be:
-                # SPEC-001 T4: si un UC ya levantó BusinessException, propagar
-                # como HTTP 409. El except Exception del UC wrapper ya tradujo,
-                # pero si el UC se ejecuta sin decorador o el HTTPException
-                # bubble-up llega aquí, mantenemos consistencia.
+                # SPEC-001 T4
                 raise HTTPException(
                     status_code=409,
                     detail={"code": be.code or "PLT-INVALID", "key": be.key},

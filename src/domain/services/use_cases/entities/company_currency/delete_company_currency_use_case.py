@@ -22,15 +22,7 @@ from src.domain.services.repositories.entities.i_company_currency_repository imp
 
 
 class DeleteCompanyCurrencyUseCase:
-    """Elimina una company_currency con guard de base (R7).
-
-    Si la fila a eliminar es la única `is_base=true` y NO existe otra fila
-    para esa company que pueda asumir el rol de base (es decir, no hay
-    alternativa), rechazar. Para reasignar la base, el cliente debe primero
-    `update` otra fila a `is_base=true` (swap atómico) y luego eliminar la
-    antigua.
-    """
-
+    # SPEC-001 T4
     def __init__(self, company_currency_repository: ICompanyCurrencyRepository):
         self.company_currency_repository = company_currency_repository
         self.message = Message()
@@ -41,7 +33,6 @@ class DeleteCompanyCurrencyUseCase:
         config: Config,
         params: CompanyCurrencyDelete,
     ) -> Union[CompanyCurrency, str, None]:
-        # Validar existencia + multi-tenant primero.
         target = await self.company_currency_repository.read(
             config=config,
             params=CompanyCurrencyRead(id=params.id),
@@ -52,23 +43,17 @@ class DeleteCompanyCurrencyUseCase:
                 KEYS_ERRORS.PLT_COMPANY_CURRENCY_NOT_FOUND.value,
             )
 
-        # R7: si la fila objetivo es base, verificar que existe alguna otra
-        # fila para esa company (si no, eliminar dejaría a la company sin
-        # base — prohibido).
         if target.is_base:
             current_base = await self.company_currency_repository.find_base_by_company(
                 config=config,
                 company_id=target.company_id,
             )
-            # Si la base actual es la que se va a eliminar, contar otras filas.
             if current_base is not None and current_base.id == target.id:
                 all_rows = await self.company_currency_repository.list(
                     config=config,
                     params=Pagination(all_data=True),
                 )
                 all_rows = all_rows or []
-                # Sin alternativa = solo existe esta fila base, no hay otra
-                # candidata para asumir el rol después del delete.
                 has_alternative = any(row.id != target.id for row in all_rows)
                 if not has_alternative:
                     raise BusinessException(

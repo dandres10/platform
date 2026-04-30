@@ -24,17 +24,7 @@ from src.infrastructure.database.mappers.company_currency_mapper import (
 
 
 class SaveCompanyCurrencyUseCase:
-    """Crea una asociación currency ↔ company.
-
-    Reglas de negocio (SPEC-001):
-    - R14: la PRIMERA fila para una company debe tener `is_base=true`.
-    - R5: si ya hay base y `is_base=true` → rechazar (para promover, usar
-      update con swap atómico).
-    - R4: combinación `(company_id, currency_id)` duplicada → rechazar antes
-      del INSERT con mensaje claro. El UNIQUE constraint del DB es la
-      defensa-en-profundidad final.
-    """
-
+    # SPEC-001 T4
     def __init__(self, company_currency_repository: ICompanyCurrencyRepository):
         self.company_currency_repository = company_currency_repository
         self.message = Message()
@@ -47,16 +37,12 @@ class SaveCompanyCurrencyUseCase:
     ) -> Union[CompanyCurrency, str, None]:
         company_id = params.company_id
 
-        # Listar filas existentes para la company actual (multi-tenant ya lo
-        # aplica el repo). Lo usamos para 3 chequeos: ¿hay alguna?, ¿duplicado?,
-        # ¿hay base ya?
         existing_rows = await self.company_currency_repository.list(
             config=config,
             params=Pagination(all_data=True),
         )
         existing_rows = existing_rows or []
 
-        # R4: duplicado (company_id, currency_id).
         if params.currency_id is not None:
             for row in existing_rows:
                 if row.currency_id == params.currency_id:
@@ -65,7 +51,6 @@ class SaveCompanyCurrencyUseCase:
                         KEYS_ERRORS.PLT_COMPANY_CURRENCY_DUPLICATE.value,
                     )
 
-        # R5: si ya hay base y el cliente pide is_base=true → rechazar.
         existing_base = await self.company_currency_repository.find_base_by_company(
             config=config,
             company_id=company_id,
@@ -76,7 +61,6 @@ class SaveCompanyCurrencyUseCase:
                 KEYS_ERRORS.PLT_COMPANY_CURRENCY_BASE_ALREADY_EXISTS.value,
             )
 
-        # R14: si NO hay filas previas y is_base=false → rechazar.
         if not existing_rows and not params.is_base:
             raise BusinessException(
                 KEYS_MESSAGES.PLT_COMPANY_CURRENCY_FIRST_MUST_BE_BASE.value,

@@ -25,14 +25,7 @@ from src.infrastructure.database.mappers.company_currency_mapper import (
 
 
 class CompanyCurrencyRepository(ICompanyCurrencyRepository):
-    """Repository de company_currency.
-
-    Patrón UoW (request-level transaction): este repo NO hace commit ni rollback.
-    Usa db.flush() para empujar los statements a la sesión y refresh() para
-    recargar los valores generados por el server (defaults, triggers). El
-    commit/rollback final lo gestiona el orquestador del request.
-    """
-
+    # SPEC-001 T3
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def save(self, config: Config, params: CompanyCurrencyEntity) -> Union[CompanyCurrency, None]:
         db = config.async_db
@@ -72,8 +65,6 @@ class CompanyCurrencyRepository(ICompanyCurrencyRepository):
 
         stmt = select(CompanyCurrencyEntity)
 
-        # Multi-tenant filter (R9): siempre que haya company_id en el token,
-        # restringir al tenant actual.
         if company_id:
             stmt = stmt.filter(CompanyCurrencyEntity.company_id == company_id)
 
@@ -143,14 +134,6 @@ class CompanyCurrencyRepository(ICompanyCurrencyRepository):
         config: Config,
         company_id,
     ) -> Optional[CompanyCurrency]:
-        """Devuelve la fila base (is_base=true) de la company indicada.
-
-        Multi-tenant guard: si el token trae un company_id distinto al
-        parámetro recibido, retornamos None para evitar leak cross-tenant.
-        Si el token no trae company_id (usuario externo / system), confiamos
-        en el caller. El UC `update` siempre debería pasar el company_id
-        leído de la fila ya validada bajo el filtro multi-tenant del repo.
-        """
         db = config.async_db
         token_company_id = config.token.company_id if config.token else None
 
