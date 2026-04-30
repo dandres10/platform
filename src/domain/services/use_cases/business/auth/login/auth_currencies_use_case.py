@@ -47,7 +47,6 @@ class AuthCurrenciesUseCase:
         )
 
         if not results:
-            print("no se encontraron idiomas")
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(

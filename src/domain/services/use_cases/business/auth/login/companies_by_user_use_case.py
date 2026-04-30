@@ -48,7 +48,6 @@ class CompaniesByUserUseCase:
         )
 
         if not results:
-            print("no se encontraron compañias asociadas al usuario")
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(

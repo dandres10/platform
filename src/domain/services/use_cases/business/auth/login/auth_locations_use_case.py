@@ -43,7 +43,6 @@ class AuthLocationsUseCase:
         )
 
         if not results:
-            print("no se encontraron locations")
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
