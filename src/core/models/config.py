@@ -10,6 +10,7 @@ class Config(BaseModel):
     db: Optional[Any] = None
     async_db: Optional[AsyncSession] = None
     language: Optional[str] = None
+    timezone: Optional[str] = None
     request: Optional[Any] = None
     response_type: RESPONSE_TYPE = Field(default=RESPONSE_TYPE.DICT.value)
     token: Optional[AccessToken] = Field(default=None)
