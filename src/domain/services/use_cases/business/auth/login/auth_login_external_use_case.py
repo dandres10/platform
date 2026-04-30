@@ -39,9 +39,7 @@ from src.infrastructure.database.repositories.business.mappers.auth.login.login_
     map_to_country_login_response,
     map_to_currecy_login_response,
     map_to_language_login_response,
-    map_to_permission_response,
     map_to_platform_login_response,
-    map_to_rol_login_response,
     map_to_user_login_response,
 )
 from src.core.config import settings
@@ -171,8 +169,8 @@ class AuthLoginExternalUseCase:
                 platform=map_to_platform_login_response(platform_entity=platform_entity),
                 country=map_to_country_login_response(country_entity=country_entity) if country_entity else None,
                 company=None,   # Usuario externo no tiene compañía
-                rol=map_to_rol_login_response(rol_entity=rol_entity),
-                permissions=[map_to_permission_response(p) for p in permissions],
+                rol=rol_entity,
+                permissions=permissions,
                 menu=auth_menu,
             ),
             platform_variations=PlatformVariations(

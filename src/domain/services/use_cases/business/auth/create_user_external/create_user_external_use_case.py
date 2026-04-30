@@ -140,7 +140,7 @@ class CreateUserExternalUseCase:
                     ),
                 )
 
-        # Obtener el rol USER por código
+        # SPEC-015 T4
         rol_user = await self.auth_repository.external_rol_and_permissions_by_code(
             config=config, rol_code=ROL_TYPE.USER.value
         )
@@ -151,10 +151,9 @@ class CreateUserExternalUseCase:
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND.value
                 ),
             )
-        
-        # Extraer el rol_id del resultado
-        rol_entity = rol_user[0][0]  # Primera tupla, primer elemento (RolEntity)
-        rol_id = rol_entity.id
+
+        _permissions, rol = rol_user
+        rol_id = rol.id
 
         existing_users_email = await self.user_list_uc.execute(
             config=config,

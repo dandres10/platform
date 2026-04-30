@@ -510,18 +510,7 @@ class AuthRepository(IAuthRepository):
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def external_rol_and_permissions_by_code(
         self, config: Config, rol_code: str
-    ) -> Union[List[Tuple[RolEntity, RolPermissionEntity, PermissionEntity]], None]:
-        """
-        Obtiene el rol y sus permisos para usuarios externos buscando por código.
-        
-        Args:
-            config: Configuración de la solicitud
-            rol_code: Código del rol (ej: 'USER')
-            
-        Returns:
-            Lista de tuplas (RolEntity, RolPermissionEntity, PermissionEntity)
-            None si no se encuentra
-        """
+    ) -> Optional[Tuple[List[PermissionLoginResponse], RolLoginResponse]]:
         db = config.async_db
         stmt = (
             select(RolEntity, RolPermissionEntity, PermissionEntity)
@@ -532,7 +521,21 @@ class AuthRepository(IAuthRepository):
         )
 
         result = await db.execute(stmt)
-        return result.all()
+        rows = result.all()
+
+        if not rows:
+            return None
+
+        # SPEC-015 T4
+        seen_permission_ids = set()
+        permissions: List[PermissionLoginResponse] = []
+        for _, _, permission_entity in rows:
+            if permission_entity.id not in seen_permission_ids:
+                seen_permission_ids.add(permission_entity.id)
+                permissions.append(map_to_permission_response(permission_entity=permission_entity))
+
+        rol = map_to_rol_login_response(rol_entity=rows[0][0])
+        return (permissions, rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def menu_external(
