@@ -33,7 +33,9 @@ from src.domain.models.business.auth.login.menu import Menu
 from src.domain.models.business.auth.login.user_rol_info import UserRolInfo
 from src.domain.models.entities.company.company import Company
 from src.domain.models.entities.currency.currency import Currency
+from src.domain.models.entities.geo_division.geo_division import GeoDivision
 from src.domain.models.entities.language.language import Language
+from src.domain.models.entities.location.location import Location
 from src.domain.models.entities.platform.platform import Platform
 from src.domain.models.entities.user.user import User
 from src.domain.services.repositories.business.i_auth_repository import IAuthRepository
@@ -59,9 +61,11 @@ from src.infrastructure.database.entities.user_entity import UserEntity
 from src.infrastructure.database.entities.user_location_rol_entity import (
     UserLocationRolEntity,
 )
-from src.infrastructure.database.mappers.company_mapper import map_to_list_company
+from src.infrastructure.database.mappers.company_mapper import map_to_company, map_to_list_company
 from src.infrastructure.database.mappers.currency_mapper import map_to_currency
+from src.infrastructure.database.mappers.geo_division_mapper import map_to_geo_division
 from src.infrastructure.database.mappers.language_mapper import map_to_language
+from src.infrastructure.database.mappers.location_mapper import map_to_location
 from src.infrastructure.database.mappers.platform_mapper import map_to_platform
 from src.infrastructure.database.mappers.user_mapper import map_to_user
 from src.domain.models.business.auth.login.auth_login_response import (
@@ -87,18 +91,7 @@ from src.infrastructure.database.repositories.business.mappers.auth.users_extern
 class AuthRepository(IAuthRepository):
     async def initial_user_data(
         self, config: Config, params: AuthInitialUserData
-    ) -> Union[
-        Tuple[
-            PlatformEntity,
-            UserEntity,
-            LanguageEntity,
-            LocationEntity,
-            CurrencyEntity,
-            GeoDivisionEntity,
-            CompanyEntity,
-        ],
-        None,
-    ]:
+    ) -> Optional[Tuple[Platform, User, Language, Location, Currency, GeoDivision, Company]]:
         db = config.async_db
         stmt = (
             select(
@@ -121,9 +114,21 @@ class AuthRepository(IAuthRepository):
         )
 
         result = await db.execute(stmt)
-        results = result.first()
+        row = result.first()
+        if not row:
+            return None
 
-        return results
+        # SPEC-015 T7
+        platform_e, user_e, language_e, location_e, currency_e, geo_e, company_e = row
+        return (
+            map_to_platform(platform_entity=platform_e),
+            map_to_user(user_entity=user_e),
+            map_to_language(language_entity=language_e),
+            map_to_location(location_entity=location_e),
+            map_to_currency(currency_entity=currency_e),
+            map_to_geo_division(entity=geo_e),
+            map_to_company(company_entity=company_e),
+        )
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def user_role_and_permissions(
