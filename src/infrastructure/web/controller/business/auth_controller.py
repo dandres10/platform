@@ -37,10 +37,10 @@ from src.domain.services.use_cases.business.auth.create_api_token.create_api_tok
 from src.domain.services.use_cases.business.auth.login.auth_login_orchestrator_use_case import (
     AuthLoginOrchestratorUseCase,
 )
-from src.domain.services.use_cases.business.auth.login.auth_logout_use_case import (
+from src.domain.services.use_cases.business.auth.logout.auth_logout_use_case import (
     AuthLogoutUseCase,
 )
-from src.domain.services.use_cases.business.auth.login.auth_refresh_token_orchestrator_use_case import (
+from src.domain.services.use_cases.business.auth.refresh_token.auth_refresh_token_orchestrator_use_case import (
     AuthRefreshTokenOrchestratorUseCase,
 )
 from src.domain.services.use_cases.business.auth.create_user_internal import (
