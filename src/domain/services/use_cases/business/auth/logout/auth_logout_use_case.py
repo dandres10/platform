@@ -1,8 +1,10 @@
 from typing import List, Union
 from src.core.classes.async_message import Message
+from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.enums.layer import LAYER
 from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.config import Config
+from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.logout.auth_logout_response import AuthLogoutResponse
 from src.domain.models.entities.user.user_read import UserRead
@@ -52,6 +54,13 @@ class AuthLogoutUseCase:
         if isinstance(user_update, str):
             return user_update
 
-        result = AuthLogoutResponse(message="cierra de session con exito.")
+        translated_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_LOGOUT_SUCCESS.value
+            ),
+        )
+
+        result = AuthLogoutResponse(message=translated_message)
 
         return result
