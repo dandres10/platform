@@ -220,7 +220,7 @@ class AuthLoginUseCase:
                 ),
                 country=map_to_country_login_response(country_entity=country_entity),
                 company=map_to_company_login_response(company_entity=company_entity),
-                rol=map_to_rol_login_response(rol_entity=rol_q),
+                rol=rol_q,
                 permissions=permissions,
                 menu=auth_menu,
             ),

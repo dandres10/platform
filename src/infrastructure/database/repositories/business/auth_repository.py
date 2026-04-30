@@ -56,8 +56,14 @@ from src.infrastructure.database.entities.user_location_rol_entity import (
     UserLocationRolEntity,
 )
 from src.infrastructure.database.mappers.company_mapper import map_to_list_company
+from src.domain.models.business.auth.login.auth_login_response import (
+    PermissionLoginResponse,
+    RolLoginResponse,
+)
 from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_company_login_response,
+    map_to_permission_response,
+    map_to_rol_login_response,
 )
 from src.infrastructure.database.repositories.business.mappers.auth.users_internal import (
     map_to_user_by_location_item,
@@ -111,18 +117,7 @@ class AuthRepository(IAuthRepository):
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def user_role_and_permissions(
         self, config: Config, params: AuthUserRoleAndPermissions
-    ) -> Union[
-        List[
-            Tuple[
-                UserLocationRolEntity,
-                UserEntity,
-                RolEntity,
-                RolPermissionEntity,
-                PermissionEntity,
-            ]
-        ],
-        None,
-    ]:
+    ) -> Optional[Tuple[List[PermissionLoginResponse], RolLoginResponse]]:
         db = config.async_db
         stmt = (
             select(
@@ -157,7 +152,15 @@ class AuthRepository(IAuthRepository):
         result = await db.execute(stmt)
         results = result.all()
 
-        return results
+        if not results:
+            return None
+
+        # SPEC-015 T3
+        permissions = [
+            map_to_permission_response(permission_entity=row[4]) for row in results
+        ]
+        rol = map_to_rol_login_response(rol_entity=results[0][2])
+        return (permissions, rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def menu(self, config: Config, params: Menu) -> Union[
