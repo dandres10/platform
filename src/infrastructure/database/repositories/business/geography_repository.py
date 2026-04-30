@@ -7,6 +7,7 @@ from sqlalchemy import func
 from src.core.enums.layer import LAYER
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
+from src.domain.models.business.geography.index import GeoDivisionTypeByCountryResponse
 from src.infrastructure.database.entities.geo_division_entity import GeoDivisionEntity
 from src.infrastructure.database.entities.geo_division_type_entity import GeoDivisionTypeEntity
 
@@ -37,26 +38,26 @@ class GeographyRepository:
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def get_types_by_country(
         self, config: Config, country_id: UUID4
-    ) -> Optional[List]:
+    ) -> Optional[List[GeoDivisionTypeByCountryResponse]]:
         """Obtiene los tipos de división disponibles para un país con conteo."""
         db = config.async_db
         from sqlalchemy import text as sa_text
-            
+
         schema = settings.database_schema
         raw_sql = sa_text(f"""
             WITH RECURSIVE descendants AS (
                 SELECT id, geo_division_type_id, level
                 FROM {schema}.geo_division
                 WHERE top_id = :country_id AND state = TRUE
-                    
+
                 UNION ALL
-                    
+
                 SELECT gd.id, gd.geo_division_type_id, gd.level
                 FROM {schema}.geo_division gd
                 INNER JOIN descendants d ON gd.top_id = d.id
                 WHERE gd.state = TRUE
             )
-            SELECT 
+            SELECT
                 gdt.id,
                 gdt.name,
                 gdt.label,
@@ -68,10 +69,22 @@ class GeographyRepository:
             GROUP BY gdt.id, gdt.name, gdt.label, d.level
             ORDER BY d.level
         """)
-            
+
         result = await db.execute(raw_sql, {"country_id": str(country_id)})
         rows = result.all()
-        return rows if rows else None
+        if not rows:
+            return None
+        # SPEC-015 T2
+        return [
+            GeoDivisionTypeByCountryResponse(
+                id=row.id,
+                name=row.name,
+                label=row.label,
+                level=row.level,
+                count=row.count,
+            )
+            for row in rows
+        ]
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def get_by_country_and_type(
