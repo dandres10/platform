@@ -1,18 +1,28 @@
+import asyncio
 import json
+import logging
+import traceback
 from functools import wraps
 from fastapi import HTTPException
-from termcolor import colored
-import traceback
+from sqlalchemy.exc import IntegrityError
 
 from src.core.exceptions import BusinessException
 
 
-import asyncio
-import traceback
-import json
-from functools import wraps
-from fastapi import HTTPException
-from termcolor import colored
+logger = logging.getLogger(__name__)
+
+
+# SPEC-009 T1
+_CONSTRAINT_TO_CODE: dict[str, str] = {}
+
+
+def _translate_integrity_error(exc: Exception) -> tuple[int, dict]:
+    """Traduce IntegrityError a respuesta segura sin filtrar SQL ni constraint names."""
+    raw = str(getattr(exc, "orig", exc) or exc)
+    for constraint_name, code in _CONSTRAINT_TO_CODE.items():
+        if constraint_name in raw:
+            return 409, {"code": code, "message": "constraint violation"}
+    return 409, {"code": "CORE-CONFLICT", "message": "integrity constraint violation"}
 
 
 def execute_transaction(layer, enabled=True):
@@ -20,27 +30,19 @@ def execute_transaction(layer, enabled=True):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             if not enabled:
-                # Si el decorador está deshabilitado, simplemente ejecuta la función original
                 return await func(*args, **kwargs)
             try:
-                # Ejecutar la función original
                 return await func(*args, **kwargs)
-            except BusinessException as be:
-                # SPEC-001 T4
-                raise HTTPException(
-                    status_code=409,
-                    detail={"code": be.code or "PLT-INVALID", "key": be.key},
-                )
+            except HTTPException:
+                # SPEC-009 T1
+                raise
             except Exception as e:
-                # Obtener la clase y el nombre del método
                 class_name = func.__qualname__.split(".")[0]
                 method_name = func.__name__
 
-                # Extraer los parámetros `params` y `config`
                 params = kwargs.get("params", args[1] if len(args) > 1 else None)
                 config = kwargs.get("config", args[0] if len(args) > 0 else None)
 
-                # Preparar los datos de los parámetros
                 params_data = {}
                 if params:
                     try:
@@ -75,12 +77,10 @@ def execute_transaction(layer, enabled=True):
                     except Exception as ex:
                         config_data = f"Unserializable config: {ex}"
 
-                # Capturar la traza del error
                 tb = traceback.extract_tb(e.__traceback__)
                 filename = tb[-1].filename
                 line_number = tb[-1].lineno
 
-                # Formatear y retornar los datos de error
                 error_data = {
                     "layer": layer,
                     "class_name": class_name,
@@ -92,41 +92,37 @@ def execute_transaction(layer, enabled=True):
                     "line": line_number,
                 }
 
-                # Serializar el diccionario a JSON
                 error_json = json.dumps(error_data, indent=4, default=str)
+                logger.error("TRANSACTION_ERROR: %s", error_json)
 
-                # Imprimir el error formateado
-                print(
-                    colored(
-                        f"ERROR: {error_json}",
-                        "light_red",
+                # SPEC-009 T1
+                if isinstance(e, BusinessException):
+                    raise HTTPException(
+                        status_code=409,
+                        detail={"code": e.code or "PLT-INVALID", "key": e.key},
                     )
-                )
-                print(
-                    colored(
-                        "-" * 100,
-                        "light_red",
+                if isinstance(e, IntegrityError):
+                    status, detail = _translate_integrity_error(e)
+                    raise HTTPException(status_code=status, detail=detail)
+                if isinstance(e, ValueError):
+                    raise HTTPException(
+                        status_code=400,
+                        detail={"code": "CORE-INVALID", "message": "invalid state or input"},
                     )
-                )
-
-                # Lanzar una excepción HTTP con el mensaje de error
                 raise HTTPException(
-                    status_code=500, detail=f"{e}".replace("500:", "").lstrip()
+                    status_code=500,
+                    detail={"code": "CORE-ERROR", "message": "internal error"},
                 )
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
             if not enabled:
-                # Si el decorador está deshabilitado, simplemente ejecuta la función original
                 return func(*args, **kwargs)
             try:
-                # Ejecutar la función original
                 return func(*args, **kwargs)
-            except Exception as e:
-                # Misma lógica de manejo de errores que async_wrapper
+            except Exception:
                 ...
 
-        # Detectar si la función es asíncrona
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:
@@ -137,15 +133,10 @@ def execute_transaction(layer, enabled=True):
 
 def string_to_json(text: str):
     try:
-        # Remover caracteres de escape como '\n' y otros
         cleaned_text = text.replace("\\n", "").replace("\\t", "").replace("\\", "")
-
-        # Intentar convertir la cadena en un objeto JSON
         json_object = json.loads(cleaned_text)
-
         return json_object
-    except json.JSONDecodeError as e:
-        """print(f"Error al convertir la cadena a JSON: {e}")"""
+    except json.JSONDecodeError:
         return None
 
 
@@ -154,17 +145,14 @@ def execute_transaction_route(enabled=True):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
             if not enabled:
-                # Si el decorador está deshabilitado, simplemente ejecuta la función original
                 return await func(*args, **kwargs)
 
+            request = None
             try:
-                # Obtener `config` desde los kwargs
                 config = kwargs.get("config", None)
 
                 if config is not None and hasattr(config, "request"):
                     request = config.request
-                else:
-                    request = None
 
                 if request:
                     body = await request.body()
@@ -173,19 +161,14 @@ def execute_transaction_route(enabled=True):
                     )
 
                     json_body = string_to_json(formatted_body)
-
-                    # Almacenar directamente el objeto JSON si es válido
                     request.state.body = (
                         json_body if json_body is not None else formatted_body
                     )
 
                 return await func(*args, **kwargs)
-            except BusinessException as be:
-                # SPEC-001 T4
-                raise HTTPException(
-                    status_code=409,
-                    detail={"code": be.code or "PLT-INVALID", "key": be.key},
-                )
+            except HTTPException:
+                # SPEC-009 T1
+                raise
             except Exception as e:
                 route_info = {}
 
@@ -226,57 +209,36 @@ def execute_transaction_route(enabled=True):
                     "route_info": route_info,
                 }
 
-                print(
-                    colored(
-                        f"ERROR: {json.dumps(error_info, indent=4)}",
-                        "light_red",
-                    )
-                )
+                logger.error("ROUTE_ERROR: %s", json.dumps(error_info, indent=4, default=str))
 
-                print(
-                    colored(
-                        "-" * 100,
-                        "light_red",
+                # SPEC-009 T1
+                if isinstance(e, BusinessException):
+                    raise HTTPException(
+                        status_code=409,
+                        detail={"code": e.code or "PLT-INVALID", "key": e.key},
                     )
-                )
+                if isinstance(e, IntegrityError):
+                    status, detail = _translate_integrity_error(e)
+                    raise HTTPException(status_code=status, detail=detail)
+                if isinstance(e, ValueError):
+                    raise HTTPException(
+                        status_code=400,
+                        detail={"code": "CORE-INVALID", "message": "invalid state or input"},
+                    )
                 raise HTTPException(
-                    status_code=500, detail=f"{e}".replace("500:", "").lstrip()
+                    status_code=500,
+                    detail={"code": "CORE-ERROR", "message": "internal error"},
                 )
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
             if not enabled:
-                # Si el decorador está deshabilitado, simplemente ejecuta la función original
                 return func(*args, **kwargs)
-
             try:
-                # Lógica para funciones síncronas similar a la asíncrona
-                config = kwargs.get("config", None)
-
-                if config is not None and hasattr(config, "request"):
-                    request = config.request
-                else:
-                    request = None
-
-                if request:
-                    body = request.body()  # Síncrono, sin await
-                    formatted_body = (
-                        body.decode("utf-8") if isinstance(body, bytes) else str(body)
-                    )
-
-                    json_body = string_to_json(formatted_body)
-
-                    # Almacenar directamente el objeto JSON si es válido
-                    request.state.body = (
-                        json_body if json_body is not None else formatted_body
-                    )
-
                 return func(*args, **kwargs)
-            except Exception as e:
-                # Manejo de errores similar a async_wrapper
+            except Exception:
                 ...
 
-        # Detectar si la función es asíncrona
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:
