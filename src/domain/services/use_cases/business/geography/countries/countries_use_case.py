@@ -11,9 +11,6 @@ from src.domain.models.business.geography.index import GeoDivisionItemResponse
 from src.infrastructure.database.repositories.business.geography_repository import (
     GeographyRepository,
 )
-from src.infrastructure.database.repositories.business.mappers.geography.geography_mapper import (
-    map_to_list_geo_division_item_response,
-)
 
 
 class CountriesUseCase:
@@ -25,12 +22,12 @@ class CountriesUseCase:
     async def execute(
         self, config: Config
     ) -> Union[List[GeoDivisionItemResponse], str]:
-        rows = await self.geography_repository.get_countries(config=config)
-        if not rows:
+        result = await self.geography_repository.get_countries(config=config)
+        if not result:
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_NO_RESULTS_FOUND.value
                 ),
             )
-        return map_to_list_geo_division_item_response(rows)
+        return result

@@ -6,9 +6,6 @@ from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_login_response import MenuLoginResponse
 from src.infrastructure.database.repositories.business.auth_repository import AuthRepository
-from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
-    map_to_menu_response,
-)
 
 
 class AuthMenuExternalUseCase:
@@ -34,20 +31,11 @@ class AuthMenuExternalUseCase:
         permission_ids = [str(p.id) for p in permissions]
 
         # Obtener menús externos filtrados por permisos
-        menus = await self.auth_repository.menu_external(
+        result = await self.auth_repository.menu_external(
             config=config, permission_ids=permission_ids
         )
 
-        if not menus:
+        if not result:
             return []  # Retornar lista vacía, no error
-
-        # Extraer y mapear menús únicos
-        seen_menu_ids = set()
-        result = []
-        
-        for menu_permission, menu_entity in menus:
-            if menu_entity.id not in seen_menu_ids:
-                seen_menu_ids.add(menu_entity.id)
-                result.append(map_to_menu_response(menu_entity=menu_entity))
 
         return result

@@ -14,9 +14,6 @@ from src.domain.models.business.geography.index import (
 from src.infrastructure.database.repositories.business.geography_repository import (
     GeographyRepository,
 )
-from src.infrastructure.database.repositories.business.mappers.geography.geography_mapper import (
-    map_to_list_geo_division_item_response,
-)
 
 
 class ChildrenByTypeUseCase:
@@ -28,14 +25,14 @@ class ChildrenByTypeUseCase:
     async def execute(
         self, config: Config, params: ChildrenByTypeRequest
     ) -> Union[List[GeoDivisionItemResponse], str]:
-        rows = await self.geography_repository.get_children_by_type(
+        result = await self.geography_repository.get_children_by_type(
             config=config, parent_id=params.parent_id, type_name=params.type_name
         )
-        if not rows:
+        if not result:
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_NO_RESULTS_FOUND.value
                 ),
             )
-        return map_to_list_geo_division_item_response(rows)
+        return result

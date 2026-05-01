@@ -14,9 +14,6 @@ from src.domain.models.business.geography.index import (
 from src.infrastructure.database.repositories.business.geography_repository import (
     GeographyRepository,
 )
-from src.infrastructure.database.repositories.business.mappers.geography.geography_mapper import (
-    map_to_hierarchy_item_response,
-)
 
 
 class HierarchyUseCase:
@@ -28,25 +25,14 @@ class HierarchyUseCase:
     async def execute(
         self, config: Config, params: HierarchyRequest
     ) -> Union[GeoDivisionHierarchyResponse, str]:
-        rows = await self.geography_repository.get_hierarchy(
+        result = await self.geography_repository.get_hierarchy(
             config=config, node_id=params.node_id
         )
-        if not rows:
+        if not result:
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND.value
                 ),
             )
-        
-        node = map_to_hierarchy_item_response(entity=rows[0][0], type_entity=rows[0][1])
-        ancestors = [
-            map_to_hierarchy_item_response(entity=row[0], type_entity=row[1])
-            for row in rows[1:]
-        ]
-        
-        return GeoDivisionHierarchyResponse(
-            node=node,
-            ancestors=ancestors,
-            depth=len(rows),
-        )
+        return result

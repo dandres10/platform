@@ -69,6 +69,8 @@ from src.infrastructure.database.mappers.location_mapper import map_to_location
 from src.infrastructure.database.mappers.platform_mapper import map_to_platform
 from src.infrastructure.database.mappers.user_mapper import map_to_user
 from src.domain.models.business.auth.login.auth_login_response import (
+    CurrencyLoginResponse,
+    LocationLoginResponse,
     MenuLoginResponse,
     PermissionLoginResponse,
     RolLoginResponse,
@@ -76,6 +78,8 @@ from src.domain.models.business.auth.login.auth_login_response import (
 from src.domain.models.entities.menu_permission.menu_permission import MenuPermission
 from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_company_login_response,
+    map_to_currecy_login_response,
+    map_to_location_login_response,
     map_to_menu_response,
     map_to_permission_response,
     map_to_rol_login_response,
@@ -222,10 +226,7 @@ class AuthRepository(IAuthRepository):
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def currencies_by_location(
         self, config: Config, params: AuthCurremciesByLocation
-    ) -> Union[
-        List[Tuple[CurrencyLocationEntity, CurrencyEntity, LocationEntity]],
-        None,
-    ]:
+    ) -> Optional[List[CurrencyLoginResponse]]:
         db = config.async_db
         stmt = (
             select(CurrencyLocationEntity, CurrencyEntity, LocationEntity)
@@ -243,13 +244,18 @@ class AuthRepository(IAuthRepository):
         result = await db.execute(stmt)
         results = result.all()
 
-        return results
+        if not results:
+            return None
+
+        # SPEC-019
+        return [
+            map_to_currecy_login_response(currency_entity=row[1]) for row in results
+        ]
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def locations_by_user(self, config: Config, params: AuthLocations) -> Union[
-        List[Tuple[UserLocationRolEntity, LocationEntity, CompanyEntity, UserEntity]],
-        None,
-    ]:
+    async def locations_by_user(
+        self, config: Config, params: AuthLocations
+    ) -> Optional[List[LocationLoginResponse]]:
         db = config.async_db
         stmt = (
             select(UserLocationRolEntity, LocationEntity, CompanyEntity, UserEntity)
@@ -266,7 +272,13 @@ class AuthRepository(IAuthRepository):
         result = await db.execute(stmt)
         results = result.all()
 
-        return results
+        if not results:
+            return None
+
+        # SPEC-019
+        return [
+            map_to_location_login_response(location_entity=row[1]) for row in results
+        ]
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def create_api_token(
@@ -565,7 +577,7 @@ class AuthRepository(IAuthRepository):
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def menu_external(
         self, config: Config, permission_ids: List[str]
-    ) -> Union[List[Tuple[MenuPermissionEntity, MenuEntity]], None]:
+    ) -> Optional[List[MenuLoginResponse]]:
         """
         Obtiene menús para usuarios externos.
         
@@ -576,7 +588,7 @@ class AuthRepository(IAuthRepository):
             permission_ids: Lista de IDs de permisos del rol
             
         Returns:
-            Lista de tuplas (MenuPermissionEntity, MenuEntity)
+            Lista de MenuLoginResponse (deduplicada por menu_id)
             None si no se encuentra
         """
         db = config.async_db
@@ -589,12 +601,24 @@ class AuthRepository(IAuthRepository):
         )
 
         result = await db.execute(stmt)
-        return result.all()
+        rows = result.all()
+
+        if not rows:
+            return None
+
+        # SPEC-019
+        seen_menu_ids = set()
+        menus: List[MenuLoginResponse] = []
+        for _, menu_entity in rows:
+            if menu_entity.id not in seen_menu_ids:
+                seen_menu_ids.add(menu_entity.id)
+                menus.append(map_to_menu_response(menu_entity=menu_entity))
+        return menus
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def all_currencies(
         self, config: Config
-    ) -> Union[List[CurrencyEntity], None]:
+    ) -> Optional[List[CurrencyLoginResponse]]:
         """
         Obtiene todas las currencies activas del sistema.
         
@@ -604,7 +628,7 @@ class AuthRepository(IAuthRepository):
             config: Configuración de la solicitud
             
         Returns:
-            Lista de CurrencyEntity activas
+            Lista de CurrencyLoginResponse activas
             None si no hay currencies
         """
         db = config.async_db
@@ -617,7 +641,14 @@ class AuthRepository(IAuthRepository):
         result = await db.execute(stmt)
         currencies = result.scalars().all()
 
-        return currencies if currencies else None
+        if not currencies:
+            return None
+
+        # SPEC-019
+        return [
+            map_to_currecy_login_response(currency_entity=currency)
+            for currency in currencies
+        ]
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def user_country(

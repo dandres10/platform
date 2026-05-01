@@ -8,6 +8,7 @@ from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.logout.auth_logout_response import AuthLogoutResponse
 from src.domain.models.entities.user.user_read import UserRead
+from src.domain.models.entities.user.user_update import UserUpdate
 from src.domain.services.use_cases.entities.user.user_read_use_case import (
     UserReadUseCase,
 )
@@ -15,9 +16,6 @@ from src.domain.services.use_cases.entities.user.user_update_use_case import (
     UserUpdateUseCase,
 )
 from src.core.config import settings
-from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
-    map_to_user_read,
-)
 from src.infrastructure.database.repositories.entities.user_repository import (
     UserRepository,
 )
@@ -47,8 +45,22 @@ class AuthLogoutUseCase:
 
         user_read.refresh_token = ""
 
+        # SPEC-019: response composition (UserRead DTO -> UserUpdate)
+        user_update_params = UserUpdate(
+            id=user_read.id,
+            platform_id=user_read.platform_id,
+            password=user_read.password,
+            email=user_read.email,
+            identification=user_read.identification,
+            first_name=user_read.first_name,
+            last_name=user_read.last_name,
+            phone=user_read.phone,
+            refresh_token=user_read.refresh_token,
+            state=user_read.state,
+        )
+
         user_update = await self.user_update_use_case.execute(
-            config=config, params=map_to_user_read(user_read=user_read)
+            config=config, params=user_update_params
         )
 
         if isinstance(user_update, str):
