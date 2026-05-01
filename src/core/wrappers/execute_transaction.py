@@ -26,6 +26,8 @@ def _translate_integrity_error(exc: Exception) -> tuple[int, dict]:
 
 
 def execute_transaction(layer, enabled=True):
+    # SPEC-023: `enabled` controla solo logging y traducción de errores;
+    # no afecta la transaccionalidad (cada repo gestiona su propia tx).
     def decorator(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -97,9 +99,10 @@ def execute_transaction(layer, enabled=True):
 
                 # SPEC-009 T1
                 if isinstance(e, BusinessException):
+                    # SPEC-023
                     raise HTTPException(
                         status_code=409,
-                        detail={"code": e.code or "PLT-INVALID", "key": e.key},
+                        detail={"code": e.code or "CORE-INVALID", "key": e.key},
                     )
                 if isinstance(e, IntegrityError):
                     status, detail = _translate_integrity_error(e)
@@ -141,30 +144,34 @@ def string_to_json(text: str):
 
 
 def execute_transaction_route(enabled=True):
+    # SPEC-023: `enabled` controla solo logging y traducción de errores;
+    # no afecta la transaccionalidad. Body parsing ocurre antes del try
+    # para evitar capturar errores de Pydantic dentro de logs de transacción.
     def decorator(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
+            # SPEC-023
+            config = kwargs.get("config", None)
+            request = (
+                config.request
+                if config is not None and hasattr(config, "request")
+                else None
+            )
+
+            if enabled and request is not None:
+                body = await request.body()
+                formatted_body = (
+                    body.decode("utf-8") if isinstance(body, bytes) else str(body)
+                )
+                json_body = string_to_json(formatted_body)
+                request.state.body = (
+                    json_body if json_body is not None else formatted_body
+                )
+
             if not enabled:
                 return await func(*args, **kwargs)
 
-            request = None
             try:
-                config = kwargs.get("config", None)
-
-                if config is not None and hasattr(config, "request"):
-                    request = config.request
-
-                if request:
-                    body = await request.body()
-                    formatted_body = (
-                        body.decode("utf-8") if isinstance(body, bytes) else str(body)
-                    )
-
-                    json_body = string_to_json(formatted_body)
-                    request.state.body = (
-                        json_body if json_body is not None else formatted_body
-                    )
-
                 return await func(*args, **kwargs)
             except HTTPException:
                 # SPEC-009 T1
@@ -213,9 +220,10 @@ def execute_transaction_route(enabled=True):
 
                 # SPEC-009 T1
                 if isinstance(e, BusinessException):
+                    # SPEC-023
                     raise HTTPException(
                         status_code=409,
-                        detail={"code": e.code or "PLT-INVALID", "key": e.key},
+                        detail={"code": e.code or "CORE-INVALID", "key": e.key},
                     )
                 if isinstance(e, IntegrityError):
                     status, detail = _translate_integrity_error(e)
