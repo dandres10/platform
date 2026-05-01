@@ -81,6 +81,9 @@ class CreateApiTokenUseCase:
                 ),
             )
 
+        # SPEC-007
+        await self.auth_repository.acquire_api_token_rol_lock(config=config, rol_id=params.rol_id)
+
         api_token_list: List[ApiToken] | str = (
             await self.api_token_list_use_case.execute(
                 config=config,

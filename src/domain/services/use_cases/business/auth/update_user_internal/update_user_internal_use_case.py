@@ -48,6 +48,9 @@ from src.infrastructure.database.repositories.entities.user_location_rol_reposit
 from src.infrastructure.database.repositories.entities.rol_repository import (
     RolRepository
 )
+from src.infrastructure.database.repositories.business.auth_repository import (
+    AuthRepository
+)
 
 
 user_repository = UserRepository()
@@ -78,6 +81,7 @@ class UpdateUserInternalUseCase:
         self.user_location_rol_update_uc = UserLocationRolUpdateUseCase(user_location_rol_repository)
         self.rol_read_uc = RolReadUseCase(rol_repository)
         self.rol_list_uc = RolListUseCase(rol_repository)
+        self.auth_repository = AuthRepository()
         self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
@@ -191,6 +195,8 @@ class UpdateUserInternalUseCase:
 
             # 4b. Si se cambia de ADMIN a otro rol, verificar que no sea el último
             if current_rol_is_admin and not new_rol_is_admin and admin_rol_id:
+                # SPEC-007
+                await self.auth_repository.acquire_location_admin_lock(config=config, location_id=admin_location_id)
                 admins_in_location = await self.user_location_rol_list_uc.execute(
                     config=config,
                     params=Pagination(

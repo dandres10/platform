@@ -35,6 +35,7 @@ from src.infrastructure.database.repositories.entities.location_repository impor
 from src.infrastructure.database.repositories.entities.currency_location_repository import CurrencyLocationRepository
 # SPEC-001 T6.6
 from src.infrastructure.database.repositories.entities.company_currency_repository import CompanyCurrencyRepository
+from src.infrastructure.database.repositories.business.auth_repository import AuthRepository
 
 # Importar use cases de entidades
 from src.domain.services.use_cases.entities.company.company_save_use_case import CompanySaveUseCase
@@ -112,6 +113,7 @@ class CreateCompanyUseCase:
         self.clone_permissions_uc = CloneMenuPermissionsForCompanyUseCase()
         
         self.message = Message()
+        self.auth_repository = AuthRepository()
     
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
@@ -124,6 +126,9 @@ class CreateCompanyUseCase:
         # ============================================
         # 1. VALIDACIONES PREVIAS
         # ============================================
+        
+        # SPEC-007
+        await self.auth_repository.acquire_company_nit_lock(config=config, nit=params.company.nit)
         
         # Validar NIT único
         existing_companies = await self.company_list_uc.execute(

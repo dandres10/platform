@@ -47,6 +47,9 @@ from src.infrastructure.database.repositories.entities.user_location_rol_reposit
 from src.infrastructure.database.repositories.entities.platform_repository import (
     PlatformRepository
 )
+from src.infrastructure.database.repositories.business.auth_repository import (
+    AuthRepository
+)
 
 
 user_repository = UserRepository()
@@ -68,6 +71,7 @@ class DeleteUserInternalUseCase:
         self.check_active_relations_uc = CheckActiveRelationsUseCase()
         self.check_last_admin_uc = CheckLastAdminUseCase()
         self.soft_delete_user_uc = SoftDeleteUserUseCase()
+        self.auth_repository = AuthRepository()
         self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
@@ -162,6 +166,8 @@ class DeleteUserInternalUseCase:
             )
 
         # 6. Validar que no sea el único ADMIN de la ubicación
+        # SPEC-007
+        await self.auth_repository.acquire_location_admin_lock(config=config, location_id=config.token.location_id)
         is_last_admin = await self.check_last_admin_uc.execute(
             config=config,
             user_id=params.user_id,

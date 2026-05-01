@@ -1,8 +1,10 @@
 from typing import Any, List, Optional, Tuple, Union
 from uuid import UUID
+import hashlib
 from src.core.config import settings
 from src.core.enums.layer import LAYER
 from sqlalchemy.future import select
+from sqlalchemy import text
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
 from src.core.wrappers.execute_transaction import execute_transaction
@@ -93,6 +95,35 @@ from src.infrastructure.database.repositories.business.mappers.auth.users_extern
 
 
 class AuthRepository(IAuthRepository):
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def acquire_company_nit_lock(self, config: Config, nit: str) -> None:
+        """SPEC-007: lock por NIT para serializar create_company concurrente."""
+        db = config.async_db
+        lock_key = int(hashlib.md5(f"company:nit:{nit}".encode()).hexdigest(), 16) % (2**31 - 1)
+        await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def acquire_user_email_lock(self, config: Config, email: str) -> None:
+        """SPEC-007: lock por email para serializar creación de usuarios concurrente."""
+        db = config.async_db
+        lock_key = int(hashlib.md5(f"user:email:{email}".encode()).hexdigest(), 16) % (2**31 - 1)
+        await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def acquire_api_token_rol_lock(self, config: Config, rol_id) -> None:
+        """SPEC-007: lock por rol_id para serializar create_api_token concurrente."""
+        db = config.async_db
+        lock_key = int(hashlib.md5(f"api_token:rol:{rol_id}".encode()).hexdigest(), 16) % (2**31 - 1)
+        await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def acquire_location_admin_lock(self, config: Config, location_id) -> None:
+        """SPEC-007: lock por location_id para serializar update/delete del último admin."""
+        db = config.async_db
+        lock_key = int(hashlib.md5(f"location:admin:{location_id}".encode()).hexdigest(), 16) % (2**31 - 1)
+        await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+
     async def initial_user_data(
         self, config: Config, params: AuthInitialUserData
     ) -> Optional[Tuple[Platform, User, Language, Location, Currency, GeoDivision, Company]]:

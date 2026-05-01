@@ -155,6 +155,9 @@ class CreateUserExternalUseCase:
         _permissions, rol = rol_user
         rol_id = rol.id
 
+        # SPEC-007
+        await self.auth_repository.acquire_user_email_lock(config=config, email=params.email)
+
         existing_users_email = await self.user_list_uc.execute(
             config=config,
             params=Pagination(
