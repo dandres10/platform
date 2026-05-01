@@ -178,17 +178,18 @@ class DeleteUserInternalUseCase:
             )
 
         # 7. Intentar hard delete
+        # SPEC-008
         try:
-            await self._execute_hard_delete(
-                config=config,
-                params=params,
-                user_location_rols=user_location_rols,
-                platform_id=platform_id
-            )
-            return None  # Hard delete exitoso
-            
+            async with config.async_db.begin_nested():
+                await self._execute_hard_delete(
+                    config=config,
+                    params=params,
+                    user_location_rols=user_location_rols,
+                    platform_id=platform_id
+                )
+            return None
+
         except Exception:
-            # Si falla el hard delete, hacer soft delete
             return await self._handle_soft_delete(config=config, user=user)
 
     async def _execute_hard_delete(
