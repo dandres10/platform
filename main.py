@@ -23,11 +23,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-""" if settings.app_environment == "prod":
-    app.add_middleware(
-        UserRateLimitMiddleware, default_limits=["100/hour"], login_limits=["20/hour"]
-    ) """
-    
+# SPEC-020
+if settings.app_environment == "prod":
+    app.add_middleware(UserRateLimitMiddleware)
 
 app.add_middleware(RedirectToDocsMiddleware)
 CorsAppConfigurator.setup_cors(app)
