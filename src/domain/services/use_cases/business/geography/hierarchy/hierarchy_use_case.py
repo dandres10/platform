@@ -16,9 +16,13 @@ from src.infrastructure.database.repositories.business.geography_repository impo
 )
 
 
+geography_repository = GeographyRepository()
+
+
 class HierarchyUseCase:
+    # SPEC-010 T5
     def __init__(self):
-        self.geography_repository = GeographyRepository()
+        self.geography_repository = geography_repository
         self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
