@@ -13,6 +13,7 @@ from src.domain.models.entities.geo_division_type.index import (
     GeoDivisionType,
     GeoDivisionTypeDelete,
     GeoDivisionTypeRead,
+    GeoDivisionTypeSave,
     GeoDivisionTypeUpdate,
 )
 from src.domain.services.repositories.entities.i_geo_division_type_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.geo_division_type_entity import GeoDiv
 from src.infrastructure.database.mappers.geo_division_type_mapper import (
     map_to_geo_division_type,
     map_to_list_geo_division_type,
+    map_to_save_geo_division_type_entity,
 )
 
 
 class GeoDivisionTypeRepository(IGeoDivisionTypeRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: GeoDivisionTypeEntity) -> Union[GeoDivisionType, None]:
+    async def save(self, config: Config, params: GeoDivisionTypeSave) -> Union[GeoDivisionType, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_geo_division_type_entity(params)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_geo_division_type(params)
+        await db.refresh(entity)
+        return map_to_geo_division_type(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: GeoDivisionTypeUpdate) -> Union[GeoDivisionType, None]:

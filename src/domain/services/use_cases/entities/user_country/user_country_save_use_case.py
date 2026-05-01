@@ -12,9 +12,6 @@ from src.domain.models.entities.user_country.index import UserCountry, UserCount
 from src.domain.services.repositories.entities.i_user_country_repository import (
     IUserCountryRepository,
 )
-from src.infrastructure.database.mappers.user_country_mapper import (
-    map_to_save_user_country_entity,
-)
 
 
 class UserCountrySaveUseCase:
@@ -28,8 +25,7 @@ class UserCountrySaveUseCase:
         config: Config,
         params: UserCountrySave,
     ) -> Union[UserCountry, str, None]:
-        result = map_to_save_user_country_entity(params)
-        result = await self.user_country_repository.save(config=config, params=result)
+        result = await self.user_country_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

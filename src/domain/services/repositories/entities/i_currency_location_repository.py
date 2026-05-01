@@ -9,10 +9,10 @@ from src.domain.models.entities.currency_location.index import (
     CurrencyLocation,
     CurrencyLocationDelete,
     CurrencyLocationRead,
+    CurrencyLocationSave,
     CurrencyLocationUpdate,
 )
 
-from src.infrastructure.database.entities.currency_location_entity import CurrencyLocationEntity
 
 
 class ICurrencyLocationRepository(ABC):
@@ -20,7 +20,7 @@ class ICurrencyLocationRepository(ABC):
     def save(
         self,
         config: Config,
-        params: CurrencyLocationEntity,
+        params: CurrencyLocationSave,
     ) -> Union[CurrencyLocation, None]:
         pass
 

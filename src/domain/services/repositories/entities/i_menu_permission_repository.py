@@ -9,10 +9,10 @@ from src.domain.models.entities.menu_permission.index import (
     MenuPermission,
     MenuPermissionDelete,
     MenuPermissionRead,
+    MenuPermissionSave,
     MenuPermissionUpdate,
 )
 
-from src.infrastructure.database.entities.menu_permission_entity import MenuPermissionEntity
 
 
 class IMenuPermissionRepository(ABC):
@@ -20,7 +20,7 @@ class IMenuPermissionRepository(ABC):
     def save(
         self,
         config: Config,
-        params: MenuPermissionEntity,
+        params: MenuPermissionSave,
     ) -> Union[MenuPermission, None]:
         pass
 

@@ -9,10 +9,10 @@ from src.domain.models.entities.rol_permission.index import (
     RolPermission,
     RolPermissionDelete,
     RolPermissionRead,
+    RolPermissionSave,
     RolPermissionUpdate,
 )
 
-from src.infrastructure.database.entities.rol_permission_entity import RolPermissionEntity
 
 
 class IRolPermissionRepository(ABC):
@@ -20,7 +20,7 @@ class IRolPermissionRepository(ABC):
     def save(
         self,
         config: Config,
-        params: RolPermissionEntity,
+        params: RolPermissionSave,
     ) -> Union[RolPermission, None]:
         pass
 

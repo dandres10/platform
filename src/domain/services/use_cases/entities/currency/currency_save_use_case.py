@@ -12,9 +12,6 @@ from src.domain.models.entities.currency.index import Currency, CurrencySave
 from src.domain.services.repositories.entities.i_currency_repository import (
     ICurrencyRepository,
 )
-from src.infrastructure.database.mappers.currency_mapper import (
-    map_to_save_currency_entity,
-)
 
 
 class CurrencySaveUseCase:
@@ -28,8 +25,7 @@ class CurrencySaveUseCase:
         config: Config,
         params: CurrencySave,
     ) -> Union[Currency, str, None]:
-        result = map_to_save_currency_entity(params)
-        result = await self.currency_repository.save(config=config, params=result)
+        result = await self.currency_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

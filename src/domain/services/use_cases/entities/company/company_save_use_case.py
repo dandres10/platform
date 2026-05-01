@@ -17,9 +17,6 @@ from src.domain.services.repositories.entities.i_company_repository import (
 from src.domain.services.use_cases.entities.company_currency.save_company_currency_use_case import (
     SaveCompanyCurrencyUseCase,
 )
-from src.infrastructure.database.mappers.company_mapper import (
-    map_to_save_company_entity,
-)
 
 
 class CompanySaveUseCase:
@@ -40,8 +37,7 @@ class CompanySaveUseCase:
         config: Config,
         params: CompanySave,
     ) -> Union[Company, str, None]:
-        result = map_to_save_company_entity(params)
-        result = await self.company_repository.save(config=config, params=result)
+        result = await self.company_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

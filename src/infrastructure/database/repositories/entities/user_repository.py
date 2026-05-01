@@ -13,27 +13,32 @@ from src.domain.models.entities.user.index import (
     User,
     UserDelete,
     UserRead,
+    UserSave,
     UserUpdate,
 )
 from src.domain.services.repositories.entities.i_user_repository import (
     IUserRepository,
 )
 from src.infrastructure.database.entities.user_entity import UserEntity
+from src.core.classes.password import Password
 from src.infrastructure.database.mappers.user_mapper import (
     map_to_user,
     map_to_list_user,
+    map_to_save_user_entity,
 )
 
 
 class UserRepository(IUserRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: UserEntity) -> Union[User, None]:
+    async def save(self, config: Config, params: UserSave) -> Union[User, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_user_entity(params)
+        entity.password = Password.hash_password(password=entity.password)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_user(params)
+        await db.refresh(entity)
+        return map_to_user(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: UserUpdate) -> Union[User, None]:

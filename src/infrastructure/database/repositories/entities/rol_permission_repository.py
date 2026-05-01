@@ -13,6 +13,7 @@ from src.domain.models.entities.rol_permission.index import (
     RolPermission,
     RolPermissionDelete,
     RolPermissionRead,
+    RolPermissionSave,
     RolPermissionUpdate,
 )
 from src.domain.services.repositories.entities.i_rol_permission_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.rol_permission_entity import RolPermis
 from src.infrastructure.database.mappers.rol_permission_mapper import (
     map_to_rol_permission,
     map_to_list_rol_permission,
+    map_to_save_rol_permission_entity,
 )
 
 
 class RolPermissionRepository(IRolPermissionRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: RolPermissionEntity) -> Union[RolPermission, None]:
+    async def save(self, config: Config, params: RolPermissionSave) -> Union[RolPermission, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_rol_permission_entity(params)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_rol_permission(params)
+        await db.refresh(entity)
+        return map_to_rol_permission(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: RolPermissionUpdate) -> Union[RolPermission, None]:

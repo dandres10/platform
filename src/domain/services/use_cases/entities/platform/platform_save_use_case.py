@@ -12,9 +12,6 @@ from src.domain.models.entities.platform.index import Platform, PlatformSave
 from src.domain.services.repositories.entities.i_platform_repository import (
     IPlatformRepository,
 )
-from src.infrastructure.database.mappers.platform_mapper import (
-    map_to_save_platform_entity,
-)
 
 
 class PlatformSaveUseCase:
@@ -28,8 +25,7 @@ class PlatformSaveUseCase:
         config: Config,
         params: PlatformSave,
     ) -> Union[Platform, str, None]:
-        result = map_to_save_platform_entity(params)
-        result = await self.platform_repository.save(config=config, params=result)
+        result = await self.platform_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

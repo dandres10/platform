@@ -13,6 +13,7 @@ from src.domain.models.entities.menu_permission.index import (
     MenuPermission,
     MenuPermissionDelete,
     MenuPermissionRead,
+    MenuPermissionSave,
     MenuPermissionUpdate,
 )
 from src.domain.services.repositories.entities.i_menu_permission_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.menu_permission_entity import MenuPerm
 from src.infrastructure.database.mappers.menu_permission_mapper import (
     map_to_menu_permission,
     map_to_list_menu_permission,
+    map_to_save_menu_permission_entity,
 )
 
 
 class MenuPermissionRepository(IMenuPermissionRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: MenuPermissionEntity) -> Union[MenuPermission, None]:
+    async def save(self, config: Config, params: MenuPermissionSave) -> Union[MenuPermission, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_menu_permission_entity(params)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_menu_permission(params)
+        await db.refresh(entity)
+        return map_to_menu_permission(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: MenuPermissionUpdate) -> Union[MenuPermission, None]:

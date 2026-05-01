@@ -9,10 +9,10 @@ from src.domain.models.entities.api_token.index import (
     ApiToken,
     ApiTokenDelete,
     ApiTokenRead,
+    ApiTokenSave,
     ApiTokenUpdate,
 )
 
-from src.infrastructure.database.entities.api_token_entity import ApiTokenEntity
 
 
 class IApiTokenRepository(ABC):
@@ -20,7 +20,7 @@ class IApiTokenRepository(ABC):
     def save(
         self,
         config: Config,
-        params: ApiTokenEntity,
+        params: ApiTokenSave,
     ) -> Union[ApiToken, None]:
         pass
 

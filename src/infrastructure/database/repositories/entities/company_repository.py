@@ -13,6 +13,7 @@ from src.domain.models.entities.company.index import (
     Company,
     CompanyDelete,
     CompanyRead,
+    CompanySave,
     CompanyUpdate,
 )
 from src.domain.services.repositories.entities.i_company_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.company_entity import CompanyEntity
 from src.infrastructure.database.mappers.company_mapper import (
     map_to_company,
     map_to_list_company,
+    map_to_save_company_entity,
 )
 
 
 class CompanyRepository(ICompanyRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: CompanyEntity) -> Union[Company, None]:
+    async def save(self, config: Config, params: CompanySave) -> Union[Company, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_company_entity(params)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_company(params)
+        await db.refresh(entity)
+        return map_to_company(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: CompanyUpdate) -> Union[Company, None]:

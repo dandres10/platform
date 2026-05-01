@@ -13,6 +13,7 @@ from src.domain.models.entities.permission.index import (
     Permission,
     PermissionDelete,
     PermissionRead,
+    PermissionSave,
     PermissionUpdate,
 )
 from src.domain.services.repositories.entities.i_permission_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.permission_entity import PermissionEnt
 from src.infrastructure.database.mappers.permission_mapper import (
     map_to_permission,
     map_to_list_permission,
+    map_to_save_permission_entity,
 )
 
 
 class PermissionRepository(IPermissionRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: PermissionEntity) -> Union[Permission, None]:
+    async def save(self, config: Config, params: PermissionSave) -> Union[Permission, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_permission_entity(params)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_permission(params)
+        await db.refresh(entity)
+        return map_to_permission(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: PermissionUpdate) -> Union[Permission, None]:

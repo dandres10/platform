@@ -12,9 +12,6 @@ from src.domain.models.entities.rol.index import Rol, RolSave
 from src.domain.services.repositories.entities.i_rol_repository import (
     IRolRepository,
 )
-from src.infrastructure.database.mappers.rol_mapper import (
-    map_to_save_rol_entity,
-)
 
 
 class RolSaveUseCase:
@@ -28,8 +25,7 @@ class RolSaveUseCase:
         config: Config,
         params: RolSave,
     ) -> Union[Rol, str, None]:
-        result = map_to_save_rol_entity(params)
-        result = await self.rol_repository.save(config=config, params=result)
+        result = await self.rol_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

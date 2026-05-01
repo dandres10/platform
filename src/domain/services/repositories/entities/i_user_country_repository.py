@@ -9,10 +9,10 @@ from src.domain.models.entities.user_country.index import (
     UserCountry,
     UserCountryDelete,
     UserCountryRead,
+    UserCountrySave,
     UserCountryUpdate,
 )
 
-from src.infrastructure.database.entities.user_country_entity import UserCountryEntity
 
 
 class IUserCountryRepository(ABC):
@@ -20,7 +20,7 @@ class IUserCountryRepository(ABC):
     def save(
         self,
         config: Config,
-        params: UserCountryEntity,
+        params: UserCountrySave,
     ) -> Union[UserCountry, None]:
         pass
 

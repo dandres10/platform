@@ -13,6 +13,7 @@ from src.domain.models.entities.menu.index import (
     Menu,
     MenuDelete,
     MenuRead,
+    MenuSave,
     MenuUpdate,
 )
 from src.domain.services.repositories.entities.i_menu_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.menu_entity import MenuEntity
 from src.infrastructure.database.mappers.menu_mapper import (
     map_to_menu,
     map_to_list_menu,
+    map_to_save_menu_entity,
 )
 
 
 class MenuRepository(IMenuRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: MenuEntity) -> Union[Menu, None]:
+    async def save(self, config: Config, params: MenuSave) -> Union[Menu, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_menu_entity(params)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_menu(params)
+        await db.refresh(entity)
+        return map_to_menu(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: MenuUpdate) -> Union[Menu, None]:

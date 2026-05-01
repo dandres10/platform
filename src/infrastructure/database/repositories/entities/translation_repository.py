@@ -13,6 +13,7 @@ from src.domain.models.entities.translation.index import (
     Translation,
     TranslationDelete,
     TranslationRead,
+    TranslationSave,
     TranslationUpdate,
 )
 from src.domain.services.repositories.entities.i_translation_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.translation_entity import TranslationE
 from src.infrastructure.database.mappers.translation_mapper import (
     map_to_translation,
     map_to_list_translation,
+    map_to_save_translation_entity,
 )
 
 
 class TranslationRepository(ITranslationRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: TranslationEntity) -> Union[Translation, None]:
+    async def save(self, config: Config, params: TranslationSave) -> Union[Translation, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_translation_entity(params)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_translation(params)
+        await db.refresh(entity)
+        return map_to_translation(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: TranslationUpdate) -> Union[Translation, None]:

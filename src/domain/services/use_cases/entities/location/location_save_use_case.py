@@ -12,9 +12,6 @@ from src.domain.models.entities.location.index import Location, LocationSave
 from src.domain.services.repositories.entities.i_location_repository import (
     ILocationRepository,
 )
-from src.infrastructure.database.mappers.location_mapper import (
-    map_to_save_location_entity,
-)
 
 
 class LocationSaveUseCase:
@@ -28,8 +25,7 @@ class LocationSaveUseCase:
         config: Config,
         params: LocationSave,
     ) -> Union[Location, str, None]:
-        result = map_to_save_location_entity(params)
-        result = await self.location_repository.save(config=config, params=result)
+        result = await self.location_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

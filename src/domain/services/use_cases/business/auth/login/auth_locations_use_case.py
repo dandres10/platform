@@ -12,7 +12,6 @@ from src.domain.models.business.auth.login.auth_login_response import (
     LocationLoginResponse,
 )
 from src.core.config import settings
-from src.infrastructure.database.mappers.currency_mapper import map_to_list_currency
 from src.infrastructure.database.repositories.business.auth_repository import (
     AuthRepository,
 )

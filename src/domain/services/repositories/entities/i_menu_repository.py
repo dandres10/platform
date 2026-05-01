@@ -9,10 +9,10 @@ from src.domain.models.entities.menu.index import (
     Menu,
     MenuDelete,
     MenuRead,
+    MenuSave,
     MenuUpdate,
 )
 
-from src.infrastructure.database.entities.menu_entity import MenuEntity
 
 
 class IMenuRepository(ABC):
@@ -20,7 +20,7 @@ class IMenuRepository(ABC):
     def save(
         self,
         config: Config,
-        params: MenuEntity,
+        params: MenuSave,
     ) -> Union[Menu, None]:
         pass
 

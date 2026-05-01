@@ -12,9 +12,6 @@ from src.domain.models.entities.language.index import Language, LanguageSave
 from src.domain.services.repositories.entities.i_language_repository import (
     ILanguageRepository,
 )
-from src.infrastructure.database.mappers.language_mapper import (
-    map_to_save_language_entity,
-)
 
 
 class LanguageSaveUseCase:
@@ -28,8 +25,7 @@ class LanguageSaveUseCase:
         config: Config,
         params: LanguageSave,
     ) -> Union[Language, str, None]:
-        result = map_to_save_language_entity(params)
-        result = await self.language_repository.save(config=config, params=result)
+        result = await self.language_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

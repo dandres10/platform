@@ -13,6 +13,7 @@ from src.domain.models.entities.user_country.index import (
     UserCountry,
     UserCountryDelete,
     UserCountryRead,
+    UserCountrySave,
     UserCountryUpdate,
 )
 from src.domain.services.repositories.entities.i_user_country_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.user_country_entity import UserCountry
 from src.infrastructure.database.mappers.user_country_mapper import (
     map_to_user_country,
     map_to_list_user_country,
+    map_to_save_user_country_entity,
 )
 
 
 class UserCountryRepository(IUserCountryRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: UserCountryEntity) -> Union[UserCountry, None]:
+    async def save(self, config: Config, params: UserCountrySave) -> Union[UserCountry, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_user_country_entity(params)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_user_country(params)
+        await db.refresh(entity)
+        return map_to_user_country(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: UserCountryUpdate) -> Union[UserCountry, None]:

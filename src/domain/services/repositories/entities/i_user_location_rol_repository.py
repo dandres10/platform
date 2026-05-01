@@ -9,10 +9,10 @@ from src.domain.models.entities.user_location_rol.index import (
     UserLocationRol,
     UserLocationRolDelete,
     UserLocationRolRead,
+    UserLocationRolSave,
     UserLocationRolUpdate,
 )
 
-from src.infrastructure.database.entities.user_location_rol_entity import UserLocationRolEntity
 
 
 class IUserLocationRolRepository(ABC):
@@ -20,7 +20,7 @@ class IUserLocationRolRepository(ABC):
     def save(
         self,
         config: Config,
-        params: UserLocationRolEntity,
+        params: UserLocationRolSave,
     ) -> Union[UserLocationRol, None]:
         pass
 

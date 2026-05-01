@@ -9,10 +9,10 @@ from src.domain.models.entities.geo_division_type.index import (
     GeoDivisionType,
     GeoDivisionTypeDelete,
     GeoDivisionTypeRead,
+    GeoDivisionTypeSave,
     GeoDivisionTypeUpdate,
 )
 
-from src.infrastructure.database.entities.geo_division_type_entity import GeoDivisionTypeEntity
 
 
 class IGeoDivisionTypeRepository(ABC):
@@ -20,7 +20,7 @@ class IGeoDivisionTypeRepository(ABC):
     def save(
         self,
         config: Config,
-        params: GeoDivisionTypeEntity,
+        params: GeoDivisionTypeSave,
     ) -> Union[GeoDivisionType, None]:
         pass
 

@@ -13,6 +13,7 @@ from src.domain.models.entities.location.index import (
     Location,
     LocationDelete,
     LocationRead,
+    LocationSave,
     LocationUpdate,
 )
 from src.domain.services.repositories.entities.i_location_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.location_entity import LocationEntity
 from src.infrastructure.database.mappers.location_mapper import (
     map_to_location,
     map_to_list_location,
+    map_to_save_location_entity,
 )
 
 
 class LocationRepository(ILocationRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: LocationEntity) -> Union[Location, None]:
+    async def save(self, config: Config, params: LocationSave) -> Union[Location, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_location_entity(params)
+        db.add(entity)
         await db.commit()
-        await db.refresh(params)
-        return map_to_location(params)
+        await db.refresh(entity)
+        return map_to_location(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: LocationUpdate) -> Union[Location, None]:

@@ -12,9 +12,6 @@ from src.domain.models.entities.rol_permission.index import RolPermission, RolPe
 from src.domain.services.repositories.entities.i_rol_permission_repository import (
     IRolPermissionRepository,
 )
-from src.infrastructure.database.mappers.rol_permission_mapper import (
-    map_to_save_rol_permission_entity,
-)
 
 
 class RolPermissionSaveUseCase:
@@ -28,8 +25,7 @@ class RolPermissionSaveUseCase:
         config: Config,
         params: RolPermissionSave,
     ) -> Union[RolPermission, str, None]:
-        result = map_to_save_rol_permission_entity(params)
-        result = await self.rol_permission_repository.save(config=config, params=result)
+        result = await self.rol_permission_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,
