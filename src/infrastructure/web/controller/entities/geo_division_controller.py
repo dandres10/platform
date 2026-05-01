@@ -24,16 +24,25 @@ from src.domain.services.use_cases.entities.geo_division.index import (
 from src.infrastructure.database.repositories.entities.geo_division_repository import (
     GeoDivisionRepository,
 )
-
+from src.infrastructure.database.repositories.entities.geo_division_type_repository import (
+    GeoDivisionTypeRepository,
+)
+from src.domain.services.use_cases.entities.geo_division_type.geo_division_type_read_use_case import (
+    GeoDivisionTypeReadUseCase,
+)
 
 
 geo_division_repository = GeoDivisionRepository()
+# SPEC-004 D6
+geo_division_type_repository = GeoDivisionTypeRepository()
 
 
 class GeoDivisionController:
     def __init__(self) -> None:
-        self.geo_division_save_use_case = GeoDivisionSaveUseCase(geo_division_repository)
-        self.geo_division_update_use_case = GeoDivisionUpdateUseCase(geo_division_repository)
+        # SPEC-004 D6
+        geo_division_type_read_uc = GeoDivisionTypeReadUseCase(geo_division_type_repository)
+        self.geo_division_save_use_case = GeoDivisionSaveUseCase(geo_division_repository, geo_division_type_read_uc)
+        self.geo_division_update_use_case = GeoDivisionUpdateUseCase(geo_division_repository, geo_division_type_read_uc)
         self.geo_division_list_use_case = GeoDivisionListUseCase(geo_division_repository)
         self.geo_division_delete_use_case = GeoDivisionDeleteUseCase(geo_division_repository)
         self.geo_division_read_use_case = GeoDivisionReadUseCase(geo_division_repository)

@@ -105,3 +105,6 @@ class KEYS_MESSAGES(str, Enum):
     AUTH_API_TOKEN_ROL_NOT_FOUND = "auth_api_token_rol_not_found"
     AUTH_API_TOKEN_ALREADY_EXISTS = "auth_api_token_already_exists"
     AUTH_LOGOUT_SUCCESS = "auth_logout_success"
+
+    # SPEC-004 D6 — geo_division phone_code only COUNTRY
+    PLT_GEO_PHONE_CODE_ONLY_COUNTRY = "plt_geo_phone_code_only_country"
