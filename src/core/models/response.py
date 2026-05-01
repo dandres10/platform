@@ -1,4 +1,4 @@
-from typing import Generic, List, TypeVar, Union
+from typing import Generic, List, Optional, TypeVar, Union
 
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -12,6 +12,8 @@ class Response(BaseModel, Generic[T]):
     message_type: MESSAGE_TYPE
     notification_type: NOTIFICATION_TYPE
     message: str
+    # SPEC-022
+    code: Optional[str] = None
     response: Union[T, List[Union[T, None]], None] = None
 
     def to_http_response(self, status_code: int = 200) -> "JSONResponse | Response[T]":
@@ -84,10 +86,12 @@ class Response(BaseModel, Generic[T]):
         response: Union[T, List[Union[T, None]], None] = None,
         message: str = "",
         message_type: str = MESSAGE_TYPE.STATIC.value,
+        code: Optional[str] = None,
     ) -> "Response[T]":
         return cls(
             response=response,
             message_type=message_type,
             notification_type=NOTIFICATION_TYPE.ERROR.value,
             message=message,
+            code=code,
         )

@@ -1,4 +1,5 @@
 from src.core.models.config import Config
+from src.core.models.filter import Pagination, FilterManager
 from src.core.classes.token import Token
 from src.core.enums.language import LANGUAGE
 from src.core.models.ws_request import WSRequest
@@ -32,6 +33,21 @@ async def get_config(
     config.token = token
     request.state.config = config
     config.token_code = credentials.credentials
+
+    # SPEC-022
+    raw_filters = request.query_params.getlist("filter")
+    filters = []
+    for raw in raw_filters:
+        parts = raw.split(",", 2)
+        if len(parts) == 3:
+            filters.append(FilterManager(field=parts[0], condition=parts[1], value=parts[2]))
+
+    config.pagination = Pagination(
+        skip=int(request.query_params.get("skip", 0)),
+        limit=int(request.query_params.get("limit", 50)),
+        all_data=request.query_params.get("all_data", "false").lower() == "true",
+        filters=filters if filters else None,
+    )
 
     async with async_session_db() as session:
         config.async_db = session

@@ -2,6 +2,7 @@ from typing import Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field, ConfigDict
 from src.core.models.access_token import AccessToken
+from src.core.models.filter import Pagination
 from src.core.enums.response_type import RESPONSE_TYPE
 
 
@@ -16,3 +17,5 @@ class Config(BaseModel):
     token: Optional[AccessToken] = Field(default=None)
     encoded_token: Optional[str] = None
     token_code: Optional[str] = None
+    # SPEC-022
+    pagination: Optional[Pagination] = Field(default=None)
