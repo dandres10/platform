@@ -108,3 +108,6 @@ class KEYS_MESSAGES(str, Enum):
 
     # SPEC-004 D6 — geo_division phone_code only COUNTRY
     PLT_GEO_PHONE_CODE_ONLY_COUNTRY = "plt_geo_phone_code_only_country"
+
+    # SPEC-030 T2
+    AUTH_LOGIN_INVALID_CREDENTIALS = "auth_login_invalid_credentials"
