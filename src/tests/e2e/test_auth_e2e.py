@@ -64,18 +64,20 @@ async def test_login_external_happy_path(client, seed_user):
 
 
 async def test_login_invalid_credentials(client, seed_user):
+    # SPEC-030 T8
     headers = {"language": "es", "timezone": "America/Bogota"}
     payload = {"email": seed_user["email"], "password": "WrongPassword"}
     r = await client.post("/v1/auth/login", json=payload, headers=headers)
-    assert r.status_code in (200, 401, 409)
-    if r.status_code == 200:
-        # Si retorna 200 con notification ERROR, también es válido
-        body = r.json()
-        assert body["notification_type"] in ("ERROR", "WARNING")
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["notification_type"] == "ERROR"
 
 
 async def test_login_nonexistent_user(client):
+    # SPEC-030 T8
     headers = {"language": "es", "timezone": "America/Bogota"}
     payload = {"email": f"noexist-{uuid4()}@test.com", "password": "Test1234!"}
     r = await client.post("/v1/auth/login", json=payload, headers=headers)
-    assert r.status_code in (200, 401, 409)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["notification_type"] == "ERROR"
