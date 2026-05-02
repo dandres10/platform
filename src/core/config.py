@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     app_environment: str = os.getenv("APP_ENVIRONMENT", "")
     app_port: int = int(os.getenv("APP_PORT", "8000"))
 
+    # SPEC-029 T1
+    rate_limit_enabled: bool = os.getenv("RATE_LIMIT_ENABLED", "True").lower() == "true"
+    rate_limit_business: str = os.getenv("RATE_LIMIT_BUSINESS", "30/minute")
+    rate_limit_entity: str = os.getenv("RATE_LIMIT_ENTITY", "60/minute")
+    rate_limit_read: str = os.getenv("RATE_LIMIT_READ", "120/minute")
+
     model_config = SettingsConfigDict(env_file=".env")
 
 
