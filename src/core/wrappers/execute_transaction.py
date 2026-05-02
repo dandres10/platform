@@ -123,7 +123,8 @@ def execute_transaction(layer, enabled=True):
                     "line": line_number,
                 }
 
-                error_json = json.dumps(error_data, indent=4, default=str)
+                # SPEC-028 T2
+                error_json = json.dumps(_redact_sensitive(error_data), indent=4, default=str)
                 logger.error("TRANSACTION_ERROR: %s", error_json)
 
                 # SPEC-009 T1
@@ -258,7 +259,11 @@ def execute_transaction_route(enabled=True):
                     "route_info": route_info,
                 }
 
-                logger.error("ROUTE_ERROR: %s", json.dumps(error_info, indent=4, default=str))
+                # SPEC-028 T2
+                logger.error(
+                    "ROUTE_ERROR: %s",
+                    json.dumps(_redact_sensitive(error_info), indent=4, default=str),
+                )
 
                 # SPEC-009 T1
                 if isinstance(e, BusinessException):
