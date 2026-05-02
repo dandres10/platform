@@ -55,25 +55,32 @@ class AuthValidateUserUseCase:
             ),
         )
 
-        if isinstance(result_users_list, str):
+        # SPEC-030 T1
+        if (
+            not result_users_list
+            or isinstance(result_users_list, str)
+            or not isinstance(result_users_list, list)
+            or len(result_users_list) != 1
+        ):
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
-                    key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value
+                    key=KEYS_MESSAGES.AUTH_LOGIN_INVALID_CREDENTIALS.value
                 ),
             )
 
-        [user] = result_users_list
+        user = result_users_list[0]
 
         check_password = self.password.check_password(
             password=params.password, hashed_password=user.password
         )
 
         if not check_password:
+            # SPEC-030 T1
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
-                    key=KEYS_MESSAGES.CORE_RECORD_NOT_FOUND_TO_DELETE.value
+                    key=KEYS_MESSAGES.AUTH_LOGIN_INVALID_CREDENTIALS.value
                 ),
             )
 
