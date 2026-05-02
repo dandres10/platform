@@ -9,7 +9,8 @@ class UserEntity(Base):
     __table_args__ = {"schema": settings.database_schema}
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, server_default=text('uuid_generate_v4()'))
-    platform_id = Column(UUID(as_uuid=True), ForeignKey('platform.id'), nullable=False)
+    # SPEC-027
+    platform_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.platform.id'), nullable=False)
     password = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
     identification = Column(String(30), nullable=False, unique=True)

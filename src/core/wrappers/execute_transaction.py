@@ -171,8 +171,12 @@ def execute_transaction_route(enabled=True):
             db = config.async_db if config is not None else None
 
             # SPEC-025
+            # SPEC-027: si get_config ya autobegan tx (validate_has_refresh_token),
+            # commitear esa tx primero para que db.begin() pueda abrir nueva tx limpia.
             async def _run_in_transaction():
                 if db is not None:
+                    if db.in_transaction():
+                        await db.commit()
                     async with db.begin():
                         return await func(*args, **kwargs)
                 return await func(*args, **kwargs)
