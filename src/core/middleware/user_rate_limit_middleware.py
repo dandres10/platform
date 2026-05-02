@@ -5,6 +5,7 @@ from limits import parse
 from limits.strategies import FixedWindowRateLimiter
 from limits.storage import MemoryStorage
 from src.core.classes.token import Token
+from src.core.config import settings
 
 # SPEC-020
 BUSINESS_PREFIXES = (
@@ -20,9 +21,10 @@ class UserRateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.storage = MemoryStorage()
         self.limiter = FixedWindowRateLimiter(self.storage)
-        self.business_rate = parse("30/minute")
-        self.entity_rate = parse("60/minute")
-        self.read_rate = parse("120/minute")
+        # SPEC-029 T2
+        self.business_rate = parse(settings.rate_limit_business)
+        self.entity_rate = parse(settings.rate_limit_entity)
+        self.read_rate = parse(settings.rate_limit_read)
 
     def _get_user_key(self, request: Request) -> str:
         authorization = request.headers.get("Authorization")
