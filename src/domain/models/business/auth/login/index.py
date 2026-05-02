@@ -6,10 +6,10 @@ from .auth_user_role_and_permissions import AuthUserRoleAndPermissions
 from .user_type_info import UserTypeInfo
 from .user_rol_info import UserRolInfo
 
+# SPEC-030 T6
 __all__ = [
     "AuthLoginRequest",
     "AuthLoginResponse",
-    "Security",
     "AuthInitialUserData",
     "AuthMenu",
     "AuthUserRoleAndPermissions",
