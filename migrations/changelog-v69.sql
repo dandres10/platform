@@ -6,8 +6,10 @@
 --RUN
 
 INSERT INTO translation (id, "key", language_code, translation, context, state, created_date, updated_date) VALUES
-(uuid_generate_v4(), 'auth_login_invalid_credentials', 'es', 'Credenciales inválidas', 'error', true, now(), now()),
-(uuid_generate_v4(), 'auth_login_invalid_credentials', 'en', 'Invalid credentials', 'error', true, now(), now());
+(uuid_generate_v4(), 'auth_login_invalid_credentials', 'es', 'Credenciales inválidas', 'backend', true, now(), now()),
+(uuid_generate_v4(), 'auth_login_invalid_credentials', 'en', 'Invalid credentials', 'backend', true, now(), now());
+
+--FIN RUN
 
 --ROLLBACK
 DELETE FROM translation WHERE "key" = 'auth_login_invalid_credentials';
