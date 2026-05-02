@@ -24,7 +24,8 @@ app = FastAPI(
 )
 
 # SPEC-020
-if settings.app_environment == "prod":
+# SPEC-029 T3
+if settings.rate_limit_enabled:
     app.add_middleware(UserRateLimitMiddleware)
 
 app.add_middleware(RedirectToDocsMiddleware)
