@@ -9,7 +9,7 @@ class PermissionEntity(Base):
     __table_args__ = {"schema": settings.database_schema}
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, server_default=text('uuid_generate_v4()'))
-    company_id = Column(UUID(as_uuid=True), ForeignKey('company.id'), nullable=True)
+    company_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.company.id'), nullable=True)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     state = Column(Boolean, nullable=False, server_default=text('true'))

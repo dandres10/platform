@@ -22,6 +22,11 @@ OTHER_COMPANY_ID = str(uuid4())
 
 _tenant_state.init(COMPANY_ID, USER_ID)
 
+# SPEC-003 T9: forzar has_track=True en tests para que execute_transaction
+# capture BusinessException y la traduzca a HTTPException 409.
+from src.core.config import settings as _settings
+_settings.has_track = True
+
 
 def _make_token(company_id: str, user_id: str, rol_code: str = None) -> AccessToken:
     effective_role = rol_code or _tenant_state.current_rol_code()

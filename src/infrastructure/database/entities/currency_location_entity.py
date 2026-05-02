@@ -9,8 +9,8 @@ class CurrencyLocationEntity(Base):
     __table_args__ = {"schema": settings.database_schema}
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, server_default=text('uuid_generate_v4()'))
-    currency_id = Column(UUID(as_uuid=True), ForeignKey('currency.id'), nullable=False)
-    location_id = Column(UUID(as_uuid=True), ForeignKey('location.id'), nullable=False)
+    currency_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.currency.id'), nullable=False)
+    location_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.location.id'), nullable=False)
     state = Column(Boolean, nullable=False, server_default=text('true'))
     created_date = Column(DateTime, nullable=False, server_default=text('now()'))
     updated_date = Column(DateTime, nullable=False, server_default=text('now()'), onupdate=text('now()'))

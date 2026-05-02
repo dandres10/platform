@@ -1,4 +1,5 @@
-from pydantic import UUID4, BaseModel, Field
+from pydantic import BaseModel, Field
+from uuid import UUID
 
 class GeoDivisionRead(BaseModel):
-    id: UUID4 = Field(...)
+    id: UUID = Field(...)

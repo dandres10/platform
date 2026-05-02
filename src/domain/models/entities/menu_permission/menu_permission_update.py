@@ -1,9 +1,10 @@
-from pydantic import BaseModel, Field, UUID4
+from pydantic import BaseModel, Field
+from uuid import UUID
 from typing import Optional
 from datetime import datetime
 
 class MenuPermissionUpdate(BaseModel):
-    id: UUID4 = Field(...)
-    menu_id: UUID4 = Field(...)
-    permission_id: UUID4 = Field(...)
+    id: UUID = Field(...)
+    menu_id: UUID = Field(...)
+    permission_id: UUID = Field(...)
     state: bool = Field(default=True)

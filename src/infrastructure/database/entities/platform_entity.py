@@ -9,9 +9,9 @@ class PlatformEntity(Base):
     __table_args__ = {"schema": settings.database_schema}
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, server_default=text('uuid_generate_v4()'))
-    language_id = Column(UUID(as_uuid=True), ForeignKey('language.id'), nullable=False)
-    location_id = Column(UUID(as_uuid=True), ForeignKey('location.id'), nullable=True)
-    currency_id = Column(UUID(as_uuid=True), ForeignKey('currency.id'), nullable=False)
+    language_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.language.id'), nullable=False)
+    location_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.location.id'), nullable=True)
+    currency_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.currency.id'), nullable=False)
     token_expiration_minutes = Column(Integer, nullable=False, server_default=text('60'))
     refresh_token_expiration_minutes = Column(Integer, nullable=False, server_default=text('62'))
     created_date = Column(DateTime, nullable=False, server_default=text('now()'))

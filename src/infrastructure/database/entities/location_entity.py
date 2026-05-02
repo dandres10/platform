@@ -9,9 +9,9 @@ class LocationEntity(Base):
     __table_args__ = {"schema": settings.database_schema}
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, server_default=text('uuid_generate_v4()'))
-    company_id = Column(UUID(as_uuid=True), ForeignKey('company.id'), nullable=True)
-    country_id = Column(UUID(as_uuid=True), ForeignKey('geo_division.id'), nullable=True)
-    city_id = Column(UUID(as_uuid=True), ForeignKey('geo_division.id'), nullable=True)
+    company_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.company.id'), nullable=True)
+    country_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.geo_division.id'), nullable=True)
+    city_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.geo_division.id'), nullable=True)
     name = Column(String(255), nullable=False)
     address = Column(Text, nullable=False)
     phone = Column(String(20), nullable=False)

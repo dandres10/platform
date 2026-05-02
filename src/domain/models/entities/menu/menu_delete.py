@@ -1,4 +1,5 @@
-from pydantic import UUID4, BaseModel, field_validator, Field
+from pydantic import BaseModel, field_validator, Field
+from uuid import UUID
 
 class MenuDelete(BaseModel):
-    id: UUID4 = Field(...)
+    id: UUID = Field(...)
