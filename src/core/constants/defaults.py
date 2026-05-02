@@ -1,0 +1,2 @@
+# SPEC-024
+DEFAULT_TIMEZONE = "America/Bogota"

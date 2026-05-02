@@ -15,7 +15,6 @@ class Config(BaseModel):
     request: Optional[Any] = None
     response_type: RESPONSE_TYPE = Field(default=RESPONSE_TYPE.DICT.value)
     token: Optional[AccessToken] = Field(default=None)
-    encoded_token: Optional[str] = None
     token_code: Optional[str] = None
     # SPEC-022
     pagination: Optional[Pagination] = Field(default=None)

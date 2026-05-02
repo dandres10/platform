@@ -6,7 +6,6 @@ from src.infrastructure.web.routes.route import Route
 from src.infrastructure.web.routes.route_business import RouteBusiness
 from src.core.middleware.cors_app import CorsAppConfigurator
 from src.core.middleware.redirect_to_docs import RedirectToDocsMiddleware
-from src.infrastructure.web.routes.route_websockets import RouteWebsockets
 from src.infrastructure.web.routes.route_mcp import RouteMcp, mcp_business
 from src.infrastructure.web.health_router import health_router
 
@@ -34,5 +33,4 @@ CorsAppConfigurator.setup_cors(app)
 app.include_router(health_router)
 RouteBusiness.set_routes(app)
 Route.set_routes(app)
-RouteWebsockets.set_routes(app)
 RouteMcp.set_routes(app)
