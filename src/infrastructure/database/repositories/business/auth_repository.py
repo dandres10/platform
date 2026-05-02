@@ -342,7 +342,8 @@ class AuthRepository(IAuthRepository):
 
         result = await db.execute(stmt)
         rol_tuple = result.first()
-        rol, *list = rol_tuple
+        # SPEC-030 T7
+        rol, *_ = rol_tuple
 
         return CreateApiTokenResponse(
             rol_id=params.rol_id, permissions=permissions, rol_code=rol.code
