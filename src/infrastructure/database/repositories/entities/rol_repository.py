@@ -34,7 +34,7 @@ class RolRepository(IRolRepository):
         db = config.async_db
         entity = map_to_save_rol_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_rol(entity)
 
@@ -53,7 +53,7 @@ class RolRepository(IRolRepository):
         for key, value in update_data.items():
             setattr(rol, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(rol)
         return map_to_rol(rol)
 
@@ -92,7 +92,7 @@ class RolRepository(IRolRepository):
             return None
 
         await db.delete(rol)
-        await db.commit()
+        await db.flush()
         return map_to_rol(rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

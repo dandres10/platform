@@ -36,7 +36,7 @@ class UserRepository(IUserRepository):
         entity = map_to_save_user_entity(params)
         entity.password = Password.hash_password(password=entity.password)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_user(entity)
 
@@ -55,7 +55,7 @@ class UserRepository(IUserRepository):
         for key, value in update_data.items():
             setattr(user, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
         return map_to_user(user)
 
@@ -94,7 +94,7 @@ class UserRepository(IUserRepository):
             return None
 
         await db.delete(user)
-        await db.commit()
+        await db.flush()
         return map_to_user(user)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

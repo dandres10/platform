@@ -34,7 +34,7 @@ class ApiTokenRepository(IApiTokenRepository):
         db = config.async_db
         entity = map_to_save_api_token_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_api_token(entity)
 
@@ -53,7 +53,7 @@ class ApiTokenRepository(IApiTokenRepository):
         for key, value in update_data.items():
             setattr(api_token, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(api_token)
         return map_to_api_token(api_token)
 
@@ -92,7 +92,7 @@ class ApiTokenRepository(IApiTokenRepository):
             return None
 
         await db.delete(api_token)
-        await db.commit()
+        await db.flush()
         return map_to_api_token(api_token)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

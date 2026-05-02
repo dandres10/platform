@@ -34,7 +34,7 @@ class MenuPermissionRepository(IMenuPermissionRepository):
         db = config.async_db
         entity = map_to_save_menu_permission_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_menu_permission(entity)
 
@@ -53,7 +53,7 @@ class MenuPermissionRepository(IMenuPermissionRepository):
         for key, value in update_data.items():
             setattr(menu_permission, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(menu_permission)
         return map_to_menu_permission(menu_permission)
 
@@ -92,7 +92,7 @@ class MenuPermissionRepository(IMenuPermissionRepository):
             return None
 
         await db.delete(menu_permission)
-        await db.commit()
+        await db.flush()
         return map_to_menu_permission(menu_permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

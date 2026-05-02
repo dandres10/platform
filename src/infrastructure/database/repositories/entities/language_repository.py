@@ -34,7 +34,7 @@ class LanguageRepository(ILanguageRepository):
         db = config.async_db
         entity = map_to_save_language_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_language(entity)
 
@@ -53,7 +53,7 @@ class LanguageRepository(ILanguageRepository):
         for key, value in update_data.items():
             setattr(language, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(language)
         return map_to_language(language)
 
@@ -92,7 +92,7 @@ class LanguageRepository(ILanguageRepository):
             return None
 
         await db.delete(language)
-        await db.commit()
+        await db.flush()
         return map_to_language(language)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

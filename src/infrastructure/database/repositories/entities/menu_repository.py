@@ -34,7 +34,7 @@ class MenuRepository(IMenuRepository):
         db = config.async_db
         entity = map_to_save_menu_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_menu(entity)
 
@@ -53,7 +53,7 @@ class MenuRepository(IMenuRepository):
         for key, value in update_data.items():
             setattr(menu, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(menu)
         return map_to_menu(menu)
 
@@ -92,7 +92,7 @@ class MenuRepository(IMenuRepository):
             return None
 
         await db.delete(menu)
-        await db.commit()
+        await db.flush()
         return map_to_menu(menu)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

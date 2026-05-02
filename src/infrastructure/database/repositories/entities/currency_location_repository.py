@@ -34,7 +34,7 @@ class CurrencyLocationRepository(ICurrencyLocationRepository):
         db = config.async_db
         entity = map_to_save_currency_location_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_currency_location(entity)
 
@@ -53,7 +53,7 @@ class CurrencyLocationRepository(ICurrencyLocationRepository):
         for key, value in update_data.items():
             setattr(currency_location, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(currency_location)
         return map_to_currency_location(currency_location)
 
@@ -92,7 +92,7 @@ class CurrencyLocationRepository(ICurrencyLocationRepository):
             return None
 
         await db.delete(currency_location)
-        await db.commit()
+        await db.flush()
         return map_to_currency_location(currency_location)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

@@ -34,7 +34,7 @@ class UserLocationRolRepository(IUserLocationRolRepository):
         db = config.async_db
         entity = map_to_save_user_location_rol_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_user_location_rol(entity)
 
@@ -53,7 +53,7 @@ class UserLocationRolRepository(IUserLocationRolRepository):
         for key, value in update_data.items():
             setattr(user_location_rol, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(user_location_rol)
         return map_to_user_location_rol(user_location_rol)
 
@@ -92,7 +92,7 @@ class UserLocationRolRepository(IUserLocationRolRepository):
             return None
 
         await db.delete(user_location_rol)
-        await db.commit()
+        await db.flush()
         return map_to_user_location_rol(user_location_rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
@@ -127,6 +127,6 @@ class UserLocationRolRepository(IUserLocationRolRepository):
             return None
 
         await db.delete(user_location_rol)
-        await db.commit()
+        await db.flush()
         return map_to_user_location_rol(user_location_rol)
         

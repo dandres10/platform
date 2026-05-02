@@ -34,7 +34,7 @@ class GeoDivisionTypeRepository(IGeoDivisionTypeRepository):
         db = config.async_db
         entity = map_to_save_geo_division_type_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_geo_division_type(entity)
 
@@ -53,7 +53,7 @@ class GeoDivisionTypeRepository(IGeoDivisionTypeRepository):
         for key, value in update_data.items():
             setattr(geo_division_type, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(geo_division_type)
         return map_to_geo_division_type(geo_division_type)
 
@@ -92,7 +92,7 @@ class GeoDivisionTypeRepository(IGeoDivisionTypeRepository):
             return None
 
         await db.delete(geo_division_type)
-        await db.commit()
+        await db.flush()
         return map_to_geo_division_type(geo_division_type)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

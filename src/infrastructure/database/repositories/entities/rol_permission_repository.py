@@ -34,7 +34,7 @@ class RolPermissionRepository(IRolPermissionRepository):
         db = config.async_db
         entity = map_to_save_rol_permission_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_rol_permission(entity)
 
@@ -53,7 +53,7 @@ class RolPermissionRepository(IRolPermissionRepository):
         for key, value in update_data.items():
             setattr(rol_permission, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(rol_permission)
         return map_to_rol_permission(rol_permission)
 
@@ -92,7 +92,7 @@ class RolPermissionRepository(IRolPermissionRepository):
             return None
 
         await db.delete(rol_permission)
-        await db.commit()
+        await db.flush()
         return map_to_rol_permission(rol_permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

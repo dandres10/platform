@@ -34,7 +34,7 @@ class CompanyRepository(ICompanyRepository):
         db = config.async_db
         entity = map_to_save_company_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_company(entity)
 
@@ -53,7 +53,7 @@ class CompanyRepository(ICompanyRepository):
         for key, value in update_data.items():
             setattr(company, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(company)
         return map_to_company(company)
 
@@ -92,7 +92,7 @@ class CompanyRepository(ICompanyRepository):
             return None
 
         await db.delete(company)
-        await db.commit()
+        await db.flush()
         return map_to_company(company)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

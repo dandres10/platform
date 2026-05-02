@@ -145,8 +145,8 @@ def string_to_json(text: str):
 
 def execute_transaction_route(enabled=True):
     # SPEC-023: `enabled` controla solo logging y traducción de errores;
-    # no afecta la transaccionalidad. Body parsing ocurre antes del try
-    # para evitar capturar errores de Pydantic dentro de logs de transacción.
+    # la transaccionalidad es siempre activa.
+    # SPEC-025: UoW request-level — async with db.begin() envuelve el UC.
     def decorator(func):
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -168,11 +168,20 @@ def execute_transaction_route(enabled=True):
                     json_body if json_body is not None else formatted_body
                 )
 
-            if not enabled:
+            db = config.async_db if config is not None else None
+
+            # SPEC-025
+            async def _run_in_transaction():
+                if db is not None:
+                    async with db.begin():
+                        return await func(*args, **kwargs)
                 return await func(*args, **kwargs)
 
+            if not enabled:
+                return await _run_in_transaction()
+
             try:
-                return await func(*args, **kwargs)
+                return await _run_in_transaction()
             except HTTPException:
                 # SPEC-009 T1
                 raise

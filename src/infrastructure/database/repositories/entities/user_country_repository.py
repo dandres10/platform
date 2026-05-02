@@ -34,7 +34,7 @@ class UserCountryRepository(IUserCountryRepository):
         db = config.async_db
         entity = map_to_save_user_country_entity(params)
         db.add(entity)
-        await db.commit()
+        await db.flush()
         await db.refresh(entity)
         return map_to_user_country(entity)
 
@@ -53,7 +53,7 @@ class UserCountryRepository(IUserCountryRepository):
         for key, value in update_data.items():
             setattr(user_country, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(user_country)
         return map_to_user_country(user_country)
 
@@ -92,7 +92,7 @@ class UserCountryRepository(IUserCountryRepository):
             return None
 
         await db.delete(user_country)
-        await db.commit()
+        await db.flush()
         return map_to_user_country(user_country)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
@@ -144,5 +144,5 @@ class UserCountryRepository(IUserCountryRepository):
             return None
 
         await db.delete(user_country)
-        await db.commit()
+        await db.flush()
         return map_to_user_country(user_country)
