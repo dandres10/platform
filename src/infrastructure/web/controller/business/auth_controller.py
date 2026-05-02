@@ -72,7 +72,7 @@ from src.domain.services.use_cases.business.auth.users_internal import (
 from src.domain.services.use_cases.business.auth.users_external import (
     UsersExternalUseCase,
 )
-from src.domain.models.business.auth.create_company.index import (
+from src.domain.models.business.auth.create_company import (
     CreateCompanyRequest,
     CreateCompanyResponse,
 )

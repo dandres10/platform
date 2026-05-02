@@ -10,7 +10,7 @@ from src.core.wrappers.execute_transaction import execute_transaction
 from src.core.classes.async_message import Message
 from src.core.models.message import MessageCoreEntity
 
-from src.domain.models.business.auth.create_company.index import CreateCompanyRequest
+from src.domain.models.business.auth.create_company import CreateCompanyRequest
 from src.domain.models.entities.company.index import CompanySave
 from src.domain.models.entities.location.index import LocationSave
 from src.domain.models.entities.geo_division.index import GeoDivisionRead
@@ -18,7 +18,7 @@ from src.domain.models.entities.language.index import LanguageRead
 from src.domain.models.entities.currency.index import CurrencyRead
 from src.domain.models.entities.currency_location.index import CurrencyLocationSave
 from src.domain.models.entities.rol.index import RolRead
-from src.domain.models.business.auth.create_user_internal.index import (
+from src.domain.models.business.auth.create_user_internal import (
     CreateUserInternalRequest,
     LocationRolItem
 )
