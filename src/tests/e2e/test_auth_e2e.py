@@ -1,0 +1,81 @@
+# SPEC-003 T10 / SPEC-002 Auth lifecycle
+import pytest
+import pytest_asyncio
+from uuid import uuid4
+from sqlalchemy import text
+
+
+@pytest_asyncio.fixture(scope="function")
+async def seed_user(client):
+    # Crea user externo de test para login + cleanup post-test
+    from src.infrastructure.database.config.async_config_db import async_session_db
+    from src.core.config import settings
+    from src.core.classes.password import Password
+    s = settings.database_schema
+
+    user_id = uuid4()
+    platform_id = uuid4()
+    ulr_id = uuid4()
+    email = f"e2e-{str(uuid4())[:8]}@test.com"
+    password = "Test1234!"
+
+    async with async_session_db() as session:
+        language = (await session.execute(text(f"SELECT id FROM {s}.\"language\" LIMIT 1"))).scalar()
+        currency = (await session.execute(text(f"SELECT id FROM {s}.\"currency\" LIMIT 1"))).scalar()
+        rol_user = (await session.execute(text(f"SELECT id FROM {s}.\"rol\" WHERE code='USER' LIMIT 1"))).scalar()
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."platform" (id, language_id, location_id, currency_id, token_expiration_minutes, refresh_token_expiration_minutes)
+            VALUES (:pid, :lang, NULL, :curr, 60, 1440)
+        """), {"pid": platform_id, "lang": language, "curr": currency})
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."user" (id, platform_id, email, password, identification, first_name, last_name, phone, refresh_token, state)
+            VALUES (:uid, :pid, :email, :pwd, :ident, 'E2E', 'Test', '+57 123', '', true)
+        """), {
+            "uid": user_id, "pid": platform_id, "email": email,
+            "pwd": Password.hash_password(password=password),
+            "ident": f"E2E-{str(uuid4())[:8]}",
+        })
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."user_location_rol" (id, user_id, location_id, rol_id, state)
+            VALUES (:ulr, :uid, NULL, :rol, true)
+        """), {"ulr": ulr_id, "uid": user_id, "rol": rol_user})
+        await session.commit()
+
+    yield {"email": email, "password": password, "user_id": str(user_id)}
+
+    async with async_session_db() as session:
+        await session.execute(text(f'DELETE FROM {s}."user_location_rol" WHERE user_id = :uid'), {"uid": user_id})
+        await session.execute(text(f'DELETE FROM {s}."user" WHERE id = :uid'), {"uid": user_id})
+        await session.execute(text(f'DELETE FROM {s}."platform" WHERE id = :pid'), {"pid": platform_id})
+        await session.commit()
+
+
+async def test_login_external_happy_path(client, seed_user):
+    headers = {"language": "es", "timezone": "America/Bogota"}
+    payload = {"email": seed_user["email"], "password": seed_user["password"]}
+    r = await client.post("/v1/auth/login", json=payload, headers=headers)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["notification_type"] == "SUCCESS"
+    assert body["response"]["token"]
+
+
+async def test_login_invalid_credentials(client, seed_user):
+    headers = {"language": "es", "timezone": "America/Bogota"}
+    payload = {"email": seed_user["email"], "password": "WrongPassword"}
+    r = await client.post("/v1/auth/login", json=payload, headers=headers)
+    assert r.status_code in (200, 401, 409)
+    if r.status_code == 200:
+        # Si retorna 200 con notification ERROR, también es válido
+        body = r.json()
+        assert body["notification_type"] in ("ERROR", "WARNING")
+
+
+async def test_login_nonexistent_user(client):
+    headers = {"language": "es", "timezone": "America/Bogota"}
+    payload = {"email": f"noexist-{uuid4()}@test.com", "password": "Test1234!"}
+    r = await client.post("/v1/auth/login", json=payload, headers=headers)
+    assert r.status_code in (200, 401, 409)
