@@ -16,6 +16,35 @@ logger = logging.getLogger(__name__)
 _CONSTRAINT_TO_CODE: dict[str, str] = {}
 
 
+# SPEC-028 T1
+_SENSITIVE_KEYS: frozenset[str] = frozenset(
+    {
+        "password",
+        "authorization",
+        "token",
+        "refresh_token",
+        "secret_key",
+        "jwt_secret_key",
+        "access_token",
+        "api_token",
+    }
+)
+
+
+# SPEC-028 T1
+def _redact_sensitive(payload, sensitive_keys: frozenset[str] = _SENSITIVE_KEYS):
+    if isinstance(payload, dict):
+        return {
+            k: ("<redacted>" if k.lower() in sensitive_keys else _redact_sensitive(v, sensitive_keys))
+            for k, v in payload.items()
+        }
+    if isinstance(payload, list):
+        return [_redact_sensitive(item, sensitive_keys) for item in payload]
+    if isinstance(payload, tuple):
+        return tuple(_redact_sensitive(item, sensitive_keys) for item in payload)
+    return payload
+
+
 def _translate_integrity_error(exc: Exception) -> tuple[int, dict]:
     """Traduce IntegrityError a respuesta segura sin filtrar SQL ni constraint names."""
     raw = str(getattr(exc, "orig", exc) or exc)
