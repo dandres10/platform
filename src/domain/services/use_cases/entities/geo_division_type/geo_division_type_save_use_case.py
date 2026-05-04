@@ -12,9 +12,6 @@ from src.domain.models.entities.geo_division_type.index import GeoDivisionType, 
 from src.domain.services.repositories.entities.i_geo_division_type_repository import (
     IGeoDivisionTypeRepository,
 )
-from src.infrastructure.database.mappers.geo_division_type_mapper import (
-    map_to_save_geo_division_type_entity,
-)
 
 
 class GeoDivisionTypeSaveUseCase:
@@ -28,8 +25,7 @@ class GeoDivisionTypeSaveUseCase:
         config: Config,
         params: GeoDivisionTypeSave,
     ) -> Union[GeoDivisionType, str, None]:
-        result = map_to_save_geo_division_type_entity(params)
-        result = await self.geo_division_type_repository.save(config=config, params=result)
+        result = await self.geo_division_type_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

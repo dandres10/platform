@@ -6,9 +6,6 @@ from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_login_response import CurrencyLoginResponse
 from src.infrastructure.database.repositories.business.auth_repository import AuthRepository
-from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
-    map_to_currecy_login_response,
-)
 
 
 class AuthCurrenciesExternalUseCase:
@@ -29,12 +26,9 @@ class AuthCurrenciesExternalUseCase:
     ) -> Union[List[CurrencyLoginResponse], str]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
-        currencies = await self.auth_repository.all_currencies(config=config)
+        result = await self.auth_repository.all_currencies(config=config)
 
-        if not currencies:
+        if not result:
             return []  # Retornar lista vacía, no error
 
-        return [
-            map_to_currecy_login_response(currency_entity=currency)
-            for currency in currencies
-        ]
+        return result

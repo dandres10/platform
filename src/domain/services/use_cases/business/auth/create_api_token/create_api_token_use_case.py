@@ -74,7 +74,15 @@ class CreateApiTokenUseCase:
         )
 
         if isinstance(rol_read, str):
-            return "El rol no existe"
+            return await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.AUTH_API_TOKEN_ROL_NOT_FOUND.value
+                ),
+            )
+
+        # SPEC-007
+        await self.auth_repository.acquire_api_token_rol_lock(config=config, rol_id=params.rol_id)
 
         api_token_list: List[ApiToken] | str = (
             await self.api_token_list_use_case.execute(
@@ -93,7 +101,12 @@ class CreateApiTokenUseCase:
         )
 
         if not isinstance(api_token_list, str):
-            return "El rol ya tiene un token api"
+            return await self.message.get_message(
+                config=config,
+                message=MessageCoreEntity(
+                    key=KEYS_MESSAGES.AUTH_API_TOKEN_ALREADY_EXISTS.value
+                ),
+            )
 
         result: CreateApiTokenResponse | None = (
             await self.auth_repository.create_api_token(config=config, params=params)

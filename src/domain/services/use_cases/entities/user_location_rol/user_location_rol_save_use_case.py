@@ -12,9 +12,6 @@ from src.domain.models.entities.user_location_rol.index import UserLocationRol, 
 from src.domain.services.repositories.entities.i_user_location_rol_repository import (
     IUserLocationRolRepository,
 )
-from src.infrastructure.database.mappers.user_location_rol_mapper import (
-    map_to_save_user_location_rol_entity,
-)
 
 
 class UserLocationRolSaveUseCase:
@@ -28,8 +25,7 @@ class UserLocationRolSaveUseCase:
         config: Config,
         params: UserLocationRolSave,
     ) -> Union[UserLocationRol, str, None]:
-        result = map_to_save_user_location_rol_entity(params)
-        result = await self.user_location_rol_repository.save(config=config, params=result)
+        result = await self.user_location_rol_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

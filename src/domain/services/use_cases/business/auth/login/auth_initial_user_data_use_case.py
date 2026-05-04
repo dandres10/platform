@@ -6,13 +6,13 @@ from src.core.models.config import Config
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_initial_user_data import AuthInitialUserData
-from src.infrastructure.database.entities.company_entity import CompanyEntity
-from src.infrastructure.database.entities.geo_division_entity import GeoDivisionEntity
-from src.infrastructure.database.entities.currency_entity import CurrencyEntity
-from src.infrastructure.database.entities.language_entity import LanguageEntity
-from src.infrastructure.database.entities.location_entity import LocationEntity
-from src.infrastructure.database.entities.platform_entity import PlatformEntity
-from src.infrastructure.database.entities.user_entity import UserEntity
+from src.domain.models.entities.company.company import Company
+from src.domain.models.entities.currency.currency import Currency
+from src.domain.models.entities.geo_division.geo_division import GeoDivision
+from src.domain.models.entities.language.language import Language
+from src.domain.models.entities.location.location import Location
+from src.domain.models.entities.platform.platform import Platform
+from src.domain.models.entities.user.user import User
 from src.infrastructure.database.repositories.business.auth_repository import (
     AuthRepository,
 )
@@ -32,24 +32,12 @@ class AuthInitialUserDataUseCase:
         self,
         config: Config,
         params: AuthInitialUserData,
-    ) -> Union[
-        Tuple[
-            PlatformEntity,
-            UserEntity,
-            LanguageEntity,
-            LocationEntity,
-            CurrencyEntity,
-            GeoDivisionEntity,
-            CompanyEntity,
-        ],
-        str,
-    ]:
+    ) -> Union[Tuple[Platform, User, Language, Location, Currency, GeoDivision, Company], str]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
         result = await self.auth_repository.initial_user_data(config=config, params=params)
 
         if not result:
-            print("no se encontro informacion relacionada")
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(

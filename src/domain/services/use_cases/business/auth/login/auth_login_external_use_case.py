@@ -6,8 +6,13 @@ from src.core.models.access_token import AccessToken
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.domain.models.business.auth.login.auth_login_response import (
+    CountryLoginResponse,
+    CurrencyLoginResponse,
+    LanguageLoginResponse,
     PlatformConfiguration,
+    PlatformLoginResponse,
     PlatformVariations,
+    UserLoginResponse,
 )
 from src.domain.models.business.auth.login.index import (
     AuthLoginRequest,
@@ -34,15 +39,6 @@ from src.domain.services.use_cases.entities.user.user_update_use_case import (
 )
 from src.infrastructure.database.repositories.business.auth_repository import (
     AuthRepository,
-)
-from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
-    map_to_country_login_response,
-    map_to_currecy_login_response,
-    map_to_language_login_response,
-    map_to_permission_response,
-    map_to_platform_login_response,
-    map_to_rol_login_response,
-    map_to_user_login_response,
 )
 from src.core.config import settings
 from src.core.classes.token import Token
@@ -93,7 +89,7 @@ class AuthLoginExternalUseCase:
         if isinstance(initial_data, str):
             return initial_data
 
-        platform_entity, user_entity, language_entity, currency_entity = initial_data
+        platform, user, language, currency = initial_data
 
         # 2. Obtener rol USER y permisos
         rol_and_permissions = await self.auth_external_rol_and_permissions_use_case.execute(
@@ -123,18 +119,18 @@ class AuthLoginExternalUseCase:
 
         # 6. Obtener country del usuario desde user_country (puede ser None)
         country_entity = await self.auth_repository.user_country(
-            config=config, user_id=user_entity.id
+            config=config, user_id=user.id
         )
 
         # 8. Generar tokens
         access_token = AccessToken(
             rol_id=str(rol_entity.id),
             rol_code=str(rol_entity.code),
-            user_id=str(user_entity.id),
+            user_id=str(user.id),
             location_id=None,  # Usuario externo no tiene ubicación
-            currency_id=str(currency_entity.id),
+            currency_id=str(currency.id),
             company_id=None,   # Usuario externo no tiene compañía
-            token_expiration_minutes=platform_entity.token_expiration_minutes,
+            token_expiration_minutes=platform.token_expiration_minutes,
             permissions=[permission.name for permission in permissions],
         )
 
@@ -145,34 +141,71 @@ class AuthLoginExternalUseCase:
         user_update = await self.user_update_use_case.execute(
             config=config,
             params=UserUpdate(
-                id=user_entity.id,
-                platform_id=user_entity.platform_id,
-                password=user_entity.password,
-                email=user_entity.email,
-                identification=user_entity.identification,
-                first_name=user_entity.first_name,
-                last_name=user_entity.last_name,
-                phone=user_entity.phone,
+                id=user.id,
+                platform_id=user.platform_id,
+                password=user.password,
+                email=user.email,
+                identification=user.identification,
+                first_name=user.first_name,
+                last_name=user.last_name,
+                phone=user.phone,
                 refresh_token=refresh_token,
-                state=user_entity.state,
+                state=user.state,
             ),
         )
 
         if isinstance(user_update, str):
             return user_update
 
-        # 10. Construir respuesta
+        # 10. SPEC-019: response composition from domain DTOs
+        country_response = (
+            CountryLoginResponse(
+                id=country_entity.id,
+                name=country_entity.name,
+                code=country_entity.code,
+                phone_code=country_entity.phone_code,
+                state=country_entity.state,
+            )
+            if country_entity
+            else None
+        )
+
         result = AuthLoginResponse(
             platform_configuration=PlatformConfiguration(
-                user=map_to_user_login_response(user_entity=user_entity),
-                currency=map_to_currecy_login_response(currency_entity=currency_entity),
+                user=UserLoginResponse(
+                    id=user.id,
+                    email=user.email,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                    phone=user.phone,
+                    state=user.state,
+                ),
+                currency=CurrencyLoginResponse(
+                    id=currency.id,
+                    name=currency.name,
+                    code=currency.code,
+                    symbol=currency.symbol,
+                    state=currency.state,
+                ),
                 location=None,  # Usuario externo no tiene ubicación
-                language=map_to_language_login_response(language_entity=language_entity),
-                platform=map_to_platform_login_response(platform_entity=platform_entity),
-                country=map_to_country_login_response(country_entity=country_entity) if country_entity else None,
+                language=LanguageLoginResponse(
+                    id=language.id,
+                    name=language.name,
+                    code=language.code,
+                    native_name=language.native_name,
+                    state=language.state,
+                ),
+                platform=PlatformLoginResponse(
+                    id=platform.id,
+                    language_id=platform.language_id,
+                    location_id=platform.location_id,
+                    token_expiration_minutes=platform.token_expiration_minutes,
+                    currency_id=platform.currency_id,
+                ),
+                country=country_response,
                 company=None,   # Usuario externo no tiene compañía
-                rol=map_to_rol_login_response(rol_entity=rol_entity),
-                permissions=[map_to_permission_response(p) for p in permissions],
+                rol=rol_entity,
+                permissions=permissions,
                 menu=auth_menu,
             ),
             platform_variations=PlatformVariations(

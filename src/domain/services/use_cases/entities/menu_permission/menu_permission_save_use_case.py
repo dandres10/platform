@@ -12,9 +12,6 @@ from src.domain.models.entities.menu_permission.index import MenuPermission, Men
 from src.domain.services.repositories.entities.i_menu_permission_repository import (
     IMenuPermissionRepository,
 )
-from src.infrastructure.database.mappers.menu_permission_mapper import (
-    map_to_save_menu_permission_entity,
-)
 
 
 class MenuPermissionSaveUseCase:
@@ -28,8 +25,7 @@ class MenuPermissionSaveUseCase:
         config: Config,
         params: MenuPermissionSave,
     ) -> Union[MenuPermission, str, None]:
-        result = map_to_save_menu_permission_entity(params)
-        result = await self.menu_permission_repository.save(config=config, params=result)
+        result = await self.menu_permission_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

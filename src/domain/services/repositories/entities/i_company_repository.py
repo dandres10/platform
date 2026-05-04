@@ -9,10 +9,10 @@ from src.domain.models.entities.company.index import (
     Company,
     CompanyDelete,
     CompanyRead,
+    CompanySave,
     CompanyUpdate,
 )
 
-from src.infrastructure.database.entities.company_entity import CompanyEntity
 
 
 class ICompanyRepository(ABC):
@@ -20,7 +20,7 @@ class ICompanyRepository(ABC):
     def save(
         self,
         config: Config,
-        params: CompanyEntity,
+        params: CompanySave,
     ) -> Union[Company, None]:
         pass
 

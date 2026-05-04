@@ -14,45 +14,29 @@ from src.domain.models.business.geography.index import (
 from src.infrastructure.database.repositories.business.geography_repository import (
     GeographyRepository,
 )
-from src.infrastructure.database.repositories.business.mappers.geography.geography_mapper import (
-    map_to_geo_division_type_by_country_response,
-)
+
+
+geography_repository = GeographyRepository()
 
 
 class TypesByCountryUseCase:
+    # SPEC-010 T5
     def __init__(self):
-        self.geography_repository = GeographyRepository()
+        self.geography_repository = geography_repository
         self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
         self, config: Config, params: TypesByCountryRequest
     ) -> Union[List[GeoDivisionTypeByCountryResponse], str]:
-        rows = await self.geography_repository.get_types_by_country(
+        result = await self.geography_repository.get_types_by_country(
             config=config, country_id=params.country_id
         )
-        if not rows:
+        if not result:
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(
                     key=KEYS_MESSAGES.CORE_NO_RESULTS_FOUND.value
                 ),
-            )
-        
-        from src.infrastructure.database.entities.geo_division_type_entity import GeoDivisionTypeEntity
-        
-        result = []
-        for row in rows:
-            type_entity = GeoDivisionTypeEntity()
-            type_entity.id = row.id
-            type_entity.name = row.name
-            type_entity.label = row.label
-            
-            result.append(
-                map_to_geo_division_type_by_country_response(
-                    type_entity=type_entity,
-                    level=row.level,
-                    count=row.count,
-                )
             )
         return result

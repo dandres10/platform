@@ -9,10 +9,10 @@ from src.domain.models.entities.rol.index import (
     Rol,
     RolDelete,
     RolRead,
+    RolSave,
     RolUpdate,
 )
 
-from src.infrastructure.database.entities.rol_entity import RolEntity
 
 
 class IRolRepository(ABC):
@@ -20,7 +20,7 @@ class IRolRepository(ABC):
     def save(
         self,
         config: Config,
-        params: RolEntity,
+        params: RolSave,
     ) -> Union[Rol, None]:
         pass
 

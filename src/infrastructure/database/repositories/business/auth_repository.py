@@ -1,8 +1,10 @@
 from typing import Any, List, Optional, Tuple, Union
 from uuid import UUID
+import hashlib
 from src.core.config import settings
 from src.core.enums.layer import LAYER
 from sqlalchemy.future import select
+from sqlalchemy import text
 from src.core.models.config import Config
 from src.core.models.filter import Pagination
 from src.core.wrappers.execute_transaction import execute_transaction
@@ -32,6 +34,12 @@ from src.domain.models.business.auth.login.companies_by_user import CompaniesByU
 from src.domain.models.business.auth.login.menu import Menu
 from src.domain.models.business.auth.login.user_rol_info import UserRolInfo
 from src.domain.models.entities.company.company import Company
+from src.domain.models.entities.currency.currency import Currency
+from src.domain.models.entities.geo_division.geo_division import GeoDivision
+from src.domain.models.entities.language.language import Language
+from src.domain.models.entities.location.location import Location
+from src.domain.models.entities.platform.platform import Platform
+from src.domain.models.entities.user.user import User
 from src.domain.services.repositories.business.i_auth_repository import IAuthRepository
 from src.infrastructure.database.entities.company_entity import CompanyEntity
 from src.infrastructure.database.entities.geo_division_entity import GeoDivisionEntity
@@ -55,9 +63,28 @@ from src.infrastructure.database.entities.user_entity import UserEntity
 from src.infrastructure.database.entities.user_location_rol_entity import (
     UserLocationRolEntity,
 )
-from src.infrastructure.database.mappers.company_mapper import map_to_list_company
+from src.infrastructure.database.mappers.company_mapper import map_to_company, map_to_list_company
+from src.infrastructure.database.mappers.currency_mapper import map_to_currency
+from src.infrastructure.database.mappers.geo_division_mapper import map_to_geo_division
+from src.infrastructure.database.mappers.language_mapper import map_to_language
+from src.infrastructure.database.mappers.location_mapper import map_to_location
+from src.infrastructure.database.mappers.platform_mapper import map_to_platform
+from src.infrastructure.database.mappers.user_mapper import map_to_user
+from src.domain.models.business.auth.login.auth_login_response import (
+    CurrencyLoginResponse,
+    LocationLoginResponse,
+    MenuLoginResponse,
+    PermissionLoginResponse,
+    RolLoginResponse,
+)
+from src.domain.models.entities.menu_permission.menu_permission import MenuPermission
 from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
     map_to_company_login_response,
+    map_to_currecy_login_response,
+    map_to_location_login_response,
+    map_to_menu_response,
+    map_to_permission_response,
+    map_to_rol_login_response,
 )
 from src.infrastructure.database.repositories.business.mappers.auth.users_internal import (
     map_to_user_by_location_item,
@@ -68,20 +95,38 @@ from src.infrastructure.database.repositories.business.mappers.auth.users_extern
 
 
 class AuthRepository(IAuthRepository):
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def acquire_company_nit_lock(self, config: Config, nit: str) -> None:
+        """SPEC-007: lock por NIT para serializar create_company concurrente."""
+        db = config.async_db
+        lock_key = int(hashlib.md5(f"company:nit:{nit}".encode()).hexdigest(), 16) % (2**31 - 1)
+        await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def acquire_user_email_lock(self, config: Config, email: str) -> None:
+        """SPEC-007: lock por email para serializar creación de usuarios concurrente."""
+        db = config.async_db
+        lock_key = int(hashlib.md5(f"user:email:{email}".encode()).hexdigest(), 16) % (2**31 - 1)
+        await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def acquire_api_token_rol_lock(self, config: Config, rol_id) -> None:
+        """SPEC-007: lock por rol_id para serializar create_api_token concurrente."""
+        db = config.async_db
+        lock_key = int(hashlib.md5(f"api_token:rol:{rol_id}".encode()).hexdigest(), 16) % (2**31 - 1)
+        await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+
+    @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
+    async def acquire_location_admin_lock(self, config: Config, location_id) -> None:
+        """SPEC-007: lock por location_id para serializar update/delete del último admin."""
+        db = config.async_db
+        lock_key = int(hashlib.md5(f"location:admin:{location_id}".encode()).hexdigest(), 16) % (2**31 - 1)
+        await db.execute(text("SELECT pg_advisory_xact_lock(:key)"), {"key": lock_key})
+
     async def initial_user_data(
         self, config: Config, params: AuthInitialUserData
-    ) -> Union[
-        Tuple[
-            PlatformEntity,
-            UserEntity,
-            LanguageEntity,
-            LocationEntity,
-            CurrencyEntity,
-            GeoDivisionEntity,
-            CompanyEntity,
-        ],
-        None,
-    ]:
+    ) -> Optional[Tuple[Platform, User, Language, Location, Currency, GeoDivision, Company]]:
         db = config.async_db
         stmt = (
             select(
@@ -104,25 +149,26 @@ class AuthRepository(IAuthRepository):
         )
 
         result = await db.execute(stmt)
-        results = result.first()
+        row = result.first()
+        if not row:
+            return None
 
-        return results
+        # SPEC-015 T7
+        platform_e, user_e, language_e, location_e, currency_e, geo_e, company_e = row
+        return (
+            map_to_platform(platform_entity=platform_e),
+            map_to_user(user_entity=user_e),
+            map_to_language(language_entity=language_e),
+            map_to_location(location_entity=location_e),
+            map_to_currency(currency_entity=currency_e),
+            map_to_geo_division(entity=geo_e),
+            map_to_company(company_entity=company_e),
+        )
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def user_role_and_permissions(
         self, config: Config, params: AuthUserRoleAndPermissions
-    ) -> Union[
-        List[
-            Tuple[
-                UserLocationRolEntity,
-                UserEntity,
-                RolEntity,
-                RolPermissionEntity,
-                PermissionEntity,
-            ]
-        ],
-        None,
-    ]:
+    ) -> Optional[Tuple[List[PermissionLoginResponse], RolLoginResponse]]:
         db = config.async_db
         stmt = (
             select(
@@ -157,18 +203,22 @@ class AuthRepository(IAuthRepository):
         result = await db.execute(stmt)
         results = result.all()
 
-        return results
+        if not results:
+            return None
+
+        # SPEC-015 T3
+        permissions = [
+            map_to_permission_response(permission_entity=row[4]) for row in results
+        ]
+        rol = map_to_rol_login_response(rol_entity=results[0][2])
+        return (permissions, rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def menu(self, config: Config, params: Menu) -> Union[
-        List[Tuple[MenuPermissionEntity, MenuEntity]],
-        None,
-    ]:
+    async def menu(
+        self, config: Config, params: Menu
+    ) -> Optional[Tuple[List[MenuPermission], List[MenuLoginResponse]]]:
         """
-        Obtiene menús para usuarios internos.
-        
-        IMPORTANTE: Solo retorna menús con type='INTERNAL' por seguridad.
-        Los menús EXTERNAL son exclusivos para usuarios externos.
+        Obtiene menús para usuarios internos. Solo type='INTERNAL'.
         """
         db = config.async_db
         stmt = (
@@ -177,22 +227,37 @@ class AuthRepository(IAuthRepository):
                 MenuPermissionEntity, MenuPermissionEntity.menu_id == MenuEntity.id
             )
             .filter(MenuEntity.company_id == params.company)
-            .filter(MenuEntity.type == "INTERNAL")  # Seguridad: solo menús internos
+            .filter(MenuEntity.type == "INTERNAL")
             .filter(MenuEntity.state == True)
         )
 
         result = await db.execute(stmt)
-        results = result.all()
+        rows = result.all()
 
-        return results
+        if not rows:
+            return None
+
+        # SPEC-015 T5
+        menu_permissions: List[MenuPermission] = []
+        menus_by_id: dict = {}
+        for menu_permission_entity, menu_entity in rows:
+            menu_permissions.append(
+                MenuPermission(
+                    id=menu_permission_entity.id,
+                    menu_id=menu_permission_entity.menu_id,
+                    permission_id=menu_permission_entity.permission_id,
+                    state=menu_permission_entity.state,
+                )
+            )
+            if menu_entity.id not in menus_by_id:
+                menus_by_id[menu_entity.id] = map_to_menu_response(menu_entity=menu_entity)
+
+        return (menu_permissions, list(menus_by_id.values()))
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def currencies_by_location(
         self, config: Config, params: AuthCurremciesByLocation
-    ) -> Union[
-        List[Tuple[CurrencyLocationEntity, CurrencyEntity, LocationEntity]],
-        None,
-    ]:
+    ) -> Optional[List[CurrencyLoginResponse]]:
         db = config.async_db
         stmt = (
             select(CurrencyLocationEntity, CurrencyEntity, LocationEntity)
@@ -210,13 +275,18 @@ class AuthRepository(IAuthRepository):
         result = await db.execute(stmt)
         results = result.all()
 
-        return results
+        if not results:
+            return None
+
+        # SPEC-019
+        return [
+            map_to_currecy_login_response(currency_entity=row[1]) for row in results
+        ]
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def locations_by_user(self, config: Config, params: AuthLocations) -> Union[
-        List[Tuple[UserLocationRolEntity, LocationEntity, CompanyEntity, UserEntity]],
-        None,
-    ]:
+    async def locations_by_user(
+        self, config: Config, params: AuthLocations
+    ) -> Optional[List[LocationLoginResponse]]:
         db = config.async_db
         stmt = (
             select(UserLocationRolEntity, LocationEntity, CompanyEntity, UserEntity)
@@ -233,7 +303,13 @@ class AuthRepository(IAuthRepository):
         result = await db.execute(stmt)
         results = result.all()
 
-        return results
+        if not results:
+            return None
+
+        # SPEC-019
+        return [
+            map_to_location_login_response(location_entity=row[1]) for row in results
+        ]
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def create_api_token(
@@ -266,7 +342,8 @@ class AuthRepository(IAuthRepository):
 
         result = await db.execute(stmt)
         rol_tuple = result.first()
-        rol, *list = rol_tuple
+        # SPEC-030 T7
+        rol, *_ = rol_tuple
 
         return CreateApiTokenResponse(
             rol_id=params.rol_id, permissions=permissions, rol_code=rol.code
@@ -472,24 +549,8 @@ class AuthRepository(IAuthRepository):
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def initial_external_user_data(
         self, config: Config, email: str
-    ) -> Union[
-        Tuple[PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity],
-        None,
-    ]:
-        """
-        Obtiene datos iniciales de un usuario externo.
-        
-        A diferencia de los internos, no tiene location, country ni company.
-        Se identifica por platform.location_id IS NULL.
-        
-        Args:
-            config: Configuración de la solicitud
-            email: Email del usuario
-            
-        Returns:
-            Tupla (PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity)
-            None si no se encuentra
-        """
+    ) -> Optional[Tuple[Platform, User, Language, Currency]]:
+        """Datos iniciales de un usuario externo (sin location, country ni company)."""
         db = config.async_db
         stmt = (
             select(PlatformEntity, UserEntity, LanguageEntity, CurrencyEntity)
@@ -498,27 +559,27 @@ class AuthRepository(IAuthRepository):
             .join(CurrencyEntity, CurrencyEntity.id == PlatformEntity.currency_id)
             .filter(UserEntity.email == email)
             .filter(UserEntity.state == True)
-            .filter(PlatformEntity.location_id.is_(None))  # Solo usuarios externos
+            .filter(PlatformEntity.location_id.is_(None))
         )
 
         result = await db.execute(stmt)
-        return result.first()
+        row = result.first()
+        if not row:
+            return None
+
+        # SPEC-015 T6
+        platform_entity, user_entity, language_entity, currency_entity = row
+        return (
+            map_to_platform(platform_entity=platform_entity),
+            map_to_user(user_entity=user_entity),
+            map_to_language(language_entity=language_entity),
+            map_to_currency(currency_entity=currency_entity),
+        )
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def external_rol_and_permissions_by_code(
         self, config: Config, rol_code: str
-    ) -> Union[List[Tuple[RolEntity, RolPermissionEntity, PermissionEntity]], None]:
-        """
-        Obtiene el rol y sus permisos para usuarios externos buscando por código.
-        
-        Args:
-            config: Configuración de la solicitud
-            rol_code: Código del rol (ej: 'USER')
-            
-        Returns:
-            Lista de tuplas (RolEntity, RolPermissionEntity, PermissionEntity)
-            None si no se encuentra
-        """
+    ) -> Optional[Tuple[List[PermissionLoginResponse], RolLoginResponse]]:
         db = config.async_db
         stmt = (
             select(RolEntity, RolPermissionEntity, PermissionEntity)
@@ -529,12 +590,26 @@ class AuthRepository(IAuthRepository):
         )
 
         result = await db.execute(stmt)
-        return result.all()
+        rows = result.all()
+
+        if not rows:
+            return None
+
+        # SPEC-015 T4
+        seen_permission_ids = set()
+        permissions: List[PermissionLoginResponse] = []
+        for _, _, permission_entity in rows:
+            if permission_entity.id not in seen_permission_ids:
+                seen_permission_ids.add(permission_entity.id)
+                permissions.append(map_to_permission_response(permission_entity=permission_entity))
+
+        rol = map_to_rol_login_response(rol_entity=rows[0][0])
+        return (permissions, rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def menu_external(
         self, config: Config, permission_ids: List[str]
-    ) -> Union[List[Tuple[MenuPermissionEntity, MenuEntity]], None]:
+    ) -> Optional[List[MenuLoginResponse]]:
         """
         Obtiene menús para usuarios externos.
         
@@ -545,7 +620,7 @@ class AuthRepository(IAuthRepository):
             permission_ids: Lista de IDs de permisos del rol
             
         Returns:
-            Lista de tuplas (MenuPermissionEntity, MenuEntity)
+            Lista de MenuLoginResponse (deduplicada por menu_id)
             None si no se encuentra
         """
         db = config.async_db
@@ -558,12 +633,24 @@ class AuthRepository(IAuthRepository):
         )
 
         result = await db.execute(stmt)
-        return result.all()
+        rows = result.all()
+
+        if not rows:
+            return None
+
+        # SPEC-019
+        seen_menu_ids = set()
+        menus: List[MenuLoginResponse] = []
+        for _, menu_entity in rows:
+            if menu_entity.id not in seen_menu_ids:
+                seen_menu_ids.add(menu_entity.id)
+                menus.append(map_to_menu_response(menu_entity=menu_entity))
+        return menus
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def all_currencies(
         self, config: Config
-    ) -> Union[List[CurrencyEntity], None]:
+    ) -> Optional[List[CurrencyLoginResponse]]:
         """
         Obtiene todas las currencies activas del sistema.
         
@@ -573,7 +660,7 @@ class AuthRepository(IAuthRepository):
             config: Configuración de la solicitud
             
         Returns:
-            Lista de CurrencyEntity activas
+            Lista de CurrencyLoginResponse activas
             None si no hay currencies
         """
         db = config.async_db
@@ -586,7 +673,14 @@ class AuthRepository(IAuthRepository):
         result = await db.execute(stmt)
         currencies = result.scalars().all()
 
-        return currencies if currencies else None
+        if not currencies:
+            return None
+
+        # SPEC-019
+        return [
+            map_to_currecy_login_response(currency_entity=currency)
+            for currency in currencies
+        ]
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def user_country(

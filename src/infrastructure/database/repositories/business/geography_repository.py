@@ -7,8 +7,19 @@ from sqlalchemy import func
 from src.core.enums.layer import LAYER
 from src.core.models.config import Config
 from src.core.wrappers.execute_transaction import execute_transaction
+from src.domain.models.business.geography.index import (
+    GeoDivisionItemResponse,
+    GeoDivisionTypeByCountryResponse,
+    GeoDivisionHierarchyItemResponse,
+    GeoDivisionHierarchyResponse,
+)
 from src.infrastructure.database.entities.geo_division_entity import GeoDivisionEntity
 from src.infrastructure.database.entities.geo_division_type_entity import GeoDivisionTypeEntity
+from src.infrastructure.database.repositories.business.mappers.geography.geography_mapper import (
+    map_to_geo_division_item_response,
+    map_to_hierarchy_item_response,
+    map_to_list_geo_division_item_response,
+)
 
 
 class GeographyRepository:
@@ -16,7 +27,7 @@ class GeographyRepository:
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def get_countries(
         self, config: Config
-    ) -> Optional[List[Tuple[GeoDivisionEntity, GeoDivisionTypeEntity]]]:
+    ) -> Optional[List[GeoDivisionItemResponse]]:
         """Obtiene todos los países (level = 0, nodos raíz)."""
         db = config.async_db
         stmt = (
@@ -32,31 +43,34 @@ class GeographyRepository:
         )
         result = await db.execute(stmt)
         rows = result.all()
-        return rows if rows else None
+        if not rows:
+            return None
+        # SPEC-019
+        return map_to_list_geo_division_item_response(rows)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def get_types_by_country(
         self, config: Config, country_id: UUID4
-    ) -> Optional[List]:
+    ) -> Optional[List[GeoDivisionTypeByCountryResponse]]:
         """Obtiene los tipos de división disponibles para un país con conteo."""
         db = config.async_db
         from sqlalchemy import text as sa_text
-            
+
         schema = settings.database_schema
         raw_sql = sa_text(f"""
             WITH RECURSIVE descendants AS (
                 SELECT id, geo_division_type_id, level
                 FROM {schema}.geo_division
                 WHERE top_id = :country_id AND state = TRUE
-                    
+
                 UNION ALL
-                    
+
                 SELECT gd.id, gd.geo_division_type_id, gd.level
                 FROM {schema}.geo_division gd
                 INNER JOIN descendants d ON gd.top_id = d.id
                 WHERE gd.state = TRUE
             )
-            SELECT 
+            SELECT
                 gdt.id,
                 gdt.name,
                 gdt.label,
@@ -68,15 +82,27 @@ class GeographyRepository:
             GROUP BY gdt.id, gdt.name, gdt.label, d.level
             ORDER BY d.level
         """)
-            
+
         result = await db.execute(raw_sql, {"country_id": str(country_id)})
         rows = result.all()
-        return rows if rows else None
+        if not rows:
+            return None
+        # SPEC-015 T2
+        return [
+            GeoDivisionTypeByCountryResponse(
+                id=row.id,
+                name=row.name,
+                label=row.label,
+                level=row.level,
+                count=row.count,
+            )
+            for row in rows
+        ]
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def get_by_country_and_type(
         self, config: Config, country_id: UUID4, type_name: str
-    ) -> Optional[List[Tuple[GeoDivisionEntity, GeoDivisionTypeEntity]]]:
+    ) -> Optional[List[GeoDivisionItemResponse]]:
         """Obtiene divisiones de un país filtradas por tipo."""
         db = config.async_db
         from sqlalchemy import text as sa_text
@@ -109,34 +135,25 @@ class GeographyRepository:
             
         if not rows:
             return None
-            
-        mapped = []
-        for row in rows:
-            geo_entity = GeoDivisionEntity()
-            geo_entity.id = row.id
-            geo_entity.top_id = row.top_id
-            geo_entity.geo_division_type_id = row.geo_division_type_id
-            geo_entity.name = row.name
-            geo_entity.code = row.code
-            geo_entity.phone_code = row.phone_code
-            geo_entity.level = row.level
-            geo_entity.state = row.state
-                
-            type_entity = GeoDivisionTypeEntity()
-            type_entity.id = row.type_id
-            type_entity.name = row.type_name
-            type_entity.label = row.type_label
-            type_entity.description = row.type_description
-            type_entity.state = row.type_state
-                
-            mapped.append((geo_entity, type_entity))
-            
-        return mapped
+
+        # SPEC-019
+        return [
+            GeoDivisionItemResponse(
+                id=row.id,
+                name=row.name,
+                code=row.code,
+                phone_code=row.phone_code,
+                level=row.level,
+                type=row.type_name,
+                type_label=row.type_label,
+            )
+            for row in rows
+        ]
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def get_children(
         self, config: Config, parent_id: UUID4
-    ) -> Optional[List[Tuple[GeoDivisionEntity, GeoDivisionTypeEntity]]]:
+    ) -> Optional[List[GeoDivisionItemResponse]]:
         """Obtiene hijos directos de una división."""
         db = config.async_db
         stmt = (
@@ -151,12 +168,15 @@ class GeographyRepository:
         )
         result = await db.execute(stmt)
         rows = result.all()
-        return rows if rows else None
+        if not rows:
+            return None
+        # SPEC-019
+        return map_to_list_geo_division_item_response(rows)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def get_children_by_type(
         self, config: Config, parent_id: UUID4, type_name: str
-    ) -> Optional[List[Tuple[GeoDivisionEntity, GeoDivisionTypeEntity]]]:
+    ) -> Optional[List[GeoDivisionItemResponse]]:
         """Obtiene hijos directos de una división filtrados por tipo."""
         db = config.async_db
         stmt = (
@@ -173,12 +193,15 @@ class GeographyRepository:
         )
         result = await db.execute(stmt)
         rows = result.all()
-        return rows if rows else None
+        if not rows:
+            return None
+        # SPEC-019
+        return map_to_list_geo_division_item_response(rows)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def get_hierarchy(
         self, config: Config, node_id: UUID4
-    ) -> Optional[List[Tuple[GeoDivisionEntity, GeoDivisionTypeEntity]]]:
+    ) -> Optional[GeoDivisionHierarchyResponse]:
         """Obtiene la jerarquía completa hacia arriba (nodo hasta raíz)."""
         db = config.async_db
         from sqlalchemy import text as sa_text
@@ -210,34 +233,31 @@ class GeographyRepository:
             
         if not rows:
             return None
-            
-        mapped = []
-        for row in rows:
-            geo_entity = GeoDivisionEntity()
-            geo_entity.id = row.id
-            geo_entity.top_id = row.top_id
-            geo_entity.geo_division_type_id = row.geo_division_type_id
-            geo_entity.name = row.name
-            geo_entity.code = row.code
-            geo_entity.phone_code = row.phone_code
-            geo_entity.level = row.level
-            geo_entity.state = row.state
-                
-            type_entity = GeoDivisionTypeEntity()
-            type_entity.id = row.type_id
-            type_entity.name = row.type_name
-            type_entity.label = row.type_label
-            type_entity.description = row.type_description
-            type_entity.state = row.type_state
-                
-            mapped.append((geo_entity, type_entity))
-            
-        return mapped
+
+        # SPEC-019
+        items = [
+            GeoDivisionHierarchyItemResponse(
+                id=row.id,
+                name=row.name,
+                code=row.code,
+                phone_code=row.phone_code,
+                level=row.level,
+                type=row.type_name,
+                type_label=row.type_label,
+            )
+            for row in rows
+        ]
+
+        return GeoDivisionHierarchyResponse(
+            node=items[0],
+            ancestors=items[1:],
+            depth=len(rows),
+        )
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def get_detail(
         self, config: Config, node_id: UUID4
-    ) -> Optional[Tuple[GeoDivisionEntity, GeoDivisionTypeEntity]]:
+    ) -> Optional[GeoDivisionItemResponse]:
         """Obtiene el detalle de una división específica."""
         db = config.async_db
         stmt = (
@@ -251,4 +271,7 @@ class GeographyRepository:
         )
         result = await db.execute(stmt)
         row = result.first()
-        return row if row else None
+        if not row:
+            return None
+        # SPEC-019
+        return map_to_geo_division_item_response(entity=row[0], type_entity=row[1])

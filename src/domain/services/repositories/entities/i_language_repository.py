@@ -9,10 +9,10 @@ from src.domain.models.entities.language.index import (
     Language,
     LanguageDelete,
     LanguageRead,
+    LanguageSave,
     LanguageUpdate,
 )
 
-from src.infrastructure.database.entities.language_entity import LanguageEntity
 
 
 class ILanguageRepository(ABC):
@@ -20,7 +20,7 @@ class ILanguageRepository(ABC):
     def save(
         self,
         config: Config,
-        params: LanguageEntity,
+        params: LanguageSave,
     ) -> Union[Language, None]:
         pass
 

@@ -12,9 +12,6 @@ from src.domain.models.entities.menu.index import Menu, MenuSave
 from src.domain.services.repositories.entities.i_menu_repository import (
     IMenuRepository,
 )
-from src.infrastructure.database.mappers.menu_mapper import (
-    map_to_save_menu_entity,
-)
 
 
 class MenuSaveUseCase:
@@ -28,8 +25,7 @@ class MenuSaveUseCase:
         config: Config,
         params: MenuSave,
     ) -> Union[Menu, str, None]:
-        result = map_to_save_menu_entity(params)
-        result = await self.menu_repository.save(config=config, params=result)
+        result = await self.menu_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

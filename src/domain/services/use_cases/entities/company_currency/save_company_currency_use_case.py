@@ -18,9 +18,6 @@ from src.domain.models.entities.company_currency.index import (
 from src.domain.services.repositories.entities.i_company_currency_repository import (
     ICompanyCurrencyRepository,
 )
-from src.infrastructure.database.mappers.company_currency_mapper import (
-    map_to_save_company_currency_entity,
-)
 
 
 class SaveCompanyCurrencyUseCase:
@@ -67,8 +64,7 @@ class SaveCompanyCurrencyUseCase:
                 KEYS_ERRORS.PLT_COMPANY_CURRENCY_FIRST_MUST_BE_BASE.value,
             )
 
-        entity = map_to_save_company_currency_entity(params)
-        result = await self.company_currency_repository.save(config=config, params=entity)
+        result = await self.company_currency_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

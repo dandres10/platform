@@ -1,5 +1,7 @@
-from pydantic import UUID4, BaseModel, Field
+from pydantic import BaseModel, Field
+from uuid import UUID
 from typing import Optional
 
+# SPEC-027
 class Menu(BaseModel):
-    company: Optional[UUID4] = Field(default=None)
+    company: Optional[UUID] = Field(default=None)

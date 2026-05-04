@@ -9,10 +9,10 @@ from src.domain.models.entities.permission.index import (
     Permission,
     PermissionDelete,
     PermissionRead,
+    PermissionSave,
     PermissionUpdate,
 )
 
-from src.infrastructure.database.entities.permission_entity import PermissionEntity
 
 
 class IPermissionRepository(ABC):
@@ -20,7 +20,7 @@ class IPermissionRepository(ABC):
     def save(
         self,
         config: Config,
-        params: PermissionEntity,
+        params: PermissionSave,
     ) -> Union[Permission, None]:
         pass
 

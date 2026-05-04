@@ -13,6 +13,7 @@ from src.domain.models.entities.user_country.index import (
     UserCountry,
     UserCountryDelete,
     UserCountryRead,
+    UserCountrySave,
     UserCountryUpdate,
 )
 from src.domain.services.repositories.entities.i_user_country_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.user_country_entity import UserCountry
 from src.infrastructure.database.mappers.user_country_mapper import (
     map_to_user_country,
     map_to_list_user_country,
+    map_to_save_user_country_entity,
 )
 
 
 class UserCountryRepository(IUserCountryRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: UserCountryEntity) -> Union[UserCountry, None]:
+    async def save(self, config: Config, params: UserCountrySave) -> Union[UserCountry, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_user_country(params)
+        entity = map_to_save_user_country_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_user_country(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: UserCountryUpdate) -> Union[UserCountry, None]:
@@ -50,7 +53,7 @@ class UserCountryRepository(IUserCountryRepository):
         for key, value in update_data.items():
             setattr(user_country, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(user_country)
         return map_to_user_country(user_country)
 
@@ -89,7 +92,7 @@ class UserCountryRepository(IUserCountryRepository):
             return None
 
         await db.delete(user_country)
-        await db.commit()
+        await db.flush()
         return map_to_user_country(user_country)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
@@ -141,5 +144,5 @@ class UserCountryRepository(IUserCountryRepository):
             return None
 
         await db.delete(user_country)
-        await db.commit()
+        await db.flush()
         return map_to_user_country(user_country)

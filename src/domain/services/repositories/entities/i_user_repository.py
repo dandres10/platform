@@ -9,10 +9,10 @@ from src.domain.models.entities.user.index import (
     User,
     UserDelete,
     UserRead,
+    UserSave,
     UserUpdate,
 )
 
-from src.infrastructure.database.entities.user_entity import UserEntity
 
 
 class IUserRepository(ABC):
@@ -20,7 +20,7 @@ class IUserRepository(ABC):
     def save(
         self,
         config: Config,
-        params: UserEntity,
+        params: UserSave,
     ) -> Union[User, None]:
         pass
 

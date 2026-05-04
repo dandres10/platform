@@ -1,30 +1,15 @@
 from typing import List, Union
-from src.core.enums.condition_type import CONDITION_TYPE
 from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.enums.layer import LAYER
 from src.core.enums.response_type import RESPONSE_TYPE
 from src.core.models.config import Config
-from src.core.models.filter import Pagination
 from src.core.models.message import MessageCoreEntity
 from src.core.wrappers.execute_transaction import execute_transaction
-from src.domain.models.business.auth.login.auth_currencies_by_location import (
-    AuthCurremciesByLocation,
-)
-from src.domain.models.business.auth.login.auth_login_response import (
-    CurrencyLoginResponse,
-)
 from src.domain.models.business.auth.login.companies_by_user import CompaniesByUser
 from src.domain.models.entities.company.company import Company
-from src.domain.services.use_cases.entities.currency.currency_list_use_case import (
-    CurrencyListUseCase,
-)
 from src.core.config import settings
-from src.infrastructure.database.mappers.currency_mapper import map_to_list_currency
 from src.infrastructure.database.repositories.business.auth_repository import (
     AuthRepository,
-)
-from src.infrastructure.database.repositories.business.mappers.auth.login.login_mapper import (
-    map_to_currecy_login_response,
 )
 from src.core.classes.async_message import Message
 
@@ -48,7 +33,6 @@ class CompaniesByUserUseCase:
         )
 
         if not results:
-            print("no se encontraron compañias asociadas al usuario")
             return await self.message.get_message(
                 config=config,
                 message=MessageCoreEntity(

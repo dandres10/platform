@@ -1,41 +1,69 @@
 from src.core.models.config import Config
+from src.core.models.filter import Pagination, FilterManager
 from src.core.classes.token import Token
 from src.core.enums.language import LANGUAGE
-from src.core.models.ws_request import WSRequest
 from fastapi import Depends, HTTPException, Header, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from src.infrastructure.database.config.async_config_db import async_session_db
+from zoneinfo import available_timezones
 
 
 bearer_scheme = HTTPBearer()
+
+# SPEC-013
+VALID_TIMEZONES = available_timezones()
 
 
 async def get_config(
     request: Request,
     language: str = Header(...),
+    timezone: str = Header(...),
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
 ):
     config = Config()
     token_cls = Token()
     valid_language_header(request=request)
+    valid_timezone_header(request=request)
     token = credentials.credentials
     token = token_cls.verify_token(token=token)
     config.language = language
+    config.timezone = timezone
     config.request = request
     config.token = token
     request.state.config = config
     config.token_code = credentials.credentials
 
+    # SPEC-022
+    raw_filters = request.query_params.getlist("filter")
+    filters = []
+    for raw in raw_filters:
+        parts = raw.split(",", 2)
+        if len(parts) == 3:
+            filters.append(FilterManager(field=parts[0], condition=parts[1], value=parts[2]))
+
+    config.pagination = Pagination(
+        skip=int(request.query_params.get("skip", 0)),
+        limit=int(request.query_params.get("limit", 50)),
+        all_data=request.query_params.get("all_data", "false").lower() == "true",
+        filters=filters if filters else None,
+    )
+
     async with async_session_db() as session:
         config.async_db = session
         await token_cls.validate_has_refresh_token(config=config)
         yield config
 
 
-async def get_config_login(request: Request, language: str = Header(...)):
+async def get_config_login(
+    request: Request,
+    language: str = Header(...),
+    timezone: str = Header(...),
+):
     config = Config()
     valid_language_header(request=request)
+    valid_timezone_header(request=request)
     config.language = language
+    config.timezone = timezone
     config.request = request
 
     async with async_session_db() as session:
@@ -43,29 +71,21 @@ async def get_config_login(request: Request, language: str = Header(...)):
         yield config
 
 
-async def get_config_public(request: Request, language: str = Header(...)):
+async def get_config_public(
+    request: Request,
+    language: str = Header(...),
+    timezone: str = Header(...),
+):
     config = Config()
     valid_language_header(request=request)
+    valid_timezone_header(request=request)
     config.language = language
+    config.timezone = timezone
     config.request = request
 
     async with async_session_db() as session:
         config.async_db = session
         yield config
-
-
-async def get_config_ws(ws_resquest: WSRequest):
-    config = Config()
-    token_cls = Token()
-    valid_language_header_ws(language=ws_resquest.language)
-    config.language = ws_resquest.language
-    config.token = token_cls.verify_token(token=ws_resquest.token)
-    config.token_code = ws_resquest.token
-
-    async with async_session_db() as session:
-        config.async_db = session
-        await token_cls.validate_has_refresh_token(config=config)
-    return config
 
 
 def valid_language_header(request: Request):
@@ -80,7 +100,16 @@ def valid_language_header(request: Request):
         raise HTTPException(status_code=400, detail="Invalid language")
 
 
-def valid_language_header_ws(language: LANGUAGE):
-    languages = [LANGUAGE.EN.value, LANGUAGE.ES.value]
-    if not language in languages:
-        raise HTTPException(status_code=400, detail="Invalid language")
+def valid_timezone_header(request: Request):
+    # SPEC-013
+    if "timezone" not in request.headers:
+        raise HTTPException(
+            status_code=400, detail="Does not have timezone in the header"
+        )
+
+    tz = request.headers["timezone"]
+    if tz not in VALID_TIMEZONES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid timezone: {tz}. Use IANA timezone format (e.g., America/Bogota)",
+        )

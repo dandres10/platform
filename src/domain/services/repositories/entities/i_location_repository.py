@@ -9,10 +9,10 @@ from src.domain.models.entities.location.index import (
     Location,
     LocationDelete,
     LocationRead,
+    LocationSave,
     LocationUpdate,
 )
 
-from src.infrastructure.database.entities.location_entity import LocationEntity
 
 
 class ILocationRepository(ABC):
@@ -20,7 +20,7 @@ class ILocationRepository(ABC):
     def save(
         self,
         config: Config,
-        params: LocationEntity,
+        params: LocationSave,
     ) -> Union[Location, None]:
         pass
 

@@ -13,6 +13,7 @@ from src.domain.models.entities.currency.index import (
     Currency,
     CurrencyDelete,
     CurrencyRead,
+    CurrencySave,
     CurrencyUpdate,
 )
 from src.domain.services.repositories.entities.i_currency_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.currency_entity import CurrencyEntity
 from src.infrastructure.database.mappers.currency_mapper import (
     map_to_currency,
     map_to_list_currency,
+    map_to_save_currency_entity,
 )
 
 
 class CurrencyRepository(ICurrencyRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: CurrencyEntity) -> Union[Currency, None]:
+    async def save(self, config: Config, params: CurrencySave) -> Union[Currency, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_currency(params)
+        entity = map_to_save_currency_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_currency(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: CurrencyUpdate) -> Union[Currency, None]:
@@ -50,7 +53,7 @@ class CurrencyRepository(ICurrencyRepository):
         for key, value in update_data.items():
             setattr(currency, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(currency)
         return map_to_currency(currency)
 
@@ -89,7 +92,7 @@ class CurrencyRepository(ICurrencyRepository):
             return None
 
         await db.delete(currency)
-        await db.commit()
+        await db.flush()
         return map_to_currency(currency)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

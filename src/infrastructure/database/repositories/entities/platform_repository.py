@@ -13,6 +13,7 @@ from src.domain.models.entities.platform.index import (
     Platform,
     PlatformDelete,
     PlatformRead,
+    PlatformSave,
     PlatformUpdate,
 )
 from src.domain.services.repositories.entities.i_platform_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.platform_entity import PlatformEntity
 from src.infrastructure.database.mappers.platform_mapper import (
     map_to_platform,
     map_to_list_platform,
+    map_to_save_platform_entity,
 )
 
 
 class PlatformRepository(IPlatformRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: PlatformEntity) -> Union[Platform, None]:
+    async def save(self, config: Config, params: PlatformSave) -> Union[Platform, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_platform(params)
+        entity = map_to_save_platform_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_platform(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: PlatformUpdate) -> Union[Platform, None]:
@@ -50,7 +53,7 @@ class PlatformRepository(IPlatformRepository):
         for key, value in update_data.items():
             setattr(platform, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(platform)
         return map_to_platform(platform)
 
@@ -89,7 +92,7 @@ class PlatformRepository(IPlatformRepository):
             return None
 
         await db.delete(platform)
-        await db.commit()
+        await db.flush()
         return map_to_platform(platform)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

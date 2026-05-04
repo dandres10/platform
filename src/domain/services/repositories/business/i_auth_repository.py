@@ -85,3 +85,19 @@ class IAuthRepository(ABC):
         None,
     ]:
         pass
+
+    @abstractmethod
+    async def acquire_company_nit_lock(self, config: Config, nit: str) -> None:
+        pass
+
+    @abstractmethod
+    async def acquire_user_email_lock(self, config: Config, email: str) -> None:
+        pass
+
+    @abstractmethod
+    async def acquire_api_token_rol_lock(self, config: Config, rol_id) -> None:
+        pass
+
+    @abstractmethod
+    async def acquire_location_admin_lock(self, config: Config, location_id) -> None:
+        pass

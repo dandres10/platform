@@ -84,7 +84,8 @@ class Token:
             raise HTTPException(status_code=401, detail=f"Token expirado")
         except jwt.InvalidTokenError:
             raise HTTPException(status_code=401, detail=f"Token invalido")
-        except:
+        # SPEC-030 T4
+        except Exception:
             return self.decode_token_api(token)
 
     def decode_token_api(self, token):
@@ -105,7 +106,8 @@ class Token:
                 token, self.secret_key, algorithms=[self.algorithm]
             )
             return decoded_token
-        except:
+        # SPEC-030 T4
+        except Exception:
             return None
 
     def refresh_access_token(self, refresh_token, data: AccessToken):
@@ -136,8 +138,12 @@ class Token:
             config=config, params=UserRead(id=config.token.user_id)
         )
 
+        # SPEC-030 T5
+        if user_read is None or isinstance(user_read, str):
+            raise HTTPException(status_code=401, detail="Token invalido")
+
         if not user_read.refresh_token:
-            raise HTTPException(status_code=401, detail=f"Token expirado")
+            raise HTTPException(status_code=401, detail="Token expirado")
 
     async def validate_token_api(self, config: Config):
         config.response_type = RESPONSE_TYPE.OBJECT

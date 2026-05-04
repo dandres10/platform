@@ -12,9 +12,6 @@ from src.domain.models.entities.permission.index import Permission, PermissionSa
 from src.domain.services.repositories.entities.i_permission_repository import (
     IPermissionRepository,
 )
-from src.infrastructure.database.mappers.permission_mapper import (
-    map_to_save_permission_entity,
-)
 
 
 class PermissionSaveUseCase:
@@ -28,8 +25,7 @@ class PermissionSaveUseCase:
         config: Config,
         params: PermissionSave,
     ) -> Union[Permission, str, None]:
-        result = map_to_save_permission_entity(params)
-        result = await self.permission_repository.save(config=config, params=result)
+        result = await self.permission_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

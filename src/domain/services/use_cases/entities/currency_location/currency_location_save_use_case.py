@@ -18,9 +18,6 @@ from src.domain.services.repositories.entities.i_currency_location_repository im
 from src.domain.services.use_cases.entities.company_currency.list_company_currency_use_case import (
     ListCompanyCurrencyUseCase,
 )
-from src.infrastructure.database.mappers.currency_location_mapper import (
-    map_to_save_currency_location_entity,
-)
 
 
 class CurrencyLocationSaveUseCase:
@@ -55,8 +52,7 @@ class CurrencyLocationSaveUseCase:
                 KEYS_ERRORS.PLT_CURRENCY_NOT_ALLOWED_FOR_COMPANY.value,
             )
 
-        result = map_to_save_currency_location_entity(params)
-        result = await self.currency_location_repository.save(config=config, params=result)
+        result = await self.currency_location_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

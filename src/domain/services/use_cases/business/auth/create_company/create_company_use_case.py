@@ -10,7 +10,7 @@ from src.core.wrappers.execute_transaction import execute_transaction
 from src.core.classes.async_message import Message
 from src.core.models.message import MessageCoreEntity
 
-from src.domain.models.business.auth.create_company.index import CreateCompanyRequest
+from src.domain.models.business.auth.create_company import CreateCompanyRequest
 from src.domain.models.entities.company.index import CompanySave
 from src.domain.models.entities.location.index import LocationSave
 from src.domain.models.entities.geo_division.index import GeoDivisionRead
@@ -18,7 +18,7 @@ from src.domain.models.entities.language.index import LanguageRead
 from src.domain.models.entities.currency.index import CurrencyRead
 from src.domain.models.entities.currency_location.index import CurrencyLocationSave
 from src.domain.models.entities.rol.index import RolRead
-from src.domain.models.business.auth.create_user_internal.index import (
+from src.domain.models.business.auth.create_user_internal import (
     CreateUserInternalRequest,
     LocationRolItem
 )
@@ -35,6 +35,7 @@ from src.infrastructure.database.repositories.entities.location_repository impor
 from src.infrastructure.database.repositories.entities.currency_location_repository import CurrencyLocationRepository
 # SPEC-001 T6.6
 from src.infrastructure.database.repositories.entities.company_currency_repository import CompanyCurrencyRepository
+from src.infrastructure.database.repositories.business.auth_repository import AuthRepository
 
 # Importar use cases de entidades
 from src.domain.services.use_cases.entities.company.company_save_use_case import CompanySaveUseCase
@@ -57,7 +58,6 @@ from src.domain.services.use_cases.business.auth.create_user_internal.create_use
 from .clone_menus_for_company_use_case import CloneMenusForCompanyUseCase
 from .clone_menu_permissions_for_company_use_case import CloneMenuPermissionsForCompanyUseCase
 
-# Instanciar repositorios
 company_repository = CompanyRepository()
 geo_division_repository = GeoDivisionRepository()
 language_repository = LanguageRepository()
@@ -69,25 +69,12 @@ location_repository = LocationRepository()
 currency_location_repository = CurrencyLocationRepository()
 # SPEC-001 T6.6
 company_currency_repository = CompanyCurrencyRepository()
+# SPEC-010 T6
+auth_repository = AuthRepository()
 
 
 class CreateCompanyUseCase:
-    """
-    Use Case para crear una compañía completa en el sistema.
-    
-    Proceso:
-    1. Validar todas las referencias (NIT, email, country, language, currency, rol, templates)
-    2. Crear Company
-    3. Clonar menús template manteniendo jerarquías (usando caso de uso auxiliar)
-    4. Clonar permisos de menús (usando caso de uso auxiliar)
-    5. Crear Location principal
-    6. Crear CurrencyLocation (asociar moneda a la ubicación)
-    7. Crear User admin inicial (reutilizando CreateUserInternalUseCase)
-    8. Retornar mensaje de éxito traducido
-    """
-    
     def __init__(self):
-        # Use cases de validación
         self.company_list_uc = CompanyListUseCase(company_repository)
         self.geo_division_read_uc = GeoDivisionReadUseCase(geo_division_repository)
         self.language_read_uc = LanguageReadUseCase(language_repository)
@@ -95,23 +82,23 @@ class CreateCompanyUseCase:
         self.rol_read_uc = RolReadUseCase(rol_repository)
         self.user_list_uc = UserListUseCase(user_repository)
         self.menu_list_uc = MenuListUseCase(menu_repository)
-        
-        # Use cases de creación
+
         # SPEC-001 T6.6
-        save_company_currency_uc = SaveCompanyCurrencyUseCase(company_currency_repository)
+        self.save_company_currency_uc = SaveCompanyCurrencyUseCase(company_currency_repository)
         # SPEC-001 T6.6
-        list_company_currency_uc = ListCompanyCurrencyUseCase(company_currency_repository)
-        self.company_save_uc = CompanySaveUseCase(company_repository, save_company_currency_uc)
+        self.list_company_currency_uc = ListCompanyCurrencyUseCase(company_currency_repository)
+        self.company_save_uc = CompanySaveUseCase(company_repository, self.save_company_currency_uc)
         self.location_save_uc = LocationSaveUseCase(location_repository)
         # SPEC-001 T6.6
-        self.currency_location_save_uc = CurrencyLocationSaveUseCase(currency_location_repository, list_company_currency_uc)
+        self.currency_location_save_uc = CurrencyLocationSaveUseCase(currency_location_repository, self.list_company_currency_uc)
         self.create_user_internal_uc = CreateUserInternalUseCase()
-        
-        # Use cases auxiliares (misma carpeta)
+
         self.clone_menus_uc = CloneMenusForCompanyUseCase()
         self.clone_permissions_uc = CloneMenuPermissionsForCompanyUseCase()
-        
+
         self.message = Message()
+        # SPEC-010 T6
+        self.auth_repository = auth_repository
     
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
@@ -124,6 +111,9 @@ class CreateCompanyUseCase:
         # ============================================
         # 1. VALIDACIONES PREVIAS
         # ============================================
+        
+        # SPEC-007
+        await self.auth_repository.acquire_company_nit_lock(config=config, nit=params.company.nit)
         
         # Validar NIT único
         existing_companies = await self.company_list_uc.execute(

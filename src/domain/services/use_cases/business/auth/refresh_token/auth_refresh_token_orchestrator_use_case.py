@@ -10,10 +10,10 @@ from src.domain.models.business.auth.refresh_token.auth_refresh_token_response i
 from src.domain.services.use_cases.business.auth.login.check_user_type_by_rol_use_case import (
     CheckUserTypeByRolUseCase,
 )
-from src.domain.services.use_cases.business.auth.login.auth_refresh_token_use_case import (
+from src.domain.services.use_cases.business.auth.refresh_token.auth_refresh_token_use_case import (
     AuthRefreshTokenUseCase,
 )
-from src.domain.services.use_cases.business.auth.login.auth_refresh_token_external_use_case import (
+from src.domain.services.use_cases.business.auth.refresh_token.auth_refresh_token_external_use_case import (
     AuthRefreshTokenExternalUseCase,
 )
 from src.core.classes.async_message import Message

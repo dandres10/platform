@@ -13,6 +13,7 @@ from src.domain.models.entities.api_token.index import (
     ApiToken,
     ApiTokenDelete,
     ApiTokenRead,
+    ApiTokenSave,
     ApiTokenUpdate,
 )
 from src.domain.services.repositories.entities.i_api_token_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.api_token_entity import ApiTokenEntity
 from src.infrastructure.database.mappers.api_token_mapper import (
     map_to_api_token,
     map_to_list_api_token,
+    map_to_save_api_token_entity,
 )
 
 
 class ApiTokenRepository(IApiTokenRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: ApiTokenEntity) -> Union[ApiToken, None]:
+    async def save(self, config: Config, params: ApiTokenSave) -> Union[ApiToken, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_api_token(params)
+        entity = map_to_save_api_token_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_api_token(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: ApiTokenUpdate) -> Union[ApiToken, None]:
@@ -50,7 +53,7 @@ class ApiTokenRepository(IApiTokenRepository):
         for key, value in update_data.items():
             setattr(api_token, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(api_token)
         return map_to_api_token(api_token)
 
@@ -89,7 +92,7 @@ class ApiTokenRepository(IApiTokenRepository):
             return None
 
         await db.delete(api_token)
-        await db.commit()
+        await db.flush()
         return map_to_api_token(api_token)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

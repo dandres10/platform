@@ -12,9 +12,6 @@ from src.domain.models.entities.translation.index import Translation, Translatio
 from src.domain.services.repositories.entities.i_translation_repository import (
     ITranslationRepository,
 )
-from src.infrastructure.database.mappers.translation_mapper import (
-    map_to_save_translation_entity,
-)
 
 
 class TranslationSaveUseCase:
@@ -28,8 +25,7 @@ class TranslationSaveUseCase:
         config: Config,
         params: TranslationSave,
     ) -> Union[Translation, str, None]:
-        result = map_to_save_translation_entity(params)
-        result = await self.translation_repository.save(config=config, params=result)
+        result = await self.translation_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

@@ -203,15 +203,16 @@ class DeleteCompanyUseCase:
             return await self._handle_soft_delete(config=config, company=company)
 
         # 4. Intentar hard delete
+        # SPEC-008
         try:
-            await self._execute_hard_delete(
-                config=config,
-                company_id=params.company_id
-            )
-            return None  # Hard delete exitoso
-            
+            async with config.async_db.begin_nested():
+                await self._execute_hard_delete(
+                    config=config,
+                    company_id=params.company_id
+                )
+            return None
+
         except Exception:
-            # Si falla el hard delete, hacer soft delete
             return await self._handle_soft_delete(config=config, company=company)
 
     async def _execute_hard_delete(

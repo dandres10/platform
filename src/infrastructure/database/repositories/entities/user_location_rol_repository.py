@@ -13,6 +13,7 @@ from src.domain.models.entities.user_location_rol.index import (
     UserLocationRol,
     UserLocationRolDelete,
     UserLocationRolRead,
+    UserLocationRolSave,
     UserLocationRolUpdate,
 )
 from src.domain.services.repositories.entities.i_user_location_rol_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.user_location_rol_entity import UserLo
 from src.infrastructure.database.mappers.user_location_rol_mapper import (
     map_to_user_location_rol,
     map_to_list_user_location_rol,
+    map_to_save_user_location_rol_entity,
 )
 
 
 class UserLocationRolRepository(IUserLocationRolRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: UserLocationRolEntity) -> Union[UserLocationRol, None]:
+    async def save(self, config: Config, params: UserLocationRolSave) -> Union[UserLocationRol, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_user_location_rol(params)
+        entity = map_to_save_user_location_rol_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_user_location_rol(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: UserLocationRolUpdate) -> Union[UserLocationRol, None]:
@@ -50,7 +53,7 @@ class UserLocationRolRepository(IUserLocationRolRepository):
         for key, value in update_data.items():
             setattr(user_location_rol, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(user_location_rol)
         return map_to_user_location_rol(user_location_rol)
 
@@ -89,7 +92,7 @@ class UserLocationRolRepository(IUserLocationRolRepository):
             return None
 
         await db.delete(user_location_rol)
-        await db.commit()
+        await db.flush()
         return map_to_user_location_rol(user_location_rol)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
@@ -124,6 +127,6 @@ class UserLocationRolRepository(IUserLocationRolRepository):
             return None
 
         await db.delete(user_location_rol)
-        await db.commit()
+        await db.flush()
         return map_to_user_location_rol(user_location_rol)
         

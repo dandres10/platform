@@ -13,6 +13,7 @@ from src.domain.models.entities.rol_permission.index import (
     RolPermission,
     RolPermissionDelete,
     RolPermissionRead,
+    RolPermissionSave,
     RolPermissionUpdate,
 )
 from src.domain.services.repositories.entities.i_rol_permission_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.rol_permission_entity import RolPermis
 from src.infrastructure.database.mappers.rol_permission_mapper import (
     map_to_rol_permission,
     map_to_list_rol_permission,
+    map_to_save_rol_permission_entity,
 )
 
 
 class RolPermissionRepository(IRolPermissionRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: RolPermissionEntity) -> Union[RolPermission, None]:
+    async def save(self, config: Config, params: RolPermissionSave) -> Union[RolPermission, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_rol_permission(params)
+        entity = map_to_save_rol_permission_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_rol_permission(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: RolPermissionUpdate) -> Union[RolPermission, None]:
@@ -50,7 +53,7 @@ class RolPermissionRepository(IRolPermissionRepository):
         for key, value in update_data.items():
             setattr(rol_permission, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(rol_permission)
         return map_to_rol_permission(rol_permission)
 
@@ -89,7 +92,7 @@ class RolPermissionRepository(IRolPermissionRepository):
             return None
 
         await db.delete(rol_permission)
-        await db.commit()
+        await db.flush()
         return map_to_rol_permission(rol_permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

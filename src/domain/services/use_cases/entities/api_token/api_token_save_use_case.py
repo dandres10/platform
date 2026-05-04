@@ -12,9 +12,6 @@ from src.domain.models.entities.api_token.index import ApiToken, ApiTokenSave
 from src.domain.services.repositories.entities.i_api_token_repository import (
     IApiTokenRepository,
 )
-from src.infrastructure.database.mappers.api_token_mapper import (
-    map_to_save_api_token_entity,
-)
 
 
 class ApiTokenSaveUseCase:
@@ -28,8 +25,7 @@ class ApiTokenSaveUseCase:
         config: Config,
         params: ApiTokenSave,
     ) -> Union[ApiToken, str, None]:
-        result = map_to_save_api_token_entity(params)
-        result = await self.api_token_repository.save(config=config, params=result)
+        result = await self.api_token_repository.save(config=config, params=params)
         if not result:
             return await self.message.get_message(
                 config=config,

@@ -13,6 +13,7 @@ from src.domain.models.entities.menu_permission.index import (
     MenuPermission,
     MenuPermissionDelete,
     MenuPermissionRead,
+    MenuPermissionSave,
     MenuPermissionUpdate,
 )
 from src.domain.services.repositories.entities.i_menu_permission_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.menu_permission_entity import MenuPerm
 from src.infrastructure.database.mappers.menu_permission_mapper import (
     map_to_menu_permission,
     map_to_list_menu_permission,
+    map_to_save_menu_permission_entity,
 )
 
 
 class MenuPermissionRepository(IMenuPermissionRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: MenuPermissionEntity) -> Union[MenuPermission, None]:
+    async def save(self, config: Config, params: MenuPermissionSave) -> Union[MenuPermission, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_menu_permission(params)
+        entity = map_to_save_menu_permission_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_menu_permission(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: MenuPermissionUpdate) -> Union[MenuPermission, None]:
@@ -50,7 +53,7 @@ class MenuPermissionRepository(IMenuPermissionRepository):
         for key, value in update_data.items():
             setattr(menu_permission, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(menu_permission)
         return map_to_menu_permission(menu_permission)
 
@@ -89,7 +92,7 @@ class MenuPermissionRepository(IMenuPermissionRepository):
             return None
 
         await db.delete(menu_permission)
-        await db.commit()
+        await db.flush()
         return map_to_menu_permission(menu_permission)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

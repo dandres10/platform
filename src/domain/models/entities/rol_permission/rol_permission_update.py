@@ -1,9 +1,10 @@
-from pydantic import BaseModel, Field, UUID4
+from pydantic import BaseModel, Field
+from uuid import UUID
 from typing import Optional
 from datetime import datetime
 
 class RolPermissionUpdate(BaseModel):
-    id: UUID4 = Field(...)
-    rol_id: UUID4 = Field(...)
-    permission_id: UUID4 = Field(...)
+    id: UUID = Field(...)
+    rol_id: UUID = Field(...)
+    permission_id: UUID = Field(...)
     state: bool = Field(default=True)

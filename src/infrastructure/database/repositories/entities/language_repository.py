@@ -13,6 +13,7 @@ from src.domain.models.entities.language.index import (
     Language,
     LanguageDelete,
     LanguageRead,
+    LanguageSave,
     LanguageUpdate,
 )
 from src.domain.services.repositories.entities.i_language_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.language_entity import LanguageEntity
 from src.infrastructure.database.mappers.language_mapper import (
     map_to_language,
     map_to_list_language,
+    map_to_save_language_entity,
 )
 
 
 class LanguageRepository(ILanguageRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: LanguageEntity) -> Union[Language, None]:
+    async def save(self, config: Config, params: LanguageSave) -> Union[Language, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_language(params)
+        entity = map_to_save_language_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_language(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: LanguageUpdate) -> Union[Language, None]:
@@ -50,7 +53,7 @@ class LanguageRepository(ILanguageRepository):
         for key, value in update_data.items():
             setattr(language, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(language)
         return map_to_language(language)
 
@@ -89,7 +92,7 @@ class LanguageRepository(ILanguageRepository):
             return None
 
         await db.delete(language)
-        await db.commit()
+        await db.flush()
         return map_to_language(language)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field, UUID4
+from pydantic import BaseModel, Field
+from uuid import UUID
 from typing import Optional
 from datetime import datetime
 
 class RolPermissionSave(BaseModel):
-    rol_id: Optional[UUID4] = Field(default=None)
-    permission_id: Optional[UUID4] = Field(default=None)
+    rol_id: Optional[UUID] = Field(default=None)
+    permission_id: Optional[UUID] = Field(default=None)
     state: bool = Field(default=True)

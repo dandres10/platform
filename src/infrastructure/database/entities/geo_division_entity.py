@@ -9,8 +9,8 @@ class GeoDivisionEntity(Base):
     __table_args__ = {"schema": settings.database_schema}
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, server_default=text('uuid_generate_v4()'))
-    top_id = Column(UUID(as_uuid=True), ForeignKey('geo_division.id'), nullable=True)
-    geo_division_type_id = Column(UUID(as_uuid=True), ForeignKey('geo_division_type.id'), nullable=False)
+    top_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.geo_division.id'), nullable=True)
+    geo_division_type_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.geo_division_type.id'), nullable=False)
     name = Column(String(255), nullable=False)
     code = Column(String(20), nullable=True)
     phone_code = Column(String(10), nullable=True)

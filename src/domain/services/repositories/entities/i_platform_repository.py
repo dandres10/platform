@@ -9,10 +9,10 @@ from src.domain.models.entities.platform.index import (
     Platform,
     PlatformDelete,
     PlatformRead,
+    PlatformSave,
     PlatformUpdate,
 )
 
-from src.infrastructure.database.entities.platform_entity import PlatformEntity
 
 
 class IPlatformRepository(ABC):
@@ -20,7 +20,7 @@ class IPlatformRepository(ABC):
     def save(
         self,
         config: Config,
-        params: PlatformEntity,
+        params: PlatformSave,
     ) -> Union[Platform, None]:
         pass
 

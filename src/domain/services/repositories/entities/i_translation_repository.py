@@ -9,10 +9,10 @@ from src.domain.models.entities.translation.index import (
     Translation,
     TranslationDelete,
     TranslationRead,
+    TranslationSave,
     TranslationUpdate,
 )
 
-from src.infrastructure.database.entities.translation_entity import TranslationEntity
 
 
 class ITranslationRepository(ABC):
@@ -20,7 +20,7 @@ class ITranslationRepository(ABC):
     def save(
         self,
         config: Config,
-        params: TranslationEntity,
+        params: TranslationSave,
     ) -> Union[Translation, None]:
         pass
 

@@ -13,6 +13,7 @@ from src.domain.models.entities.currency_location.index import (
     CurrencyLocation,
     CurrencyLocationDelete,
     CurrencyLocationRead,
+    CurrencyLocationSave,
     CurrencyLocationUpdate,
 )
 from src.domain.services.repositories.entities.i_currency_location_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.currency_location_entity import Curren
 from src.infrastructure.database.mappers.currency_location_mapper import (
     map_to_currency_location,
     map_to_list_currency_location,
+    map_to_save_currency_location_entity,
 )
 
 
 class CurrencyLocationRepository(ICurrencyLocationRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: CurrencyLocationEntity) -> Union[CurrencyLocation, None]:
+    async def save(self, config: Config, params: CurrencyLocationSave) -> Union[CurrencyLocation, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_currency_location(params)
+        entity = map_to_save_currency_location_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_currency_location(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: CurrencyLocationUpdate) -> Union[CurrencyLocation, None]:
@@ -50,7 +53,7 @@ class CurrencyLocationRepository(ICurrencyLocationRepository):
         for key, value in update_data.items():
             setattr(currency_location, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(currency_location)
         return map_to_currency_location(currency_location)
 
@@ -89,7 +92,7 @@ class CurrencyLocationRepository(ICurrencyLocationRepository):
             return None
 
         await db.delete(currency_location)
-        await db.commit()
+        await db.flush()
         return map_to_currency_location(currency_location)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

@@ -69,6 +69,9 @@ from src.infrastructure.database.repositories.entities.platform_repository impor
 from src.infrastructure.database.repositories.entities.user_location_rol_repository import (
     UserLocationRolRepository
 )
+from src.infrastructure.database.repositories.business.auth_repository import (
+    AuthRepository,
+)
 
 
 language_repository = LanguageRepository()
@@ -94,6 +97,7 @@ class CreateUserInternalUseCase:
             user_location_rol_repository
         )
 
+        self.auth_repository = AuthRepository()
         self.message = Message()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
@@ -188,6 +192,9 @@ class CreateUserInternalUseCase:
                 "rol": rol
             })
 
+
+        # SPEC-007
+        await self.auth_repository.acquire_user_email_lock(config=config, email=params.email)
 
         existing_users = await self.user_list_uc.execute(
             config=config,

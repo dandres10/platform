@@ -13,6 +13,7 @@ from src.domain.models.entities.geo_division.index import (
     GeoDivision,
     GeoDivisionDelete,
     GeoDivisionRead,
+    GeoDivisionSave,
     GeoDivisionUpdate,
 )
 from src.domain.services.repositories.entities.i_geo_division_repository import (
@@ -22,18 +23,20 @@ from src.infrastructure.database.entities.geo_division_entity import GeoDivision
 from src.infrastructure.database.mappers.geo_division_mapper import (
     map_to_geo_division,
     map_to_list_geo_division,
+    map_to_save_geo_division_entity,
 )
 
 
 class GeoDivisionRepository(IGeoDivisionRepository):
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: GeoDivisionEntity) -> Union[GeoDivision, None]:
+    async def save(self, config: Config, params: GeoDivisionSave) -> Union[GeoDivision, None]:
         db = config.async_db
-        db.add(params)
-        await db.commit()
-        await db.refresh(params)
-        return map_to_geo_division(params)
+        entity = map_to_save_geo_division_entity(params)
+        db.add(entity)
+        await db.flush()
+        await db.refresh(entity)
+        return map_to_geo_division(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: GeoDivisionUpdate) -> Union[GeoDivision, None]:
@@ -50,7 +53,7 @@ class GeoDivisionRepository(IGeoDivisionRepository):
         for key, value in update_data.items():
             setattr(geo_division, key, value)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(geo_division)
         return map_to_geo_division(geo_division)
 
@@ -89,7 +92,7 @@ class GeoDivisionRepository(IGeoDivisionRepository):
             return None
 
         await db.delete(geo_division)
-        await db.commit()
+        await db.flush()
         return map_to_geo_division(geo_division)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)

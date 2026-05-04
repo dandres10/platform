@@ -7,7 +7,7 @@ import src.infrastructure.web.mcp_routes.business.tools.geography_tools  # noqa:
 import src.infrastructure.web.mcp_routes.business.tools.catalog_tools   # noqa: F401
 
 mcp_info_router = APIRouter(
-    prefix="/mcp",
+    prefix="/v1/mcp",
     tags=["MCP"],
     responses={404: {"description": "Not found"}},
 )
@@ -40,7 +40,7 @@ def _filter_tools(tools: dict, rol_code: str, permissions: list[str]) -> list[di
     summary="MCP Server info",
     description="Retorna informacion del MCP Server y lista de tools disponibles. "
     "Con Authorization header filtra por rol y permisos del token. "
-    "Para conectarse como cliente MCP usar: `/mcp`",
+    "Para conectarse como cliente MCP usar: `/v1/mcp`",
 )
 async def mcp_business_info(authorization: Optional[str] = Header(None)):
     tools = mcp_business._tool_manager._tools
@@ -50,14 +50,14 @@ async def mcp_business_info(authorization: Optional[str] = Header(None)):
         filtered = _filter_tools(tools, access_token.rol_code, access_token.permissions)
         return {
             "name": mcp_business.name,
-            "endpoint": "/mcp",
+            "endpoint": "/v1/mcp",
             "transport": "Streamable HTTP",
             "tools_count": len(filtered),
             "tools": filtered,
         }
     return {
         "name": mcp_business.name,
-        "endpoint": "/mcp",
+        "endpoint": "/v1/mcp",
         "transport": "Streamable HTTP",
         "tools_count": len(tools),
         "tools": [
@@ -71,4 +71,4 @@ class RouteMcp:
     @staticmethod
     def set_routes(app):
         app.include_router(mcp_info_router)
-        app.mount("/mcp", mcp_business.streamable_http_app())
+        app.mount("/v1/mcp", mcp_business.streamable_http_app())

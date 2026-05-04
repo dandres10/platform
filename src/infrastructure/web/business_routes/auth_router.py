@@ -48,7 +48,7 @@ from src.domain.models.business.auth.list_users_by_location import (
 from src.domain.models.business.auth.list_users_external import (
     UserExternalItem
 )
-from src.domain.models.business.auth.create_company.index import (
+from src.domain.models.business.auth.create_company import (
     CreateCompanyRequest,
     CreateCompanyResponse,
 )

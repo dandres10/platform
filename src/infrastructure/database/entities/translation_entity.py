@@ -1,12 +1,15 @@
 from sqlalchemy.sql import func
 from src.core.config import settings
 from src.core.models.base import Base
-from sqlalchemy import Column, String, Boolean, DateTime, text, Text, Integer, Float, Time
+from sqlalchemy import Column, String, Boolean, DateTime, text, Text, Integer, Float, Time, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 
 class TranslationEntity(Base):
     __tablename__ = 'translation'
-    __table_args__ = {"schema": settings.database_schema}
+    __table_args__ = (
+        UniqueConstraint('key', 'language_code', 'context', name='translation_key_language_code_context_key'),
+        {"schema": settings.database_schema},
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, nullable=False, server_default=text('uuid_generate_v4()'))
     key = Column(String(255), nullable=False)

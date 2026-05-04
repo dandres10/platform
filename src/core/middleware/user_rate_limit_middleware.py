@@ -1,52 +1,81 @@
-from fastapi import Request, HTTPException, status
+from fastapi import Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-
+from limits import parse
+from limits.strategies import FixedWindowRateLimiter
+from limits.storage import MemoryStorage
 from src.core.classes.token import Token
+from src.core.config import settings
+
+# SPEC-020
+BUSINESS_PREFIXES = (
+    "/auth/",
+    "/catalog/",
+    "/geography/",
+)
+EXEMPT_PREFIXES = ("/health", "/mcp", "/docs", "/openapi.json", "/redoc")
+
 
 class UserRateLimitMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app, default_limits, login_limits):
+    def __init__(self, app):
         super().__init__(app)
-        self.limiter = Limiter(key_func=self.get_key, default_limits=default_limits)
-        self.login_limiter = Limiter(key_func=get_remote_address, default_limits=login_limits)
+        self.storage = MemoryStorage()
+        self.limiter = FixedWindowRateLimiter(self.storage)
+        # SPEC-029 T2
+        self.business_rate = parse(settings.rate_limit_business)
+        self.entity_rate = parse(settings.rate_limit_entity)
+        self.read_rate = parse(settings.rate_limit_read)
+
+    def _get_user_key(self, request: Request) -> str:
+        authorization = request.headers.get("Authorization")
+        if authorization and authorization.startswith("Bearer "):
+            try:
+                token = Token().verify_token(token=authorization.split(" ")[1])
+                return token.user_id
+            except Exception:
+                pass
+        return request.client.host if request.client else "unknown"
+
+    def _classify(self, path: str, method: str) -> str:
+        clean_path = path.replace("/v1", "", 1) if path.startswith("/v1/") else path
+
+        if any(clean_path.startswith(p) for p in EXEMPT_PREFIXES):
+            return "exempt"
+        if any(clean_path.startswith(p) for p in BUSINESS_PREFIXES):
+            if method in ("POST", "PUT", "DELETE"):
+                return "business"
+            return "read"
+        if method in ("POST", "PUT", "DELETE"):
+            return "entity"
+        return "read"
+
+    def _get_rate(self, category: str):
+        if category == "business":
+            return self.business_rate
+        elif category == "entity":
+            return self.entity_rate
+        return self.read_rate
 
     async def dispatch(self, request: Request, call_next):
-        # Aplicar rate limiting basado en IP para la ruta /auth/login
-        if request.url.path == "/auth/login":
-            client_ip = get_remote_address(request)
-            try:
-                self.login_limiter.check(client_ip)  # Aplica un límite estricto basado en la IP
-            except Exception:
-                return JSONResponse(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    content={"detail": "Rate limit exceeded on login."},
-                )
+        category = self._classify(request.url.path, request.method)
 
-        # Aplicar rate limiting basado en user_id para rutas autenticadas
-        else:
-            key = self.get_key(request)
-            try:
-                self.limiter.check(key)  # Aplica el rate limiting normal
-            except Exception:
-                return JSONResponse(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    content={"detail": "Rate limit exceeded."},
-                )
+        if category == "exempt":
+            return await call_next(request)
 
-        # Continuamos con la ejecución de la solicitud
-        response = await call_next(request)
-        return response
+        user_key = self._get_user_key(request)
+        rate = self._get_rate(category)
+        key = f"{user_key}:{request.url.path}"
 
-    def get_key(self, request: Request) -> str:
-        # Para rutas autenticadas, usa el user_id del token
-        authorization: str = request.headers.get("Authorization")
-        if authorization:
-            token_str = authorization.split(" ")[1]
-            try:
-                token = Token().verify_token(token=token_str)
-                return token.user_id  # Usa user_id para rate limiting
-            except Exception:
-                pass  # En caso de fallo, podemos optar por usar la IP
-        return get_remote_address(request)  # Como fallback, usa la IP
+        if not self.limiter.hit(rate, key):
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "message_type": "STATIC",
+                    "notification_type": "ERROR",
+                    "message": "Rate limit exceeded. Please try again later.",
+                    "code": "RATE-001",
+                    "response": None,
+                },
+            )
+
+        return await call_next(request)

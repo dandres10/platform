@@ -12,6 +12,7 @@ from src.domain.models.entities.company_currency.index import (
     CompanyCurrency,
     CompanyCurrencyDelete,
     CompanyCurrencyRead,
+    CompanyCurrencySave,
     CompanyCurrencyUpdate,
 )
 from src.domain.services.repositories.entities.i_company_currency_repository import (
@@ -21,18 +22,20 @@ from src.infrastructure.database.entities.company_currency_entity import Company
 from src.infrastructure.database.mappers.company_currency_mapper import (
     map_to_company_currency,
     map_to_list_company_currency,
+    map_to_save_company_currency_entity,
 )
 
 
 class CompanyCurrencyRepository(ICompanyCurrencyRepository):
     # SPEC-001 T3
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
-    async def save(self, config: Config, params: CompanyCurrencyEntity) -> Union[CompanyCurrency, None]:
+    async def save(self, config: Config, params: CompanyCurrencySave) -> Union[CompanyCurrency, None]:
         db = config.async_db
-        db.add(params)
+        entity = map_to_save_company_currency_entity(params)
+        db.add(entity)
         await db.flush()
-        await db.refresh(params)
-        return map_to_company_currency(params)
+        await db.refresh(entity)
+        return map_to_company_currency(entity)
 
     @execute_transaction(layer=LAYER.I_D_R.value, enabled=settings.has_track)
     async def update(self, config: Config, params: CompanyCurrencyUpdate) -> Union[CompanyCurrency, None]:
