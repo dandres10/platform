@@ -50,6 +50,11 @@ from src.domain.models.business.auth.forgot_password import (
     ForgotPasswordRequest,
     ForgotPasswordResponse,
 )
+# SPEC-006 T14
+from src.domain.models.business.auth.reset_password import (
+    ResetPasswordRequest,
+    ResetPasswordResponse,
+)
 from src.core.models.filter import Pagination
 from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
@@ -285,3 +290,18 @@ async def forgot_password(
     config: Config = Depends(get_config_login),
 ) -> Response[ForgotPasswordResponse]:
     return await auth_controller.forgot_password(config=config, params=params)
+
+
+# SPEC-006 T14
+@auth_router.post(
+    "/reset-password",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[ResetPasswordResponse],
+    description="Aplica nueva password usando token recibido por email. Valida token (existe, no expirado, no usado), setea password, invalida JWTs previos y consume el token."
+)
+@execute_transaction_route(enabled=settings.has_track)
+async def reset_password(
+    params: ResetPasswordRequest,
+    config: Config = Depends(get_config_login),
+) -> Response[ResetPasswordResponse]:
+    return await auth_controller.reset_password(config=config, params=params)

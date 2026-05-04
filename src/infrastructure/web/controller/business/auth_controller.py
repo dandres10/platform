@@ -74,6 +74,14 @@ from src.domain.models.business.auth.forgot_password import (
 from src.domain.services.use_cases.business.auth.forgot_password import (
     ForgotPasswordUseCase,
 )
+# SPEC-006 T14
+from src.domain.models.business.auth.reset_password import (
+    ResetPasswordRequest,
+    ResetPasswordResponse,
+)
+from src.domain.services.use_cases.business.auth.reset_password import (
+    ResetPasswordUseCase,
+)
 from src.core.models.filter import Pagination
 from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
@@ -124,6 +132,8 @@ class AuthController:
         self.change_password_use_case = ChangePasswordUseCase()
         # SPEC-006 T13
         self.forgot_password_use_case = ForgotPasswordUseCase()
+        # SPEC-006 T14
+        self.reset_password_use_case = ResetPasswordUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -482,4 +492,27 @@ class AuthController:
         return Response.success_temporary_message(
             response=ForgotPasswordResponse(message=generic_message),
             message=generic_message,
+        )
+
+    # SPEC-006 T14
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def reset_password(
+        self, config: Config, params: ResetPasswordRequest
+    ) -> Response[ResetPasswordResponse]:
+        result = await self.reset_password_use_case.execute(
+            config=config, params=params
+        )
+        if isinstance(result, str):
+            return Response.error(response=None, message=result)
+
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_RESET_PASSWORD_SUCCESS.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=ResetPasswordResponse(message=success_message),
+            message=success_message,
         )
