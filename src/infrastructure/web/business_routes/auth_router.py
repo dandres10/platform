@@ -45,6 +45,11 @@ from src.domain.models.business.auth.change_password import (
     ChangePasswordRequest,
     ChangePasswordResponse,
 )
+# SPEC-006 T13
+from src.domain.models.business.auth.forgot_password import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+)
 from src.core.models.filter import Pagination
 from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
@@ -265,3 +270,18 @@ async def change_password(
     config: Config = Depends(get_config),
 ) -> Response[ChangePasswordResponse]:
     return await auth_controller.change_password(config=config, params=params)
+
+
+# SPEC-006 T13
+@auth_router.post(
+    "/forgot-password",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[ForgotPasswordResponse],
+    description="Solicita reset de password. Siempre retorna 200 con el mismo mensaje genérico (no revela si el email existe)."
+)
+@execute_transaction_route(enabled=settings.has_track)
+async def forgot_password(
+    params: ForgotPasswordRequest,
+    config: Config = Depends(get_config_login),
+) -> Response[ForgotPasswordResponse]:
+    return await auth_controller.forgot_password(config=config, params=params)

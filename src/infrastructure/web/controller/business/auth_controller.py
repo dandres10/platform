@@ -66,6 +66,14 @@ from src.domain.models.business.auth.change_password import (
 from src.domain.services.use_cases.business.auth.change_password import (
     ChangePasswordUseCase,
 )
+# SPEC-006 T13
+from src.domain.models.business.auth.forgot_password import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+)
+from src.domain.services.use_cases.business.auth.forgot_password import (
+    ForgotPasswordUseCase,
+)
 from src.core.models.filter import Pagination
 from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
@@ -114,6 +122,8 @@ class AuthController:
         self.delete_company_use_case = DeleteCompanyUseCase()
         # SPEC-006 T12
         self.change_password_use_case = ChangePasswordUseCase()
+        # SPEC-006 T13
+        self.forgot_password_use_case = ForgotPasswordUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -451,4 +461,25 @@ class AuthController:
         return Response.success_temporary_message(
             response=ChangePasswordResponse(message=success_message),
             message=success_message,
+        )
+
+    # SPEC-006 T13
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def forgot_password(
+        self, config: Config, params: ForgotPasswordRequest
+    ) -> Response[ForgotPasswordResponse]:
+        await self.forgot_password_use_case.execute(
+            config=config, params=params
+        )
+
+        generic_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_FORGOT_PASSWORD_GENERIC.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=ForgotPasswordResponse(message=generic_message),
+            message=generic_message,
         )
