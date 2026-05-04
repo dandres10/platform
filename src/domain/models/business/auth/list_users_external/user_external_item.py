@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, UUID4, EmailStr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, UUID4, EmailStr, model_validator
 from typing import Optional
 from datetime import datetime
 
@@ -30,8 +30,9 @@ class UserExternalItem(BaseModel):
     platform_created_date: datetime = Field(..., description="Fecha de creación del platform")
     platform_updated_date: datetime = Field(..., description="Fecha de última actualización del platform")
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "platform_id": "ff0e8400-e29b-41d4-a716-446655440000",
                 "user_id": "bb0e8400-e29b-41d4-a716-446655440000",
@@ -51,4 +52,5 @@ class UserExternalItem(BaseModel):
                 "platform_updated_date": "2024-03-20T15:45:00Z"
             }
         }
+    )
 

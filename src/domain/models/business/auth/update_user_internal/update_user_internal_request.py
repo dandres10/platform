@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, UUID4
+from pydantic import BaseModel, ConfigDict, Field, UUID4
 from typing import Optional
 
 
@@ -12,8 +12,9 @@ class UpdateUserInternalRequest(BaseModel):
     state: Optional[bool] = Field(None, description="Estado del usuario (activo/inactivo)")
     rol_id: Optional[UUID4] = Field(None, description="Nuevo rol para el usuario en la ubicación")
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "password": "NewSecurePassword123!",
                 "email": "usuario@goluti.com",
@@ -25,4 +26,5 @@ class UpdateUserInternalRequest(BaseModel):
                 "rol_id": "880e8400-e29b-41d4-a716-446655440000"
             }
         }
+    )
 

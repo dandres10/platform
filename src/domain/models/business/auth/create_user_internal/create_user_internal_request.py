@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, UUID4, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, UUID4, field_validator
 from typing import Optional, List
 
 from src.core.classes.password import Password
@@ -8,13 +8,15 @@ class LocationRolItem(BaseModel):
     location_id: UUID4 = Field(..., description="ID de la ubicación")
     rol_id: UUID4 = Field(..., description="ID del rol")
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "location_id": "660e8400-e29b-41d4-a716-446655440000",
                 "rol_id": "880e8400-e29b-41d4-a716-446655440000"
             }
         }
+    )
 
 
 class CreateUserInternalRequest(BaseModel):
@@ -54,8 +56,9 @@ class CreateUserInternalRequest(BaseModel):
             seen.add(combination)
         return v
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "language_id": "550e8400-e29b-41d4-a716-446655440000",
                 "currency_id": "770e8400-e29b-41d4-a716-446655440000",
@@ -83,4 +86,5 @@ class CreateUserInternalRequest(BaseModel):
                 "refresh_token_expiration_minutes": 1440
             }
         }
+    )
 

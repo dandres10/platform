@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, Field, UUID4
+from pydantic import BaseModel, ConfigDict, Field, UUID4
 
 
 class UserByLocationItem(BaseModel):
@@ -20,8 +20,9 @@ class UserByLocationItem(BaseModel):
     rol_code: str = Field(..., description="Código del rol")
     rol_description: Optional[str] = Field(None, description="Descripción del rol")
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "user_location_rol_id": "123e4567-e89b-12d3-a456-426614174000",
                 "location_id": "660e8400-e29b-41d4-a716-446655440000",
@@ -40,4 +41,5 @@ class UserByLocationItem(BaseModel):
                 "rol_description": "Administrador del sistema"
             }
         }
+    )
 

@@ -1,6 +1,6 @@
 from decimal import Decimal
 from uuid import UUID
-from pydantic import BaseModel, Field, UUID4, EmailStr
+from pydantic import BaseModel, ConfigDict, Field, UUID4, EmailStr
 from typing import Optional
 
 
@@ -12,8 +12,9 @@ class CompanyData(BaseModel):
     # SPEC-001 T6.6
     company_base_currency_id: UUID4 = Field(..., description="ID de la moneda base contable de la empresa")
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "Empresa Ejemplo S.A.S.",
                 "nit": "900123456-7",
@@ -21,6 +22,7 @@ class CompanyData(BaseModel):
                 "company_base_currency_id": "770e8400-e29b-41d4-a716-446655440000"
             }
         }
+    )
 
 
 class LocationData(BaseModel):
@@ -35,8 +37,9 @@ class LocationData(BaseModel):
     longitude: Optional[Decimal] = Field(default=None, description="Longitud (-180 a 180)")
     google_place_id: Optional[str] = Field(default=None, max_length=255, description="Google Places API ID")
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "country_id": "550e8400-e29b-41d4-a716-446655440000",
                 "city_id": "660e8400-e29b-41d4-a716-446655440000",
@@ -48,6 +51,7 @@ class LocationData(BaseModel):
                 "longitude": -74.0817500
             }
         }
+    )
 
 
 class AdminUserData(BaseModel):
@@ -62,8 +66,9 @@ class AdminUserData(BaseModel):
     currency_id: UUID4 = Field(..., description="ID de la moneda preferida")
     rol_id: UUID4 = Field(..., description="ID del rol (debe ser rol de administrador)")
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "email": "admin@empresaejemplo.com",
                 "password": "SecureP@ssw0rd123!",
@@ -76,6 +81,7 @@ class AdminUserData(BaseModel):
                 "rol_id": "880e8400-e29b-41d4-a716-446655440000"
             }
         }
+    )
 
 
 class CreateCompanyRequest(BaseModel):
@@ -84,8 +90,9 @@ class CreateCompanyRequest(BaseModel):
     location: LocationData = Field(..., description="Datos de la ubicación principal")
     admin_user: AdminUserData = Field(..., description="Datos del usuario administrador")
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "company": {
                     "name": "Empresa Ejemplo S.A.S.",
@@ -114,4 +121,5 @@ class CreateCompanyRequest(BaseModel):
                 }
             }
         }
+    )
 

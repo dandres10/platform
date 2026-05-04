@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, UUID4, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, UUID4, field_validator
 from typing import Optional
 
 from src.core.classes.password import Password
@@ -23,8 +23,9 @@ class CreateUserExternalRequest(BaseModel):
     def _validate_password_policy(cls, v: str) -> str:
         return Password.validate_policy(v)
 
-    class Config:
-        json_schema_extra = {
+    # SPEC-031 T2
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "language_id": "550e8400-e29b-41d4-a716-446655440000",
                 "currency_id": "770e8400-e29b-41d4-a716-446655440000",
@@ -39,4 +40,5 @@ class CreateUserExternalRequest(BaseModel):
                 "refresh_token_expiration_minutes": 1440
             }
         }
+    )
 
