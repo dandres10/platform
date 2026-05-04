@@ -42,6 +42,6 @@ class ReadCompanyCurrencyUseCase:
         if config.response_type == RESPONSE_TYPE.OBJECT.value:
             return result
         elif config.response_type == RESPONSE_TYPE.DICT.value:
-            return result.dict()
+            return result.model_dump()
 
         return result

@@ -37,6 +37,6 @@ class GeoDivisionTypeListUseCase:
         if config.response_type == RESPONSE_TYPE.OBJECT.value:
             return results
         elif config.response_type == RESPONSE_TYPE.DICT.value:
-            return [result.dict() for result in results]
+            return [result.model_dump() for result in results]
 
         return results

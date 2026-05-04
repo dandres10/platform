@@ -18,7 +18,7 @@ class User(BaseModel):
     created_date: Optional[datetime] = Field(default_factory=datetime.now)
     updated_date: Optional[datetime] = Field(default_factory=datetime.now)
 
-    def dict(self, *args, **kwargs):
+    def model_dump(self, *args, **kwargs):
         exclude = kwargs.pop("exclude", set())
         exclude.update({"created_date", "updated_date", "password"})
         return super().model_dump(*args, exclude=exclude, **kwargs)

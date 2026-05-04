@@ -77,8 +77,8 @@ def execute_transaction(layer, enabled=True):
                 params_data = {}
                 if params:
                     try:
-                        if hasattr(params, "dict"):
-                            params_data = params.dict()
+                        if hasattr(params, "model_dump"):
+                            params_data = params.model_dump()
                         elif hasattr(params, "__dict__"):
                             params_data = params.__dict__
                         else:
@@ -89,8 +89,8 @@ def execute_transaction(layer, enabled=True):
                 config_data = {}
                 if config:
                     try:
-                        if hasattr(config, "dict"):
-                            config_data = config.dict()
+                        if hasattr(config, "model_dump"):
+                            config_data = config.model_dump()
                         elif hasattr(config, "__dict__"):
                             config_data = {
                                 k: (

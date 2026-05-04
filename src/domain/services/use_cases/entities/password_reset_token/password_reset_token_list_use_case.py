@@ -41,6 +41,6 @@ class PasswordResetTokenListUseCase:
         if config.response_type == RESPONSE_TYPE.OBJECT.value:
             return results
         elif config.response_type == RESPONSE_TYPE.DICT.value:
-            return [r.dict() for r in results]
+            return [r.model_dump() for r in results]
 
         return results
