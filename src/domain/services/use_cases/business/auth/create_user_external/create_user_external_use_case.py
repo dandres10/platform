@@ -307,6 +307,8 @@ class CreateUserExternalUseCase:
             company_id=None,
             token_expiration_minutes=params.token_expiration_minutes,
             permissions=[p.name for p in _permissions],
+            # SPEC-006 T10
+            password_changed_at=user_created.password_changed_at,
         )
         access_token = self.token.create_access_token(access_token_data)
         refresh_token = self.token.create_refresh_token(access_token_data)

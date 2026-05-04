@@ -173,6 +173,8 @@ class AuthLoginRefreshTokenUseCase:
             company_id=str(company.id),
             token_expiration_minutes=platform.token_expiration_minutes,
             permissions=[permission.name for permission in permissions],
+            # SPEC-006 T10
+            password_changed_at=user.password_changed_at,
         )
 
         token = self.token.create_access_token(data=access_token)
