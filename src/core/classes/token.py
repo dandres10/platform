@@ -29,6 +29,13 @@ user_repository = UserRepository()
 api_token_repository = ApiTokenRepository()
 
 
+# SPEC-006 T10
+def _coerce_naive(dt: datetime) -> datetime:
+    if dt.tzinfo is not None:
+        return dt.replace(tzinfo=None)
+    return dt
+
+
 class Token:
     def __init__(
         self,
@@ -50,8 +57,12 @@ class Token:
         to_encode = data
         to_encode.exp = expiration
 
+        # SPEC-006 T10
+        payload = to_encode.model_dump(mode="json")
+        payload["exp"] = expiration
+
         access_token = jwt.encode(
-            to_encode.model_dump(), self.secret_key, algorithm=self.algorithm
+            payload, self.secret_key, algorithm=self.algorithm
         )
         return access_token
 
@@ -68,8 +79,13 @@ class Token:
         )
         to_encode = data
         to_encode.exp = expiration
+
+        # SPEC-006 T10
+        payload = to_encode.model_dump(mode="json")
+        payload["exp"] = expiration
+
         refresh_token = jwt.encode(
-            to_encode.model_dump(), self.secret_key, algorithm=self.algorithm
+            payload, self.secret_key, algorithm=self.algorithm
         )
         return refresh_token
 
@@ -144,6 +160,13 @@ class Token:
 
         if not user_read.refresh_token:
             raise HTTPException(status_code=401, detail="Token expirado")
+
+        # SPEC-006 T10
+        token_pwd_changed = getattr(config.token, "password_changed_at", None)
+        user_pwd_changed = user_read.password_changed_at
+        if user_pwd_changed is not None:
+            if token_pwd_changed is None or _coerce_naive(token_pwd_changed) < _coerce_naive(user_pwd_changed):
+                raise HTTPException(status_code=401, detail="Token invalido")
 
     async def validate_token_api(self, config: Config):
         config.response_type = RESPONSE_TYPE.OBJECT

@@ -13,3 +13,5 @@ class AccessToken(BaseModel):
     token_expiration_minutes: int = Field(...)
     exp: Optional[datetime] = Field(default=None)
     permissions: List[str] = Field(...)
+    # SPEC-006 T10
+    password_changed_at: Optional[datetime] = Field(default=None)

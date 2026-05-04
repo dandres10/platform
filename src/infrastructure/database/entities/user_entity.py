@@ -18,6 +18,8 @@ class UserEntity(Base):
     last_name = Column(String(255), nullable=True)
     phone = Column(String(20), nullable=True)
     refresh_token = Column(Text, nullable=True)
+    # SPEC-006 T10
+    password_changed_at = Column(DateTime, nullable=True)
     state = Column(Boolean, nullable=False, server_default=text('true'))
     created_date = Column(DateTime, nullable=False, server_default=text('now()'))
     updated_date = Column(DateTime, nullable=False, server_default=text('now()'), onupdate=text('now()'))
