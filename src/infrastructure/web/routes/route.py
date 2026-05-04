@@ -19,6 +19,10 @@ from src.infrastructure.web.entities_routes.company_router import company_router
 from src.infrastructure.web.entities_routes.company_currency_router import company_currency_router
 from src.infrastructure.web.entities_routes.geo_division_type_router import geo_division_type_router
 from src.infrastructure.web.entities_routes.geo_division_router import geo_division_router
+# SPEC-006 T7
+from src.infrastructure.web.entities_routes.password_reset_token_router import (
+    password_reset_token_router,
+)
 
 
 
@@ -44,4 +48,6 @@ class Route:
         app.include_router(company_currency_router)
         app.include_router(geo_division_type_router)
         app.include_router(geo_division_router)
+        # SPEC-006 T7
+        app.include_router(password_reset_token_router)
         

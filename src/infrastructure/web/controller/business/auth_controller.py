@@ -58,6 +58,30 @@ from src.domain.services.use_cases.business.auth.delete_user_external import (
 from src.domain.services.use_cases.business.auth.create_user_external import (
     CreateUserExternalUseCase,
 )
+# SPEC-006 T12
+from src.domain.models.business.auth.change_password import (
+    ChangePasswordRequest,
+    ChangePasswordResponse,
+)
+from src.domain.services.use_cases.business.auth.change_password import (
+    ChangePasswordUseCase,
+)
+# SPEC-006 T13
+from src.domain.models.business.auth.forgot_password import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+)
+from src.domain.services.use_cases.business.auth.forgot_password import (
+    ForgotPasswordUseCase,
+)
+# SPEC-006 T14
+from src.domain.models.business.auth.reset_password import (
+    ResetPasswordRequest,
+    ResetPasswordResponse,
+)
+from src.domain.services.use_cases.business.auth.reset_password import (
+    ResetPasswordUseCase,
+)
 from src.core.models.filter import Pagination
 from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
@@ -104,6 +128,12 @@ class AuthController:
         self.users_external_use_case = UsersExternalUseCase()
         self.create_company_use_case = CreateCompanyUseCase()
         self.delete_company_use_case = DeleteCompanyUseCase()
+        # SPEC-006 T12
+        self.change_password_use_case = ChangePasswordUseCase()
+        # SPEC-006 T13
+        self.forgot_password_use_case = ForgotPasswordUseCase()
+        # SPEC-006 T14
+        self.reset_password_use_case = ResetPasswordUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -214,8 +244,14 @@ class AuthController:
             ),
         )
 
+        # SPEC-006 T11.a
         return Response.success_temporary_message(
-            response=CreateUserExternalResponse(message=success_message),
+            response=CreateUserExternalResponse(
+                message=success_message,
+                user_id=result.user_id if result else None,
+                token=result.token if result else None,
+                refresh_token=result.refresh_token if result else None,
+            ),
             message=success_message,
         )
 
@@ -411,5 +447,72 @@ class AuthController:
 
         return Response.success_temporary_message(
             response=DeleteCompanyResponse(message=success_message),
+            message=success_message,
+        )
+
+    # SPEC-006 T12
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def change_password(
+        self, config: Config, params: ChangePasswordRequest
+    ) -> Response[ChangePasswordResponse]:
+        result = await self.change_password_use_case.execute(
+            config=config, params=params
+        )
+        if isinstance(result, str):
+            return Response.error(response=None, message=result)
+
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_CHANGE_PASSWORD_SUCCESS.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=ChangePasswordResponse(message=success_message),
+            message=success_message,
+        )
+
+    # SPEC-006 T13
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def forgot_password(
+        self, config: Config, params: ForgotPasswordRequest
+    ) -> Response[ForgotPasswordResponse]:
+        await self.forgot_password_use_case.execute(
+            config=config, params=params
+        )
+
+        generic_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_FORGOT_PASSWORD_GENERIC.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=ForgotPasswordResponse(message=generic_message),
+            message=generic_message,
+        )
+
+    # SPEC-006 T14
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def reset_password(
+        self, config: Config, params: ResetPasswordRequest
+    ) -> Response[ResetPasswordResponse]:
+        result = await self.reset_password_use_case.execute(
+            config=config, params=params
+        )
+        if isinstance(result, str):
+            return Response.error(response=None, message=result)
+
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_RESET_PASSWORD_SUCCESS.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=ResetPasswordResponse(message=success_message),
             message=success_message,
         )

@@ -12,6 +12,8 @@ class User(BaseModel):
     last_name: Optional[str] = Field(default=None, max_length=255)
     phone: Optional[str] = Field(default=None, max_length=20)
     refresh_token: Optional[str] = Field(default=None)
+    # SPEC-006 T10
+    password_changed_at: Optional[datetime] = Field(default=None)
     state: bool = Field(default=True)
     created_date: Optional[datetime] = Field(default_factory=datetime.now)
     updated_date: Optional[datetime] = Field(default_factory=datetime.now)

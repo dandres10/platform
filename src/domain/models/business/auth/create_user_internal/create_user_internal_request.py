@@ -1,6 +1,8 @@
 from pydantic import BaseModel, EmailStr, Field, UUID4, field_validator
 from typing import Optional, List
 
+from src.core.classes.password import Password
+
 
 class LocationRolItem(BaseModel):
     location_id: UUID4 = Field(..., description="ID de la ubicación")
@@ -31,6 +33,12 @@ class CreateUserInternalRequest(BaseModel):
     phone: Optional[str] = Field(None, max_length=20, description="Teléfono de contacto")
     token_expiration_minutes: Optional[int] = Field(default=60, ge=5, le=1440, description="Minutos de expiración del token")
     refresh_token_expiration_minutes: Optional[int] = Field(default=1440, ge=60, le=43200, description="Minutos de expiración del refresh token")
+
+    # SPEC-006 T11.b
+    @field_validator("password")
+    @classmethod
+    def _validate_password_policy(cls, v: str) -> str:
+        return Password.validate_policy(v)
 
     @field_validator('location_rol')
     @classmethod

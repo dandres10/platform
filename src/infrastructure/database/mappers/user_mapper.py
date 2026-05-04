@@ -19,6 +19,8 @@ def map_to_user(user_entity: UserEntity) -> User:
         last_name=user_entity.last_name,
         phone=user_entity.phone,
         refresh_token=user_entity.refresh_token,
+        # SPEC-006 T10
+        password_changed_at=user_entity.password_changed_at,
         state=user_entity.state,
         created_date=user_entity.created_date,
         updated_date=user_entity.updated_date,
@@ -38,6 +40,8 @@ def map_to_user_entity(user: User) -> UserEntity:
         last_name=user.last_name,
         phone=user.phone,
         refresh_token=user.refresh_token,
+        # SPEC-006 T10
+        password_changed_at=user.password_changed_at,
         state=user.state,
         created_date=user.created_date,
         updated_date=user.updated_date,
@@ -70,6 +74,8 @@ def map_to_update_user_entity(user: UserUpdate) -> UserEntity:
         last_name=user.last_name,
         phone=user.phone,
         refresh_token=user.refresh_token,
+        # SPEC-006 T10
+        password_changed_at=user.password_changed_at,
         state=user.state,
     )
 

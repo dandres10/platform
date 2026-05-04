@@ -40,6 +40,21 @@ from src.domain.models.business.auth.create_user_external import (
     CreateUserExternalRequest,
     CreateUserExternalResponse,
 )
+# SPEC-006 T12
+from src.domain.models.business.auth.change_password import (
+    ChangePasswordRequest,
+    ChangePasswordResponse,
+)
+# SPEC-006 T13
+from src.domain.models.business.auth.forgot_password import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+)
+# SPEC-006 T14
+from src.domain.models.business.auth.reset_password import (
+    ResetPasswordRequest,
+    ResetPasswordResponse,
+)
 from src.core.models.filter import Pagination
 from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
@@ -245,3 +260,48 @@ async def delete_company(
     config: Config = Depends(get_config)
 ) -> Response[DeleteCompanyResponse]:
     return await auth_controller.delete_company(config=config, company_id=company_id)
+
+
+# SPEC-006 T12
+@auth_router.post(
+    "/change-password",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[ChangePasswordResponse],
+    description="Usuario autenticado cambia su propia contraseña. Invalida tokens de reset activos y JWTs emitidos antes del cambio."
+)
+@execute_transaction_route(enabled=settings.has_track)
+async def change_password(
+    params: ChangePasswordRequest,
+    config: Config = Depends(get_config),
+) -> Response[ChangePasswordResponse]:
+    return await auth_controller.change_password(config=config, params=params)
+
+
+# SPEC-006 T13
+@auth_router.post(
+    "/forgot-password",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[ForgotPasswordResponse],
+    description="Solicita reset de password. Siempre retorna 200 con el mismo mensaje genérico (no revela si el email existe)."
+)
+@execute_transaction_route(enabled=settings.has_track)
+async def forgot_password(
+    params: ForgotPasswordRequest,
+    config: Config = Depends(get_config_login),
+) -> Response[ForgotPasswordResponse]:
+    return await auth_controller.forgot_password(config=config, params=params)
+
+
+# SPEC-006 T14
+@auth_router.post(
+    "/reset-password",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[ResetPasswordResponse],
+    description="Aplica nueva password usando token recibido por email. Valida token (existe, no expirado, no usado), setea password, invalida JWTs previos y consume el token."
+)
+@execute_transaction_route(enabled=settings.has_track)
+async def reset_password(
+    params: ResetPasswordRequest,
+    config: Config = Depends(get_config_login),
+) -> Response[ResetPasswordResponse]:
+    return await auth_controller.reset_password(config=config, params=params)
