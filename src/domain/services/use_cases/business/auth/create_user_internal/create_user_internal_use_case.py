@@ -1,3 +1,4 @@
+import logging
 from typing import Union
 from src.core.config import settings
 from src.core.enums.layer import LAYER
@@ -9,6 +10,15 @@ from src.core.enums.keys_message import KEYS_MESSAGES
 from src.core.wrappers.execute_transaction import execute_transaction
 from src.core.classes.async_message import Message
 from src.core.models.message import MessageCoreEntity
+# SPEC-006 T11.b
+from src.domain.models.business.notifications.send_email_request import (
+    SendEmailRequest,
+)
+from src.domain.services.use_cases.business.notifications.send_email_use_case import (
+    SendEmailUseCase,
+)
+
+logger = logging.getLogger(__name__)
 
 from src.domain.models.business.auth.create_user_internal import (
     CreateUserInternalRequest,
@@ -99,6 +109,8 @@ class CreateUserInternalUseCase:
 
         self.auth_repository = AuthRepository()
         self.message = Message()
+        # SPEC-006 T11.b
+        self.send_email_uc = SendEmailUseCase()
 
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
@@ -279,6 +291,25 @@ class CreateUserInternalUseCase:
                         key=KEYS_MESSAGES.CORE_ERROR_SAVING_RECORD.value
                     ),
                 )
-        
+
+        # SPEC-006 T11.b
+        full_name = f"{params.first_name} {params.last_name}".strip()
+        try:
+            await self.send_email_uc.execute(
+                config=config,
+                params=SendEmailRequest(
+                    to=params.email,
+                    subject_key=KEYS_MESSAGES.EMAIL_WELCOME_SUBJECT.value,
+                    body_key=KEYS_MESSAGES.EMAIL_WELCOME_BODY.value,
+                    template_vars={"name": full_name},
+                ),
+            )
+        except Exception as e:
+            logger.warning(
+                "welcome email send failed for user %s: %s",
+                user_created.id,
+                e,
+            )
+
         return None
 
