@@ -1,5 +1,5 @@
 # SPEC-006 T14
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union
 
 from src.core.classes.async_message import Message
@@ -67,7 +67,7 @@ class ResetPasswordUseCase:
                 ),
             )
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         if token.expires_at < now:
             return await self.message.get_message(
                 config=config,

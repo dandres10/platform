@@ -1,6 +1,6 @@
 # SPEC-006 T7
 """Tests para /password-reset-token entity router."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -56,7 +56,7 @@ def _save_payload():
     return {
         "user_id": str(uuid4()),
         "token": "abc123def456",
-        "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
+        "expires_at": (datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)).isoformat(),
         "state": True,
     }
 
@@ -66,7 +66,7 @@ def _update_payload():
         "id": str(uuid4()),
         "user_id": str(uuid4()),
         "token": "updated_token",
-        "expires_at": (datetime.utcnow() + timedelta(hours=1)).isoformat(),
+        "expires_at": (datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)).isoformat(),
         "used_at": None,
         "state": True,
     }

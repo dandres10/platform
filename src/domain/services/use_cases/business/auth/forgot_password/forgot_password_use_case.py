@@ -1,6 +1,6 @@
 # SPEC-006 T13
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Union
 from uuid import uuid4
 
@@ -80,7 +80,7 @@ class ForgotPasswordUseCase:
         if isinstance(users, list) and len(users) == 1:
             user = users[0]
             token_value = uuid4().hex
-            expires_at = datetime.utcnow() + timedelta(
+            expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(
                 minutes=RESET_TOKEN_TTL_MINUTES
             )
 

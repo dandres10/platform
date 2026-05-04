@@ -1,5 +1,5 @@
 # SPEC-006 T13
-from datetime import datetime
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
@@ -84,7 +84,7 @@ async def test_happy_path_creates_token_and_sends_email():
         id=uuid4(),
         user_id=user_id,
         token="abc",
-        expires_at=datetime.utcnow(),
+        expires_at=datetime.now(timezone.utc).replace(tzinfo=None),
         used_at=None,
         state=True,
     )

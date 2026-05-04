@@ -1,5 +1,5 @@
 # SPEC-006 T12
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Union
 
 from src.core.classes.async_message import Message
@@ -72,7 +72,7 @@ class ChangePasswordUseCase:
             )
 
         new_hash = Password.hash_password(password=params.new_password)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
 
         update_result = await self.user_update_uc.execute(
             config=config,

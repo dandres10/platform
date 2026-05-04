@@ -1,5 +1,5 @@
 # SPEC-006 T6
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Union
 from uuid import UUID
 
@@ -153,7 +153,7 @@ class PasswordResetTokenRepository(IPasswordResetTokenRepository):
         if not entity:
             return None
 
-        entity.used_at = datetime.utcnow()
+        entity.used_at = datetime.now(timezone.utc).replace(tzinfo=None)
         await db.flush()
         await db.refresh(entity)
         return map_to_password_reset_token(entity)
@@ -169,7 +169,7 @@ class PasswordResetTokenRepository(IPasswordResetTokenRepository):
                 PasswordResetTokenEntity.user_id == user_id,
                 PasswordResetTokenEntity.used_at.is_(None),
             )
-            .values(used_at=datetime.utcnow())
+            .values(used_at=datetime.now(timezone.utc).replace(tzinfo=None))
         )
         result = await db.execute(stmt)
         await db.flush()
