@@ -40,6 +40,11 @@ from src.domain.models.business.auth.create_user_external import (
     CreateUserExternalRequest,
     CreateUserExternalResponse,
 )
+# SPEC-006 T12
+from src.domain.models.business.auth.change_password import (
+    ChangePasswordRequest,
+    ChangePasswordResponse,
+)
 from src.core.models.filter import Pagination
 from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
@@ -245,3 +250,18 @@ async def delete_company(
     config: Config = Depends(get_config)
 ) -> Response[DeleteCompanyResponse]:
     return await auth_controller.delete_company(config=config, company_id=company_id)
+
+
+# SPEC-006 T12
+@auth_router.post(
+    "/change-password",
+    status_code=status.HTTP_200_OK,
+    response_model=Response[ChangePasswordResponse],
+    description="Usuario autenticado cambia su propia contraseña. Invalida tokens de reset activos y JWTs emitidos antes del cambio."
+)
+@execute_transaction_route(enabled=settings.has_track)
+async def change_password(
+    params: ChangePasswordRequest,
+    config: Config = Depends(get_config),
+) -> Response[ChangePasswordResponse]:
+    return await auth_controller.change_password(config=config, params=params)

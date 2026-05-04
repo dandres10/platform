@@ -58,6 +58,14 @@ from src.domain.services.use_cases.business.auth.delete_user_external import (
 from src.domain.services.use_cases.business.auth.create_user_external import (
     CreateUserExternalUseCase,
 )
+# SPEC-006 T12
+from src.domain.models.business.auth.change_password import (
+    ChangePasswordRequest,
+    ChangePasswordResponse,
+)
+from src.domain.services.use_cases.business.auth.change_password import (
+    ChangePasswordUseCase,
+)
 from src.core.models.filter import Pagination
 from typing import List
 from src.domain.models.business.auth.list_users_by_location import (
@@ -104,6 +112,8 @@ class AuthController:
         self.users_external_use_case = UsersExternalUseCase()
         self.create_company_use_case = CreateCompanyUseCase()
         self.delete_company_use_case = DeleteCompanyUseCase()
+        # SPEC-006 T12
+        self.change_password_use_case = ChangePasswordUseCase()
 
     @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
     async def login(self, config: Config, params: AuthLoginRequest) -> Response:
@@ -417,5 +427,28 @@ class AuthController:
 
         return Response.success_temporary_message(
             response=DeleteCompanyResponse(message=success_message),
+            message=success_message,
+        )
+
+    # SPEC-006 T12
+    @execute_transaction(layer=LAYER.I_W_C_E.value, enabled=settings.has_track)
+    async def change_password(
+        self, config: Config, params: ChangePasswordRequest
+    ) -> Response[ChangePasswordResponse]:
+        result = await self.change_password_use_case.execute(
+            config=config, params=params
+        )
+        if isinstance(result, str):
+            return Response.error(response=None, message=result)
+
+        success_message = await self.message.get_message(
+            config=config,
+            message=MessageCoreEntity(
+                key=KEYS_MESSAGES.AUTH_CHANGE_PASSWORD_SUCCESS.value
+            ),
+        )
+
+        return Response.success_temporary_message(
+            response=ChangePasswordResponse(message=success_message),
             message=success_message,
         )
