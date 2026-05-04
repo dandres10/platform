@@ -214,8 +214,14 @@ class AuthController:
             ),
         )
 
+        # SPEC-006 T11.a
         return Response.success_temporary_message(
-            response=CreateUserExternalResponse(message=success_message),
+            response=CreateUserExternalResponse(
+                message=success_message,
+                user_id=result.user_id if result else None,
+                token=result.token if result else None,
+                refresh_token=result.refresh_token if result else None,
+            ),
             message=success_message,
         )
 

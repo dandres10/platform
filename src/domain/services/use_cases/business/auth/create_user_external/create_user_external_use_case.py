@@ -1,7 +1,11 @@
+import logging
 from typing import Union
+# SPEC-006 T11.a
+from src.core.classes.token import Token
 from src.core.config import settings
 from src.core.enums.layer import LAYER
 from src.core.enums.rol_type import ROL_TYPE
+from src.core.models.access_token import AccessToken
 from src.core.models.config import Config
 from src.core.models.filter import Pagination, FilterManager
 from src.core.enums.condition_type import CONDITION_TYPE
@@ -11,9 +15,19 @@ from src.core.wrappers.execute_transaction import execute_transaction
 from src.core.classes.async_message import Message
 from src.core.models.message import MessageCoreEntity
 
+# SPEC-006 T11.a
 from src.domain.models.business.auth.create_user_external import (
     CreateUserExternalRequest,
+    CreateUserExternalResponse,
 )
+from src.domain.models.business.notifications.send_email_request import (
+    SendEmailRequest,
+)
+from src.domain.services.use_cases.business.notifications.send_email_use_case import (
+    SendEmailUseCase,
+)
+
+logger = logging.getLogger(__name__)
 from src.domain.models.entities.platform.index import PlatformSave
 from src.domain.models.entities.user.index import UserSave
 from src.domain.models.entities.language.index import LanguageRead
@@ -93,16 +107,20 @@ class CreateUserExternalUseCase:
         self.user_save_uc = UserSaveUseCase(user_repository)
         self.user_location_rol_save_uc = UserLocationRolSaveUseCase(user_location_rol_repository)
         self.user_country_save_uc = UserCountrySaveUseCase(user_country_repository)
-        
+
         self.auth_repository = AuthRepository()
         self.message = Message()
+        # SPEC-006 T11.a
+        self.token = Token()
+        self.send_email_uc = SendEmailUseCase()
 
+    # SPEC-006 T11.a
     @execute_transaction(layer=LAYER.D_S_U_E.value, enabled=settings.has_track)
     async def execute(
         self,
         config: Config,
         params: CreateUserExternalRequest,
-    ) -> Union[str, None]:
+    ) -> Union[CreateUserExternalResponse, str, None]:
         config.response_type = RESPONSE_TYPE.OBJECT
 
         language = await self.language_read_uc.execute(
@@ -279,4 +297,41 @@ class CreateUserExternalUseCase:
                     ),
                 )
 
-        return None
+        # SPEC-006 T11.a
+        access_token_data = AccessToken(
+            rol_id=str(rol_id),
+            rol_code=rol.code,
+            user_id=str(user_created.id),
+            location_id=None,
+            currency_id=str(params.currency_id),
+            company_id=None,
+            token_expiration_minutes=params.token_expiration_minutes,
+            permissions=[p.name for p in _permissions],
+        )
+        access_token = self.token.create_access_token(access_token_data)
+        refresh_token = self.token.create_refresh_token(access_token_data)
+
+        full_name = f"{params.first_name} {params.last_name}".strip()
+        try:
+            await self.send_email_uc.execute(
+                config=config,
+                params=SendEmailRequest(
+                    to=params.email,
+                    subject_key=KEYS_MESSAGES.EMAIL_WELCOME_SUBJECT.value,
+                    body_key=KEYS_MESSAGES.EMAIL_WELCOME_BODY.value,
+                    template_vars={"name": full_name},
+                ),
+            )
+        except Exception as e:
+            logger.warning(
+                "welcome email send failed for user %s: %s",
+                user_created.id,
+                e,
+            )
+
+        return CreateUserExternalResponse(
+            message="ok",
+            user_id=user_created.id,
+            token=access_token,
+            refresh_token=refresh_token,
+        )
