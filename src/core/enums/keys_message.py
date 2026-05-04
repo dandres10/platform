@@ -111,3 +111,28 @@ class KEYS_MESSAGES(str, Enum):
 
     # SPEC-030 T2
     AUTH_LOGIN_INVALID_CREDENTIALS = "auth_login_invalid_credentials"
+
+    # SPEC-006 T9 — email templates
+    EMAIL_WELCOME_SUBJECT = "email_welcome_subject"
+    EMAIL_WELCOME_BODY = "email_welcome_body"
+    EMAIL_RESET_PASSWORD_SUBJECT = "email_reset_password_subject"
+    EMAIL_RESET_PASSWORD_BODY = "email_reset_password_body"
+
+    # SPEC-006 T9 — register flow
+    AUTH_REGISTER_EMAIL_ALREADY_EXISTS = "auth_register_email_already_exists"
+    AUTH_REGISTER_ROL_USER_NOT_FOUND = "auth_register_rol_user_not_found"
+    AUTH_REGISTER_SUCCESS = "auth_register_success"
+
+    # SPEC-006 T9 — change password flow
+    AUTH_CHANGE_PASSWORD_USER_NOT_FOUND = "auth_change_password_user_not_found"
+    AUTH_CHANGE_PASSWORD_OLD_INCORRECT = "auth_change_password_old_incorrect"
+    AUTH_CHANGE_PASSWORD_SUCCESS = "auth_change_password_success"
+
+    # SPEC-006 T9 — forgot password flow
+    AUTH_FORGOT_PASSWORD_GENERIC = "auth_forgot_password_generic"
+
+    # SPEC-006 T9 — reset password flow
+    AUTH_RESET_PASSWORD_TOKEN_INVALID = "auth_reset_password_token_invalid"
+    AUTH_RESET_PASSWORD_TOKEN_EXPIRED = "auth_reset_password_token_expired"
+    AUTH_RESET_PASSWORD_TOKEN_ALREADY_USED = "auth_reset_password_token_already_used"
+    AUTH_RESET_PASSWORD_SUCCESS = "auth_reset_password_success"
