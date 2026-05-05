@@ -80,7 +80,7 @@ async def test_create_company_atomic(client, seed_ids):
         json=payload,
         headers={"language": "es", "timezone": "America/Bogota"},
     )
-    assert r.status_code == 201, r.text
+    assert r.status_code == 200, r.text
     body = r.json()
     assert body["notification_type"] == "SUCCESS"
 
@@ -148,7 +148,6 @@ async def test_create_company_atomic(client, seed_ids):
         await session.commit()
 
 
-@pytest.mark.skip(reason="Bug preexistente: validación NIT duplicado en create-company retorna 201 en vez de error. Documentar como deuda en SPEC futuro.")
 async def test_create_company_duplicate_nit_rejected(client, seed_ids):
     # SPEC-001: NIT duplicado retorna error
     nit = f"DUP-{str(uuid4())[:8]}"
@@ -182,17 +181,16 @@ async def test_create_company_duplicate_nit_rejected(client, seed_ids):
     }
     headers = {"language": "es", "timezone": "America/Bogota"}
     r1 = await client.post("/v1/auth/create-company", json=base_payload, headers=headers)
-    assert r1.status_code == 201, r1.text
+    assert r1.status_code == 200, r1.text
 
     base_payload["admin_user"]["email"] = email2
     base_payload["admin_user"]["identification"] = f"IDT-{str(uuid4())[:8]}"
     base_payload["location"]["email"] = email2
     r2 = await client.post("/v1/auth/create-company", json=base_payload, headers=headers)
-    # NIT ya existe → error de negocio
-    assert r2.status_code in (200, 400, 409)
-    if r2.status_code == 200:
-        body = r2.json()
-        assert body["notification_type"] in ("ERROR", "WARNING") or "NIT" in body.get("message", "").upper()
+    assert r2.status_code == 200, r2.text
+    body2 = r2.json()
+    assert body2["notification_type"] == "ERROR"
+    assert "NIT" in body2["message"].upper()
 
     # Cleanup company creada
     from src.infrastructure.database.config.async_config_db import async_session_db

@@ -232,7 +232,7 @@ async def users_external(
 
 @auth_router.post(
     "/create-company",
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     response_model=Response[CreateCompanyResponse],
     summary="Crear compañía completa",
     description="Endpoint para auto-registro de nuevas compañías con toda su estructura inicial"
