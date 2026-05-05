@@ -84,7 +84,7 @@ async def test_happy_path_creates_token_and_sends_email():
         id=uuid4(),
         user_id=user_id,
         token="abc",
-        expires_at=datetime.now(timezone.utc).replace(tzinfo=None),
+        expires_at=datetime.now(timezone.utc),
         used_at=None,
         state=True,
     )

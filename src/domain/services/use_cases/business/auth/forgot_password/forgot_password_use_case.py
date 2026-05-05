@@ -80,7 +80,7 @@ class ForgotPasswordUseCase:
         if isinstance(users, list) and len(users) == 1:
             user = users[0]
             token_value = uuid4().hex
-            expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(
+            expires_at = datetime.now(timezone.utc) + timedelta(
                 minutes=RESET_TOKEN_TTL_MINUTES
             )
 

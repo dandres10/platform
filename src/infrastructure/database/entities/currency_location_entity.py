@@ -12,5 +12,5 @@ class CurrencyLocationEntity(Base):
     currency_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.currency.id'), nullable=False)
     location_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.location.id'), nullable=False)
     state = Column(Boolean, nullable=False, server_default=text('true'))
-    created_date = Column(DateTime, nullable=False, server_default=text('now()'))
-    updated_date = Column(DateTime, nullable=False, server_default=text('now()'), onupdate=text('now()'))
+    created_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
+    updated_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'), onupdate=text('now()'))

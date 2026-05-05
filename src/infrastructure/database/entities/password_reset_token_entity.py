@@ -28,10 +28,10 @@ class PasswordResetTokenEntity(Base):
         nullable=False,
     )
     token = Column(String(64), nullable=False, unique=True)
-    expires_at = Column(DateTime, nullable=False)
-    used_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
     state = Column(Boolean, nullable=False, server_default=text("true"))
-    created_date = Column(DateTime, nullable=False, server_default=text("now()"))
+    created_date = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
     updated_date = Column(
         DateTime, nullable=False, server_default=text("now()"), onupdate=text("now()")
     )

@@ -72,7 +72,7 @@ class ChangePasswordUseCase:
             )
 
         new_hash = Password.hash_password(password=params.new_password)
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = datetime.now(timezone.utc)
 
         update_result = await self.user_update_uc.execute(
             config=config,

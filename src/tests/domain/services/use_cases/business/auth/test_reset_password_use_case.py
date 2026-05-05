@@ -41,7 +41,7 @@ def _token(*, user_id, used_at=None, expires_in_seconds=3600):
         id=uuid4(),
         user_id=user_id,
         token="abc123def456",
-        expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(seconds=expires_in_seconds),
+        expires_at=datetime.now(timezone.utc) + timedelta(seconds=expires_in_seconds),
         used_at=used_at,
         state=True,
     )
@@ -75,7 +75,7 @@ async def test_returns_already_used_when_token_used_at_set():
     uc = ResetPasswordUseCase()
     cfg = _config()
     user_id = uuid4()
-    used_token = _token(user_id=user_id, used_at=datetime.now(timezone.utc).replace(tzinfo=None))
+    used_token = _token(user_id=user_id, used_at=datetime.now(timezone.utc))
 
     with patch.object(
         uc.password_reset_token_repository,

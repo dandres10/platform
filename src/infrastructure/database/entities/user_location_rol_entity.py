@@ -13,5 +13,5 @@ class UserLocationRolEntity(Base):
     location_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.location.id'), nullable=True)
     rol_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.rol.id'), nullable=False)
     state = Column(Boolean, nullable=False, server_default=text('true'))
-    created_date = Column(DateTime, nullable=False, server_default=text('now()'))
-    updated_date = Column(DateTime, nullable=False, server_default=text('now()'), onupdate=text('now()'))
+    created_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
+    updated_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'), onupdate=text('now()'))

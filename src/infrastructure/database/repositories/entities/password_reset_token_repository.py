@@ -153,7 +153,7 @@ class PasswordResetTokenRepository(IPasswordResetTokenRepository):
         if not entity:
             return None
 
-        entity.used_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        entity.used_at = datetime.now(timezone.utc)
         await db.flush()
         await db.refresh(entity)
         return map_to_password_reset_token(entity)
@@ -169,7 +169,7 @@ class PasswordResetTokenRepository(IPasswordResetTokenRepository):
                 PasswordResetTokenEntity.user_id == user_id,
                 PasswordResetTokenEntity.used_at.is_(None),
             )
-            .values(used_at=datetime.now(timezone.utc).replace(tzinfo=None))
+            .values(used_at=datetime.now(timezone.utc))
         )
         result = await db.execute(stmt)
         await db.flush()

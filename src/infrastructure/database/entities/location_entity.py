@@ -21,5 +21,5 @@ class LocationEntity(Base):
     longitude = Column(Numeric(11, 8), nullable=True)
     google_place_id = Column(String(255), nullable=True)
     state = Column(Boolean, nullable=False, server_default=text('true'))
-    created_date = Column(DateTime, nullable=False, server_default=text('now()'))
-    updated_date = Column(DateTime, nullable=False, server_default=text('now()'), onupdate=text('now()'))
+    created_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
+    updated_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'), onupdate=text('now()'))

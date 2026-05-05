@@ -132,12 +132,12 @@ async def test_validate_rejects_when_jwt_has_no_pwd_changed_but_user_does():
         assert exc.value.status_code == 401
 
 
-async def test_validate_handles_aware_vs_naive_datetimes():
+async def test_validate_handles_both_aware_datetimes():
+    """SPEC-033: con TIMESTAMPTZ + Pydantic AccessToken, ambos lados son aware."""
     t = Token()
-    aware = datetime(2026, 5, 4, 10, 0, 0, tzinfo=timezone.utc)
-    naive = datetime(2026, 5, 4, 10, 0, 0)
-    cfg = _config_with_token(password_changed_at=aware)
-    user = _user_read_with(pwd_changed=naive)
+    pwd_changed = datetime(2026, 5, 4, 10, 0, 0, tzinfo=timezone.utc)
+    cfg = _config_with_token(password_changed_at=pwd_changed)
+    user = _user_read_with(pwd_changed=pwd_changed)
 
     with patch.object(
         t.user_read_use_case, "execute", new=AsyncMock(return_value=user)

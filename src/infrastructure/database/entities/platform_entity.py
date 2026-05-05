@@ -14,5 +14,5 @@ class PlatformEntity(Base):
     currency_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.currency.id'), nullable=False)
     token_expiration_minutes = Column(Integer, nullable=False, server_default=text('60'))
     refresh_token_expiration_minutes = Column(Integer, nullable=False, server_default=text('62'))
-    created_date = Column(DateTime, nullable=False, server_default=text('now()'))
-    updated_date = Column(DateTime, nullable=False, server_default=text('now()'), onupdate=text('now()'))
+    created_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
+    updated_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'), onupdate=text('now()'))

@@ -13,5 +13,5 @@ class CompanyCurrencyEntity(Base):
     currency_id = Column(UUID(as_uuid=True), nullable=False)
     is_base = Column(Boolean, nullable=False, server_default=text('false'))
     state = Column(Boolean, nullable=False, server_default=text('true'))
-    created_date = Column(DateTime, nullable=False, server_default=text('now()'))
-    updated_date = Column(DateTime, nullable=False, server_default=text('now()'), onupdate=text('now()'))
+    created_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
+    updated_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'), onupdate=text('now()'))

@@ -37,12 +37,12 @@ async def test_save_adds_flushes_refreshes_and_returns_mapped_token():
 
     saved_id = uuid4()
     user_id = uuid4()
-    expires = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)
+    expires = datetime.now(timezone.utc) + timedelta(hours=1)
 
     async def _refresh(entity):
         entity.id = saved_id
-        entity.created_date = datetime.now(timezone.utc).replace(tzinfo=None)
-        entity.updated_date = datetime.now(timezone.utc).replace(tzinfo=None)
+        entity.created_date = datetime.now(timezone.utc)
+        entity.updated_date = datetime.now(timezone.utc)
 
     cfg.async_db.refresh = AsyncMock(side_effect=_refresh)
 
@@ -82,11 +82,11 @@ async def test_read_by_token_returns_mapped_entity_when_found():
         id=uuid4(),
         user_id=uuid4(),
         token="found",
-        expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1),
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
         used_at=None,
         state=True,
-        created_date=datetime.now(timezone.utc).replace(tzinfo=None),
-        updated_date=datetime.now(timezone.utc).replace(tzinfo=None),
+        created_date=datetime.now(timezone.utc),
+        updated_date=datetime.now(timezone.utc),
     )
     fake_result = MagicMock()
     fake_result.scalars.return_value.first.return_value = entity
@@ -106,11 +106,11 @@ async def test_mark_used_sets_used_at_timestamp():
         id=target_id,
         user_id=uuid4(),
         token="t",
-        expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1),
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
         used_at=None,
         state=True,
-        created_date=datetime.now(timezone.utc).replace(tzinfo=None),
-        updated_date=datetime.now(timezone.utc).replace(tzinfo=None),
+        created_date=datetime.now(timezone.utc),
+        updated_date=datetime.now(timezone.utc),
     )
     fake_result = MagicMock()
     fake_result.scalars.return_value.first.return_value = entity

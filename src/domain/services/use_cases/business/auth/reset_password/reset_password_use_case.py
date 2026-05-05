@@ -67,7 +67,7 @@ class ResetPasswordUseCase:
                 ),
             )
 
-        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        now = datetime.now(timezone.utc)
         if token.expires_at < now:
             return await self.message.get_message(
                 config=config,

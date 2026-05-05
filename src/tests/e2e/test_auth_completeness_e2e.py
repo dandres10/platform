@@ -183,7 +183,7 @@ async def test_reset_password_consumes_token_and_changes_password(client, seed_e
     s = settings.database_schema
 
     token_value = uuid4().hex
-    expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
     async with async_session_db() as session:
         await session.execute(text(f"""
             INSERT INTO {s}."password_reset_token" (id, user_id, token, expires_at, used_at, state)
@@ -231,8 +231,8 @@ async def test_reset_password_rejects_already_used_token(client, seed_external_u
     s = settings.database_schema
 
     token_value = uuid4().hex
-    expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(hours=1)
-    used_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+    used_at = datetime.now(timezone.utc)
     async with async_session_db() as session:
         await session.execute(text(f"""
             INSERT INTO {s}."password_reset_token" (id, user_id, token, expires_at, used_at, state)
@@ -358,7 +358,7 @@ async def test_reset_password_rejects_expired_token(client, seed_external_user_f
     s = settings.database_schema
 
     token_value = uuid4().hex
-    expired_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=2)
+    expired_at = datetime.now(timezone.utc) - timedelta(hours=2)
     async with async_session_db() as session:
         await session.execute(text(f"""
             INSERT INTO {s}."password_reset_token" (id, user_id, token, expires_at, used_at, state)
@@ -389,9 +389,9 @@ async def test_forgot_password_token_has_one_hour_ttl(client, seed_external_user
     s = settings.database_schema
 
     payload = {"email": seed_external_user_for_password_flows["email"]}
-    before_post = datetime.now(timezone.utc).replace(tzinfo=None)
+    before_post = datetime.now(timezone.utc)
     r = await client.post("/v1/auth/forgot-password", json=payload, headers=HEADERS)
-    after_post = datetime.now(timezone.utc).replace(tzinfo=None)
+    after_post = datetime.now(timezone.utc)
     assert r.status_code == 200, r.text
 
     async with async_session_db() as session:

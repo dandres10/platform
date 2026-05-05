@@ -29,13 +29,6 @@ user_repository = UserRepository()
 api_token_repository = ApiTokenRepository()
 
 
-# SPEC-006 T10
-def _coerce_naive(dt: datetime) -> datetime:
-    if dt.tzinfo is not None:
-        return dt.replace(tzinfo=None)
-    return dt
-
-
 class Token:
     def __init__(
         self,
@@ -161,11 +154,11 @@ class Token:
         if not user_read.refresh_token:
             raise HTTPException(status_code=401, detail="Token expirado")
 
-        # SPEC-006 T10
+        # SPEC-006 T10 / SPEC-033 — todo aware (TIMESTAMPTZ + datetime aware)
         token_pwd_changed = getattr(config.token, "password_changed_at", None)
         user_pwd_changed = user_read.password_changed_at
         if user_pwd_changed is not None:
-            if token_pwd_changed is None or _coerce_naive(token_pwd_changed) < _coerce_naive(user_pwd_changed):
+            if token_pwd_changed is None or token_pwd_changed < user_pwd_changed:
                 raise HTTPException(status_code=401, detail="Token invalido")
 
     async def validate_token_api(self, config: Config):

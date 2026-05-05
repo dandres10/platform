@@ -24,7 +24,7 @@ class ApiTokenEntity(Base):
     rol_id = Column(UUID(as_uuid=True), ForeignKey(f'{settings.database_schema}.rol.id'), nullable=False)
     token = Column(Text, nullable=False, unique=True)
     state = Column(Boolean, nullable=False, server_default=text("true"))
-    created_date = Column(DateTime, nullable=False, server_default=text("now()"))
+    created_date = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
     updated_date = Column(
         DateTime, nullable=False, server_default=text("now()"), onupdate=text("now()")
     )

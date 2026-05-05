@@ -13,5 +13,5 @@ class LanguageEntity(Base):
     code = Column(String(10), nullable=False, unique=True)
     native_name = Column(String(100), nullable=True)
     state = Column(Boolean, nullable=False, server_default=text('true'))
-    created_date = Column(DateTime, nullable=False, server_default=text('now()'))
-    updated_date = Column(DateTime, nullable=False, server_default=text('now()'), onupdate=text('now()'))
+    created_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'))
+    updated_date = Column(DateTime(timezone=True), nullable=False, server_default=text('now()'), onupdate=text('now()'))
