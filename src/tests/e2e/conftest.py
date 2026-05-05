@@ -251,3 +251,71 @@ async def _assert_invariants(request, client):
         assert False, message
     else:
         warnings.warn(message, stacklevel=2)
+
+
+# SPEC-032 T1
+@pytest_asyncio.fixture(scope="function")
+async def seed_authenticated_external_user(client):
+    """User externo con refresh_token poblado (sesión activa) + override
+    _tenant_state.user_id/rol_code='USER' para que el config sintético del
+    conftest apunte al user seedeado. Restaura state previo en cleanup."""
+    from src.infrastructure.database.config.async_config_db import async_session_db
+    from src.core.config import settings
+    from src.core.classes.password import Password
+    from src.tests.e2e import _tenant_state
+    s = settings.database_schema
+
+    user_id = uuid4()
+    platform_id = uuid4()
+    ulr_id = uuid4()
+    email = f"e2e-auth-{str(uuid4())[:8]}@test.com"
+    password = "Test1234!"
+    fake_refresh = f"fake-refresh-{uuid4().hex}"
+
+    async with async_session_db() as session:
+        language = (await session.execute(text(f"SELECT id FROM {s}.\"language\" LIMIT 1"))).scalar()
+        currency = (await session.execute(text(f"SELECT id FROM {s}.\"currency\" LIMIT 1"))).scalar()
+        rol_user = (await session.execute(text(f"SELECT id FROM {s}.\"rol\" WHERE code='USER' LIMIT 1"))).scalar()
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."platform" (id, language_id, location_id, currency_id, token_expiration_minutes, refresh_token_expiration_minutes)
+            VALUES (:pid, :lang, NULL, :curr, 60, 1440)
+        """), {"pid": platform_id, "lang": language, "curr": currency})
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."user" (id, platform_id, email, password, identification, first_name, last_name, phone, refresh_token, state)
+            VALUES (:uid, :pid, :email, :pwd, :ident, 'E2E', 'Test', '+57 123', :rt, true)
+        """), {
+            "uid": user_id, "pid": platform_id, "email": email,
+            "pwd": Password.hash_password(password=password),
+            "ident": f"E2E-{str(uuid4())[:8]}",
+            "rt": fake_refresh,
+        })
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."user_location_rol" (id, user_id, location_id, rol_id, state)
+            VALUES (:ulr, :uid, NULL, :rol, true)
+        """), {"ulr": ulr_id, "uid": user_id, "rol": rol_user})
+        await session.commit()
+
+    prev_user = _tenant_state._ACTIVE.get("user_id")
+    prev_role = _tenant_state._ACTIVE.get("rol_code", "ADMIN")
+    _tenant_state._ACTIVE["user_id"] = str(user_id)
+    _tenant_state._ACTIVE["rol_code"] = "USER"
+
+    yield {
+        "email": email,
+        "password": password,
+        "user_id": str(user_id),
+        "refresh_token": fake_refresh,
+    }
+
+    _tenant_state._ACTIVE["user_id"] = prev_user
+    _tenant_state._ACTIVE["rol_code"] = prev_role
+
+    async with async_session_db() as session:
+        await session.execute(text(f'DELETE FROM {s}."password_reset_token" WHERE user_id = :uid'), {"uid": user_id})
+        await session.execute(text(f'DELETE FROM {s}."user_location_rol" WHERE user_id = :uid'), {"uid": user_id})
+        await session.execute(text(f'DELETE FROM {s}."user" WHERE id = :uid'), {"uid": user_id})
+        await session.execute(text(f'DELETE FROM {s}."platform" WHERE id = :pid'), {"pid": platform_id})
+        await session.commit()
