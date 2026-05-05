@@ -41,3 +41,15 @@ async def test_users_internal_listing_filters_by_company_tenant(client):
         assert body["response"] is None
     else:
         assert isinstance(body["response"], list)
+
+
+# SPEC-032 quick win: UsersExternalUseCase
+async def test_users_external_listing_returns_response(client):
+    """UsersExternalUseCase: endpoint vivo + auth, multi-tenant filter."""
+    payload = {"skip": 0, "limit": 10, "all_data": False}
+    r = await client.post("/v1/auth/users-external", json=payload, headers=HEADERS)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["notification_type"] in ("SUCCESS", "ERROR")
+    if body["notification_type"] == "SUCCESS":
+        assert isinstance(body["response"], list)

@@ -60,3 +60,16 @@ async def test_send_email_with_template_vars_substitutes(client):
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["notification_type"] == "SUCCESS"
+
+
+async def test_send_email_with_nonexistent_body_key_returns_error(client):
+    """body_key inexistente (subject sí existe) → ERROR."""
+    payload = {
+        "to": "alice@test.com",
+        "subject_key": "email_welcome_subject",
+        "body_key": f"nonexistent_body_{uuid4().hex[:8]}",
+    }
+    r = await client.post("/v1/notifications/email", json=payload, headers=HEADERS)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["notification_type"] == "ERROR"

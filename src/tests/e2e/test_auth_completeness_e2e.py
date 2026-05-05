@@ -320,3 +320,91 @@ async def test_change_password_rejects_weak_new_password(client):
     payload = {"old_password": "anything", "new_password": "weak"}
     r = await client.post("/v1/auth/change-password", json=payload, headers=HEADERS_AUTH)
     assert r.status_code == 422, r.text
+
+
+# SPEC-032 quick win — gaps en UCs ya cubiertos
+# ---------------------------------------------------------------------------
+
+
+async def test_create_user_external_rejects_duplicate_email(client, seed_external_user_for_password_flows):
+    """CreateUserExternalUseCase guard: email duplicado debería rechazar."""
+    from src.infrastructure.database.config.async_config_db import async_session_db
+    from src.core.config import settings
+    s = settings.database_schema
+
+    async with async_session_db() as session:
+        language_id = (await session.execute(text(f"SELECT id FROM {s}.\"language\" WHERE code='es' LIMIT 1"))).scalar()
+        currency_id = (await session.execute(text(f"SELECT id FROM {s}.\"currency\" LIMIT 1"))).scalar()
+
+    payload = {
+        "language_id": str(language_id),
+        "currency_id": str(currency_id),
+        "email": seed_external_user_for_password_flows["email"],
+        "password": "Strong1!Pass",
+        "identification": f"DUP-EMAIL-{uuid4().hex[:8]}",
+        "first_name": "Dup",
+        "last_name": "Email",
+    }
+    r = await client.post("/v1/auth/create-user-external", json=payload, headers=HEADERS)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["notification_type"] == "ERROR"
+
+
+async def test_reset_password_rejects_expired_token(client, seed_external_user_for_password_flows):
+    """Token con expires_at en el pasado → AUTH_RESET_PASSWORD_TOKEN_EXPIRED."""
+    from src.infrastructure.database.config.async_config_db import async_session_db
+    from src.core.config import settings
+    s = settings.database_schema
+
+    token_value = uuid4().hex
+    expired_at = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=2)
+    async with async_session_db() as session:
+        await session.execute(text(f"""
+            INSERT INTO {s}."password_reset_token" (id, user_id, token, expires_at, used_at, state)
+            VALUES (:id, :uid, :tk, :exp, NULL, true)
+        """), {
+            "id": uuid4(),
+            "uid": seed_external_user_for_password_flows["user_id"],
+            "tk": token_value,
+            "exp": expired_at,
+        })
+        await session.commit()
+
+    payload = {"token": token_value, "new_password": "Strong1!Pass"}
+    r = await client.post("/v1/auth/reset-password", json=payload, headers=HEADERS)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["notification_type"] == "ERROR"
+
+
+async def test_forgot_password_token_has_one_hour_ttl(client, seed_external_user_for_password_flows):
+    """Verifica que expires_at se setea ~now+60min (RESET_TOKEN_TTL_MINUTES=60).
+
+    Compara contra el clock de Python (no contra created_date de PostgreSQL)
+    porque pueden estar en zonas horarias distintas en infraestructuras
+    no-UTC."""
+    from src.infrastructure.database.config.async_config_db import async_session_db
+    from src.core.config import settings
+    s = settings.database_schema
+
+    payload = {"email": seed_external_user_for_password_flows["email"]}
+    before_post = datetime.now(timezone.utc).replace(tzinfo=None)
+    r = await client.post("/v1/auth/forgot-password", json=payload, headers=HEADERS)
+    after_post = datetime.now(timezone.utc).replace(tzinfo=None)
+    assert r.status_code == 200, r.text
+
+    async with async_session_db() as session:
+        row = (await session.execute(
+            text(f'SELECT expires_at FROM {s}."password_reset_token" WHERE user_id = :uid ORDER BY created_date DESC LIMIT 1'),
+            {"uid": seed_external_user_for_password_flows["user_id"]},
+        )).first()
+        assert row is not None
+        expires_at = row[0]
+
+        expected_min = before_post + timedelta(minutes=60)
+        expected_max = after_post + timedelta(minutes=60)
+        # Tolerancia ±2s por overhead del request
+        assert (expected_min - timedelta(seconds=2)) <= expires_at <= (expected_max + timedelta(seconds=2)), (
+            f"Expected expires_at ~now+60min ({expected_min}–{expected_max}), got {expires_at}"
+        )
