@@ -319,3 +319,118 @@ async def seed_authenticated_external_user(client):
         await session.execute(text(f'DELETE FROM {s}."user" WHERE id = :uid'), {"uid": user_id})
         await session.execute(text(f'DELETE FROM {s}."platform" WHERE id = :pid'), {"pid": platform_id})
         await session.commit()
+
+
+# SPEC-032 T-AMP — fixture pesado compartido
+@pytest_asyncio.fixture(scope="function")
+async def setup_full_company(client):
+    """Crea company completa con location + currency + admin_user inicial.
+    Override _tenant_state.company_id/user_id/rol_code='ADMIN' para que el
+    config sintético del conftest apunte al admin de esta company. Cleanup
+    en orden inverso de FKs."""
+    from src.infrastructure.database.config.async_config_db import async_session_db
+    from src.core.config import settings
+    from src.core.classes.password import Password
+    from src.tests.e2e import _tenant_state
+    s = settings.database_schema
+
+    company_id = uuid4()
+    location_id = uuid4()
+    currency_id = uuid4()
+    platform_id = uuid4()
+    admin_user_id = uuid4()
+    admin_ulr_id = uuid4()
+
+    nit = f"FULL-{str(uuid4())[:8]}"
+    admin_email = f"admin-full-{str(uuid4())[:8]}@test.com"
+    admin_pwd = "AdminPass1!"
+
+    async with async_session_db() as session:
+        language = (await session.execute(text(f"SELECT id FROM {s}.\"language\" WHERE code='es' LIMIT 1"))).scalar()
+        country = (await session.execute(text(f"SELECT id FROM {s}.\"geo_division\" WHERE level=0 LIMIT 1"))).scalar()
+        admin_rol = (await session.execute(text(f"SELECT id FROM {s}.\"rol\" WHERE code='ADMIN' AND company_id IS NULL LIMIT 1"))).scalar()
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."currency" (id, code, name, symbol, state)
+            VALUES (:id, :code, 'Test Currency Full', '$', true)
+        """), {"id": currency_id, "code": f"FC-{str(uuid4())[:6]}"})
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."company" (id, nit, name, state)
+            VALUES (:id, :nit, 'Test Company Full', true)
+        """), {"id": company_id, "nit": nit})
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."company_currency" (id, company_id, currency_id, is_base, state)
+            VALUES (:id, :cid, :curid, true, true)
+        """), {"id": uuid4(), "cid": company_id, "curid": currency_id})
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."location" (id, company_id, country_id, name, address, phone, email, main_location, state)
+            VALUES (:id, :cid, :country, 'Sede Test', 'Test Address 123', '+57 300 0000', :email, true, true)
+        """), {"id": location_id, "cid": company_id, "country": country, "email": f"loc-{admin_email}"})
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."platform" (id, language_id, location_id, currency_id, token_expiration_minutes, refresh_token_expiration_minutes)
+            VALUES (:pid, :lang, :loc, :curr, 60, 1440)
+        """), {"pid": platform_id, "lang": language, "loc": location_id, "curr": currency_id})
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."user" (id, platform_id, email, password, identification, first_name, last_name, phone, refresh_token, state)
+            VALUES (:uid, :pid, :email, :pwd, :ident, 'Admin', 'Full', '+57 300 0000', '', true)
+        """), {
+            "uid": admin_user_id, "pid": platform_id, "email": admin_email,
+            "pwd": Password.hash_password(password=admin_pwd),
+            "ident": f"ADMIN-{str(uuid4())[:8]}",
+        })
+
+        await session.execute(text(f"""
+            INSERT INTO {s}."user_location_rol" (id, user_id, location_id, rol_id, state)
+            VALUES (:ulr, :uid, :loc, :rol, true)
+        """), {"ulr": admin_ulr_id, "uid": admin_user_id, "loc": location_id, "rol": admin_rol})
+
+        await session.commit()
+
+    prev_company = _tenant_state._ACTIVE.get("company_id")
+    prev_user = _tenant_state._ACTIVE.get("user_id")
+    prev_role = _tenant_state._ACTIVE.get("rol_code", "ADMIN")
+    _tenant_state._ACTIVE["company_id"] = str(company_id)
+    _tenant_state._ACTIVE["user_id"] = str(admin_user_id)
+    _tenant_state._ACTIVE["rol_code"] = "ADMIN"
+
+    yield {
+        "company_id": str(company_id),
+        "location_id": str(location_id),
+        "currency_id": str(currency_id),
+        "platform_id": str(platform_id),
+        "admin_user_id": str(admin_user_id),
+        "admin_email": admin_email,
+        "admin_password": admin_pwd,
+        "language_id": str(language),
+        "country_id": str(country),
+        "admin_rol_id": str(admin_rol),
+    }
+
+    _tenant_state._ACTIVE["company_id"] = prev_company
+    _tenant_state._ACTIVE["user_id"] = prev_user
+    _tenant_state._ACTIVE["rol_code"] = prev_role
+
+    async with async_session_db() as session:
+        await session.execute(
+            text(f'DELETE FROM {s}."user_location_rol" WHERE location_id = :loc'),
+            {"loc": location_id},
+        )
+        await session.execute(text(f"""
+            DELETE FROM {s}."user" WHERE platform_id IN (
+                SELECT id FROM {s}."platform" WHERE location_id = :loc
+            )
+        """), {"loc": location_id})
+        await session.execute(
+            text(f'DELETE FROM {s}."platform" WHERE location_id = :loc'),
+            {"loc": location_id},
+        )
+        await session.execute(text(f'DELETE FROM {s}."location" WHERE id = :id'), {"id": location_id})
+        await session.execute(text(f'DELETE FROM {s}."company_currency" WHERE company_id = :cid'), {"cid": company_id})
+        await session.execute(text(f'DELETE FROM {s}."currency" WHERE id = :id'), {"id": currency_id})
+        await session.execute(text(f'DELETE FROM {s}."company" WHERE id = :cid'), {"cid": company_id})
+        await session.commit()
